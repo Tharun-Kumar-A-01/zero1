@@ -1,0 +1,152 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: zero1-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: zero1_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zero1_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:7.2-alpine
+    container_name: zero1-prod-valkey
+    restart: unless-stopped
+    command: valkey-server --save "" --appendonly no
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_prod_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  judge0-server:
+    image: judge0/judge0:1.13.1
+    container_name: zero1-prod-judge0-server
+    restart: unless-stopped
+    ports:
+      - "2358:2358"
+    privileged: true
+    environment:
+      REDIS_HOST: valkey
+      REDIS_PORT: 6379
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: judge0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  judge0-workers:
+    image: judge0/judge0:1.13.1
+    container_name: zero1-prod-judge0-workers
+    restart: unless-stopped
+    command: ["./scripts/workers"]
+    privileged: true
+    environment:
+      REDIS_HOST: valkey
+      REDIS_PORT: 6379
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: judge0
+    depends_on:
+      judge0-server:
+        condition: service_started
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Containerfile
+    container_name: zero1-prod-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgrespassword@postgres:5432/zero1_db
+      VALKEY_URL: valkey://valkey:6379/0
+      CELERY_BROKER_URL: valkey://valkey:6379/0
+      CELERY_RESULT_BACKEND: valkey://valkey:6379/0
+      RATE_LIMIT_STORAGE_URL: valkey://valkey:6379/1
+      JUDGE0_URL: http://judge0-server:2358
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Containerfile
+    container_name: zero1-prod-celery-worker
+    restart: unless-stopped
+    command: ["uv", "run", "celery", "-A", "app.celery_app", "worker", "-l", "info", "-c", "2"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgrespassword@postgres:5432/zero1_db
+      VALKEY_URL: valkey://valkey:6379/0
+      CELERY_BROKER_URL: valkey://valkey:6379/0
+      CELERY_RESULT_BACKEND: valkey://valkey:6379/0
+      RATE_LIMIT_STORAGE_URL: valkey://valkey:6379/1
+      JUDGE0_URL: http://judge0-server:2358
+    depends_on:
+      backend:
+        condition: service_started
+      valkey:
+        condition: service_healthy
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Containerfile
+    container_name: zero1-prod-celery-beat
+    restart: unless-stopped
+    command: ["uv", "run", "celery", "-A", "app.celery_app", "beat", "-l", "info"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgrespassword@postgres:5432/zero1_db
+      VALKEY_URL: valkey://valkey:6379/0
+      CELERY_BROKER_URL: valkey://valkey:6379/0
+      CELERY_RESULT_BACKEND: valkey://valkey:6379/0
+      RATE_LIMIT_STORAGE_URL: valkey://valkey:6379/1
+    depends_on:
+      backend:
+        condition: service_started
+      valkey:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Containerfile
+    container_name: zero1-prod-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_prod_data:
+  valkey_prod_data:
