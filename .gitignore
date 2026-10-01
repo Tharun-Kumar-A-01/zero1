@@ -1,0 +1,22 @@
+# Environments & Virtual Envs
+.venv/
+env/
+venv/
+.env
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Bun
+node_modules/
+dist/
+.vite/
+*.local
+

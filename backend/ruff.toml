@@ -1,0 +1,33 @@
+# ruff.toml
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade (modern python syntax)
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "T20", # flake8-print (prevent print statements in production code)
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "W191", # tab indentation (user prefers tabs)
+]
+
+
+[lint.isort]
+combine-as-imports = true
+split-on-trailing-comma = true
+
+[format]
+quote-style = "double"
+indent-style = "tab"
+line-ending = "auto"
+
