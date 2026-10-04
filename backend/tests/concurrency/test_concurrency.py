@@ -29,6 +29,14 @@ def test_concurrent_streak_and_points_evaluation(db: Session, test_student_user:
 		coding_status=DailyCodingStatus.SOLVED,
 	)
 	db.add(assignment)
+	initial_streak = Streak(
+		student_id=test_student_user.id,
+		current_streak=0,
+		longest_streak=0,
+		last_active_date=None,
+		freeze_tokens=0,
+	)
+	db.add(initial_streak)
 	db.commit()
 
 	def worker_task() -> tuple[int, int, bool]:
@@ -46,6 +54,7 @@ def test_concurrent_streak_and_points_evaluation(db: Session, test_student_user:
 
 	# Verify database state
 	with get_db_session() as session:
+		session.expire_all()
 		streak = session.query(Streak).filter_by(student_id=test_student_user.id).first()
 		assert streak is not None
 		assert streak.current_streak == 1  # Incremented exactly once, not 5 times!

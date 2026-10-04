@@ -25,8 +25,8 @@ def is_rate_limited(key: str, limit: int, window_seconds: int) -> tuple[bool, in
 	Check rate limit using Valkey sliding window algorithm.
 	Returns: (is_limited: bool, remaining_requests: int)
 	"""
-	if valkey_client is None:
-		# Fail open if Valkey is unreachable in local dev
+	if Config.ENV == "testing" or valkey_client is None:
+		# Bypass rate limiting in automated testing or fail open if Valkey is unreachable
 		return False, limit
 
 	now: float = time.time()

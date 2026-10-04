@@ -5,7 +5,7 @@ import logging
 from typing import Any, Literal, TypeVar
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.config import Config
 from app.services.sanitizer import sanitize_text
@@ -32,9 +32,17 @@ class ExcelMappingResult(BaseModel):
 
 
 class TestCaseModel(BaseModel):
-	input_data: str
-	expected_output: str
+	input_data: str = Field(description="Standard input string. Must never be empty or whitespace.")
+	expected_output: str = Field(description="Expected standard output string. Must never be empty or whitespace.")
 	is_stress_case: bool = True
+
+	@field_validator("input_data", "expected_output")
+	@classmethod
+	def validate_non_empty(cls, value: str) -> str:
+		trimmed = str(value).strip()
+		if not trimmed:
+			raise ValueError("Test case input and output strings must never be empty or whitespace.")
+		return trimmed
 
 
 class StressTestCaseResult(BaseModel):
@@ -45,6 +53,36 @@ class HardcodeReviewResult(BaseModel):
 	status: Literal["clean", "flagged"]
 	reason: str | None = None
 	detected_shortcut: str | None = None
+
+
+class MCQParsedItem(BaseModel):
+	prompt_text: str = Field(description="The question prompt or statement")
+	options: list[str] = Field(description="List of choice strings, minimum 2, usually 4")
+	correct_option_index: int = Field(default=0, description="Zero-indexed correct option (0 for A, 1 for B, 2 for C, 3 for D)")
+	explanation: str | None = Field(default=None, description="Explanation for the correct answer")
+	difficulty: Literal["easy", "medium", "hard"] = Field(default="medium")
+
+
+class MCQSheetParseResult(BaseModel):
+	questions: list[MCQParsedItem]
+
+
+class FullTestSuiteResult(BaseModel):
+	sample_test_cases: list[TestCaseModel] = Field(description="3 sample test cases")
+	hidden_test_cases: list[TestCaseModel] = Field(description="10 standard hidden test cases")
+
+
+class CodingParsedItem(BaseModel):
+	title: str = Field(description="Problem title")
+	word_problem_text: str = Field(description="Problem statement, requirements, and input/output description")
+	constraints_text: str = Field(default="1 <= N <= 10^5\nAll values within signed 32-bit integer limits.", description="Constraints")
+	difficulty: Literal["easy", "medium", "hard"] = Field(default="medium")
+	sample_test_cases: list[TestCaseModel] = Field(default_factory=list, description="Exactly 3 sample test cases")
+	hidden_test_cases: list[TestCaseModel] = Field(default_factory=list, description="Exactly 10 standard hidden test cases")
+
+
+class CodingSheetParseResult(BaseModel):
+	questions: list[CodingParsedItem]
 
 
 # ========================================================
@@ -211,12 +249,15 @@ class AIClientService:
 		constraints_text: str,
 		reference_solution: str | None = None,
 	) -> StressTestCaseResult:
-		"""Generate large/stress test cases for a coding problem."""
+		"""Generate 10 standard validation hidden test cases for a coding problem."""
 		system_prompt = (
 			"You are an automated competitive programming test-case generator. "
-			"Generate stress test cases (maximum inputs, edge cases: 0, negative numbers, large arrays) "
-			"that adhere to the problem constraints. "
-			"Return a JSON object containing a list of test cases with 'input_data' and 'expected_output'."
+			"Generate exactly 10 standard validation hidden test cases that strictly adhere to the problem constraints. "
+			"These must be normal, valid test cases that thoroughly test the algorithm within standard constraints—NOT obscure or trick edge cases. "
+			"Do NOT use HTML entities (use plain '<', '<=', '>', '>='). "
+			"CRITICAL REQUIREMENT: Neither 'input_data' nor 'expected_output' must ever be empty, blank, or whitespace-only strings. "
+			"Every test case must contain non-empty, valid standard input and expected output. "
+			"Return a JSON object containing a list of 10 test cases with 'input_data' and 'expected_output'."
 		)
 		user_prompt = (
 			f"Problem Title: {title}\nStatement: {problem_text}\nConstraints: {constraints_text}\n"
@@ -225,6 +266,32 @@ class AIClientService:
 			user_prompt += f"Reference Solution Code:\n{reference_solution}\n"
 
 		return self.query_structured_json(system_prompt, user_prompt, StressTestCaseResult)
+
+	def generate_full_test_suite(
+		self,
+		title: str,
+		problem_text: str,
+		constraints_text: str,
+		reference_solution: str | None = None,
+	) -> FullTestSuiteResult:
+		"""Generate exactly 3 sample test cases and 10 normal hidden test cases separated in JSON."""
+		system_prompt = (
+			"You are an automated competitive programming test-case generator. "
+			"Generate a complete test suite for the coding problem with two separate lists:\n"
+			"1. sample_test_cases: Exactly 3 clear, representative sample test cases for students to see in the problem description.\n"
+			"2. hidden_test_cases: Exactly 10 standard validation hidden test cases adhering to problem constraints. "
+			"These must be normal, regular test cases—NOT trick or obscure edge cases.\n"
+			"Do NOT use HTML entities (use plain '<', '<=', '>', '>='). "
+			"CRITICAL REQUIREMENT: Neither 'input_data' nor 'expected_output' must ever be empty, blank, or whitespace-only strings. "
+			"Return ONLY a JSON object conforming to the FullTestSuiteResult schema."
+		)
+		user_prompt = (
+			f"Problem Title: {title}\nStatement: {problem_text}\nConstraints: {constraints_text}\n"
+		)
+		if reference_solution:
+			user_prompt += f"Reference Solution Code:\n{reference_solution}\n"
+
+		return self.query_structured_json(system_prompt, user_prompt, FullTestSuiteResult)
 
 	def review_code_for_hardcoding(
 		self,
@@ -249,5 +316,38 @@ class AIClientService:
 		)
 		return self.query_structured_json(system_prompt, user_prompt, HardcodeReviewResult)
 
+	def parse_mcq_sheet(self, sample_grid: list[list[str]]) -> MCQSheetParseResult:
+		"""Analyze spreadsheet rows containing multiple-choice questions and extract structured items."""
+		system_prompt = (
+			"You are an expert educational spreadsheet parser. Analyze the given spreadsheet rows containing aptitude or computer science MCQs. "
+			"Extract all valid questions. For each question, extract:\n"
+			"- prompt_text: The full question statement\n"
+			"- options: List of choices [Option A, Option B, Option C, Option D]\n"
+			"- correct_option_index: Integer index of correct option (0 for A, 1 for B, 2 for C, 3 for D)\n"
+			"- explanation: Explanation string if provided\n"
+			"- difficulty: 'easy', 'medium', or 'hard'\n"
+			"Return ONLY a JSON object conforming to the MCQSheetParseResult schema."
+		)
+		user_prompt = f"Spreadsheet Rows:\n{json.dumps(sample_grid, ensure_ascii=False)}"
+		return self.query_structured_json(system_prompt, user_prompt, MCQSheetParseResult)
+
+	def parse_coding_sheet(self, sample_grid: list[list[str]]) -> CodingSheetParseResult:
+		"""Analyze spreadsheet rows containing coding challenges and extract structured items."""
+		system_prompt = (
+			"You are an expert competitive programming spreadsheet parser. Analyze the given spreadsheet rows containing coding problems. "
+			"Extract all valid programming challenges. For each challenge, extract:\n"
+			"- title: Problem title\n"
+			"- word_problem_text: Problem statement, requirements, and input/output format specifications\n"
+			"- constraints_text: Plain text constraints with mathematical inequalities (e.g. 1 <= N <= 10^5). Do NOT use HTML entities (use '<', '<=', '>', '>=' instead of '&lt;' or '&gt;').\n"
+			"- difficulty: 'easy', 'medium', or 'hard'\n"
+			"- sample_test_cases: List of exactly 3 representative sample test cases with 'input_data' and 'expected_output' to be visible to students in the problem description.\n"
+			"- hidden_test_cases: List of exactly 10 standard validation hidden test cases with 'input_data' and 'expected_output'. These must be normal test cases covering regular inputs within constraints—NOT obscure or trick edge cases.\n"
+			"CRITICAL REQUIREMENT: Neither 'input_data' nor 'expected_output' must ever be empty, blank, or whitespace-only strings. "
+			"Return ONLY a JSON object conforming to the CodingSheetParseResult schema with 'sample_test_cases' and 'hidden_test_cases' as separate lists."
+		)
+		user_prompt = f"Spreadsheet Rows:\n{json.dumps(sample_grid, ensure_ascii=False)}"
+		return self.query_structured_json(system_prompt, user_prompt, CodingSheetParseResult)
+
 
 ai_service: AIClientService = AIClientService()
+

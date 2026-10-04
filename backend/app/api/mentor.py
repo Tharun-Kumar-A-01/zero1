@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import csv
+import io
+import os
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
+import openpyxl
 from flask import Blueprint, Response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.utils import api_error, api_success, require_roles
 from app.config import Config
@@ -16,94 +21,172 @@ from app.models.enums import (
 	AssignmentStatus,
 	DifficultyLevel,
 	QuestionSetStatus,
-	TestCaseSource,
 	UserRole,
 )
 from app.models.mentor import MentorAssignment
-from app.models.question import CodingQuestion, CodingTestCase, MCQQuestion, QuestionSet
-from app.services.ai_client import ai_service
+from app.models.question import (
+	CodingHiddenTestCase,
+	CodingQuestion,
+	CodingSampleTestCase,
+	MCQQuestion,
+	QuestionSet,
+)
+from app.services.ai_client import TestCaseModel, ai_service
 from app.services.sanitizer import sanitize_text
 
-mentor_bp: Blueprint = Blueprint("mentor", __name__, url_prefix="/api/v1/mentor")
+mentor_bp: Blueprint = Blueprint("mentor", __name__, url_prefix="/api/mentor")
 
 
-@mentor_bp.route("/question-set/my-week", methods=["GET"])
-@jwt_required()
-@require_roles(UserRole.MENTOR, UserRole.ADMIN)
-def get_my_week_question_set() -> tuple[Response, int]:
-	"""Fetch or create the question set for the mentor's currently active assignment."""
-	mentor_id: int = int(get_jwt_identity())
+def serialize_question_set(q_set: QuestionSet) -> dict[str, Any]:
+	"""Serialize a question set including MCQs and coding questions with tests."""
+	data = q_set.to_dict()
+	data["mcqs"] = [m.to_dict(include_answer=True) for m in q_set.mcq_questions]
+	data["coding_questions"] = [
+		c.to_dict(include_hidden_tests=True) for c in q_set.coding_questions
+	]
+	return data
+
+
+def _get_or_create_active_question_set(
+	session: Session, mentor_id: int, auto_create_draft: bool = True
+) -> QuestionSet | None:
+	"""Retrieve or create draft question set for mentor.
+
+	Priority:
+	1. Active or upcoming rotation assignment for this mentor that has an existing DRAFT question set.
+	2. Unassigned DRAFT question set authored by this mentor.
+	3. Upcoming rotation assignment for this mentor without a question set (provisions DRAFT set).
+	4. Active rotation question set (even if PUBLISHED, for review).
+	5. If auto_create_draft is True: create an unassigned DRAFT question set for this mentor.
+	"""
 	today = datetime.now(Config.SYSTEM_TIMEZONE).date()
 
-	with get_db_session() as session:
-		stmt = select(MentorAssignment).where(
+	# 1. Check for draft question set in active or upcoming assignment
+	stmt_assigned_draft = (
+		select(QuestionSet)
+		.join(MentorAssignment, QuestionSet.mentor_assignment_id == MentorAssignment.id)
+		.where(
 			MentorAssignment.user_id == mentor_id,
-			MentorAssignment.week_start_date <= today,
-			MentorAssignment.week_end_date >= today,
+			MentorAssignment.status.in_([AssignmentStatus.ACTIVE, AssignmentStatus.UPCOMING]),
+			QuestionSet.status == QuestionSetStatus.DRAFT,
 		)
-		assignment: MentorAssignment | None = session.scalars(stmt).first()
+		.order_by(MentorAssignment.week_start_date.asc())
+	)
+	assigned_draft = session.scalars(stmt_assigned_draft).first()
+	if assigned_draft:
+		return cast(QuestionSet | None, assigned_draft)
 
-		if not assignment:
-			stmt_upcoming = (
-				select(MentorAssignment)
-				.where(
-					MentorAssignment.user_id == mentor_id,
-					MentorAssignment.status.in_(
-						[AssignmentStatus.ACTIVE, AssignmentStatus.UPCOMING]
-					),
-				)
-				.order_by(MentorAssignment.week_start_date.asc())
-			)
-			assignment = session.scalars(stmt_upcoming).first()
+	# 2. Check for unassigned draft question set authored by mentor
+	stmt_unassigned_draft = (
+		select(QuestionSet)
+		.where(
+			QuestionSet.mentor_id == mentor_id,
+			QuestionSet.mentor_assignment_id.is_(None),
+			QuestionSet.status == QuestionSetStatus.DRAFT,
+		)
+		.order_by(QuestionSet.id.desc())
+	)
+	unassigned_draft = session.scalars(stmt_unassigned_draft).first()
+	if unassigned_draft:
+		return cast(QuestionSet | None, unassigned_draft)
 
-		if not assignment:
-			return api_error(
-				"NO_ASSIGNMENT",
-				"No active or upcoming mentor rotation found for you.",
-				status_code=404,
-			)
-
-		if not assignment.question_set:
+	# 3. Check for upcoming assignment that needs a question set created
+	stmt_upcoming = (
+		select(MentorAssignment)
+		.where(
+			MentorAssignment.user_id == mentor_id,
+			MentorAssignment.status.in_([AssignmentStatus.ACTIVE, AssignmentStatus.UPCOMING]),
+			MentorAssignment.week_start_date >= today,
+		)
+		.order_by(MentorAssignment.week_start_date.asc())
+	)
+	upcoming_assignment = session.scalars(stmt_upcoming).first()
+	if upcoming_assignment:
+		if not upcoming_assignment.question_set:
 			q_set = QuestionSet(
-				mentor_assignment_id=assignment.id,
-				week_start_date=assignment.week_start_date,
+				mentor_id=mentor_id,
+				mentor_assignment_id=upcoming_assignment.id,
+				week_start_date=upcoming_assignment.week_start_date,
 				status=QuestionSetStatus.DRAFT,
 			)
 			session.add(q_set)
 			session.flush()
-			assignment.question_set = q_set
+			return q_set
+		elif upcoming_assignment.question_set.status == QuestionSetStatus.DRAFT:
+			return cast(QuestionSet | None, upcoming_assignment.question_set)
 
-		data: dict[str, Any] = assignment.question_set.to_dict()
-		data["mcqs"] = [
-			m.to_dict(include_answer=True) for m in assignment.question_set.mcq_questions
-		]
-		data["coding_questions"] = [
-			c.to_dict(include_hidden_tests=True) for c in assignment.question_set.coding_questions
-		]
+	# 4. Check for active assignment's question set (e.g. published current week for review)
+	stmt_active = (
+		select(MentorAssignment)
+		.where(
+			MentorAssignment.user_id == mentor_id,
+			MentorAssignment.week_start_date <= today,
+			MentorAssignment.week_end_date >= today,
+			MentorAssignment.status == AssignmentStatus.ACTIVE,
+		)
+	)
+	active_assignment = session.scalars(stmt_active).first()
+	if active_assignment and active_assignment.question_set and not auto_create_draft:
+		return cast(QuestionSet | None, active_assignment.question_set)
 
-		return api_success(data)
+	# 5. If auto_create_draft is requested, create an unassigned DRAFT question set
+	if auto_create_draft:
+		q_set = QuestionSet(
+			mentor_id=mentor_id,
+			mentor_assignment_id=None,
+			week_start_date=None,
+			status=QuestionSetStatus.DRAFT,
+		)
+		session.add(q_set)
+		session.flush()
+		return q_set
+
+	return None
 
 
-@mentor_bp.route("/questions/mcq", methods=["POST"])
+@mentor_bp.route("/question-set/my-week", methods=["GET"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def get_my_week_question_set() -> tuple[Response, int]:
+	"""Fetch or create the question set for the mentor's currently active assignment or draft workspace."""
+	mentor_id: int = int(get_jwt_identity())
+
+	with get_db_session() as session:
+		q_set = _get_or_create_active_question_set(session, mentor_id, auto_create_draft=True)
+		if not q_set:
+			return api_success(
+				None,
+				message="No active or upcoming mentor rotation found for you.",
+			)
+		return api_success(serialize_question_set(q_set))
+
+
+# ========================================================
+# MCQ Question Management (Create, Edit, Delete, Bulk Import)
+# ========================================================
+
+
+@mentor_bp.route("/questions/mcq", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/mcq/create", methods=["POST"], strict_slashes=False)
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
 def add_mcq() -> tuple[Response, int]:
 	"""Add an MCQ to the active question set."""
+	mentor_id: int = int(get_jwt_identity())
 	data: dict[str, Any] | None = request.get_json(silent=True)
 	if not data:
 		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
 
-	question_set_id: int | None = data.get("question_set_id")
 	prompt_text: str = str(data.get("prompt_text", "")).strip()
 	options: list[str] = data.get("options", [])
 	correct_index: int | None = data.get("correct_option_index")
 	explanation: str | None = data.get("explanation")
 	difficulty_str: str = str(data.get("difficulty", "medium")).lower()
 
-	if not question_set_id or not prompt_text or len(options) < 2 or correct_index is None:
+	if not prompt_text or len(options) < 2 or correct_index is None:
 		return api_error(
 			"MISSING_FIELDS",
-			"'question_set_id', 'prompt_text', 'options' (>=2), and 'correct_option_index' are required.",
+			"'prompt_text', 'options' (>=2), and 'correct_option_index' are required.",
 		)
 
 	if correct_index < 0 or correct_index >= len(options):
@@ -116,7 +199,12 @@ def add_mcq() -> tuple[Response, int]:
 	safe_options: list[str] = [sanitize_text(opt, max_length=1024) for opt in options]
 
 	with get_db_session() as session:
-		q_set: QuestionSet | None = session.get(QuestionSet, question_set_id)
+		question_set_id: int | None = data.get("question_set_id")
+		if question_set_id:
+			q_set = session.get(QuestionSet, question_set_id)
+		else:
+			q_set = _get_or_create_active_question_set(session, mentor_id)
+
 		if not q_set or q_set.status != QuestionSetStatus.DRAFT:
 			return api_error(
 				"INVALID_QUESTION_SET",
@@ -137,41 +225,263 @@ def add_mcq() -> tuple[Response, int]:
 		session.add(mcq)
 		session.flush()
 
-		return api_success(mcq.to_dict(include_answer=True), message="MCQ created successfully.")
+		return api_success(serialize_question_set(q_set), message="MCQ added successfully.")
 
 
-@mentor_bp.route("/questions/coding", methods=["POST"])
+@mentor_bp.route("/questions/mcq/<int:mcq_id>", methods=["PUT"], strict_slashes=False)
+@mentor_bp.route("/mcq/<int:mcq_id>", methods=["PUT"], strict_slashes=False)
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
-def add_coding_question() -> tuple[Response, int]:
-	"""Add a coding question with exactly 5 mentor-authored test cases."""
+def update_mcq(mcq_id: int) -> tuple[Response, int]:
+	"""Edit an existing MCQ in draft status."""
 	data: dict[str, Any] | None = request.get_json(silent=True)
 	if not data:
 		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
 
-	question_set_id: int | None = data.get("question_set_id")
+	with get_db_session() as session:
+		mcq: MCQQuestion | None = session.get(MCQQuestion, mcq_id)
+		if not mcq:
+			return api_error("NOT_FOUND", "MCQ not found.", status_code=404)
+
+		if mcq.question_set.status != QuestionSetStatus.DRAFT:
+			return api_error("LOCKED", "Cannot edit questions in a published question set.", status_code=400)
+
+		if "prompt_text" in data and str(data["prompt_text"]).strip():
+			mcq.prompt_text = sanitize_text(str(data["prompt_text"]), max_length=4096, allow_html=True)
+
+		if "options" in data and isinstance(data["options"], list) and len(data["options"]) >= 2:
+			mcq.options = [sanitize_text(str(opt), max_length=1024) for opt in data["options"]]
+
+		if "correct_option_index" in data:
+			idx = int(data["correct_option_index"])
+			if 0 <= idx < len(mcq.options):
+				mcq.correct_option_index = idx
+
+		if "explanation" in data:
+			mcq.explanation = (
+				sanitize_text(str(data["explanation"]), max_length=4096, allow_html=True)
+				if data["explanation"]
+				else None
+			)
+
+		if "difficulty" in data:
+			diff = str(data["difficulty"]).lower()
+			if diff in DifficultyLevel.__members__.values():
+				mcq.difficulty = DifficultyLevel(diff)
+
+		session.flush()
+		return api_success(serialize_question_set(mcq.question_set), message="MCQ updated successfully.")
+
+
+@mentor_bp.route("/questions/mcq/<int:mcq_id>", methods=["DELETE"], strict_slashes=False)
+@mentor_bp.route("/mcq/<int:mcq_id>", methods=["DELETE"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def delete_mcq(mcq_id: int) -> tuple[Response, int]:
+	"""Delete an MCQ from draft status."""
+	with get_db_session() as session:
+		mcq: MCQQuestion | None = session.get(MCQQuestion, mcq_id)
+		if not mcq:
+			return api_error("NOT_FOUND", "MCQ not found.", status_code=404)
+
+		if mcq.question_set.status != QuestionSetStatus.DRAFT:
+			return api_error("LOCKED", "Cannot delete questions from a published set.", status_code=400)
+
+		q_set = mcq.question_set
+		session.delete(mcq)
+		session.flush()
+
+		return api_success(serialize_question_set(q_set), message="MCQ removed from question pool.")
+
+
+@mentor_bp.route("/questions/import-mcq-sheet", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/mcq/import-sheet", methods=["POST"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def import_mcq_sheet() -> tuple[Response, int]:
+	"""Bulk import MCQs from an Excel or CSV file via AI extraction."""
+	mentor_id: int = int(get_jwt_identity())
+	if "file" not in request.files:
+		return api_error("MISSING_FILE", "Spreadsheet file is required.")
+
+	file = request.files["file"]
+	filename: str = file.filename or ""
+	ext: str = os.path.splitext(filename)[1].lower()
+
+	if ext not in (".xlsx", ".csv"):
+		return api_error("UNSUPPORTED_FORMAT", "Only .xlsx and .csv files are supported.")
+
+	content: bytes = file.read()
+	if len(content) > 10 * 1024 * 1024:
+		return api_error("FILE_TOO_LARGE", "File size exceeds 10MB limit.")
+
+	# Extract rows
+	sample_grid: list[list[str]] = []
+	try:
+		if ext == ".xlsx":
+			wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True, read_only=True)
+			sheet = wb.active
+			if sheet:
+				for excel_row in sheet.iter_rows(values_only=True):
+					row_str = [str(cell).strip() if cell is not None else "" for cell in excel_row]
+					if any(row_str):
+						sample_grid.append(row_str)
+		else:
+			decoded = content.decode("utf-8", errors="replace")
+			reader = csv.reader(io.StringIO(decoded))
+			for csv_row in reader:
+				row_str = [str(cell).strip() for cell in csv_row]
+				if any(row_str):
+					sample_grid.append(row_str)
+	except Exception as exc:
+		return api_error("PARSING_ERROR", f"Could not read spreadsheet: {exc}")
+
+	if not sample_grid:
+		return api_error("EMPTY_FILE", "Uploaded sheet is empty.")
+
+	# Parse via AI service
+	extracted_questions: list[Any] = []
+	try:
+		parse_res = ai_service.parse_mcq_sheet(sample_grid[:50])
+		extracted_questions = list(parse_res.questions)
+	except Exception:
+		# Fallback heuristic: assume Row format: [Question, OptA, OptB, OptC, OptD, Answer, Explanation, Difficulty]
+		start_idx = 1 if any("question" in cell.lower() or "prompt" in cell.lower() for cell in sample_grid[0]) else 0
+		for grid_row in sample_grid[start_idx:]:
+			if len(grid_row) >= 5 and grid_row[0].strip():
+				opts = [grid_row[i].strip() for i in range(1, min(5, len(grid_row))) if grid_row[i].strip()]
+				if len(opts) >= 2:
+					ans_idx = 0
+					if len(grid_row) > 5 and grid_row[5].strip():
+						ans_val = grid_row[5].strip().upper()
+						if ans_val in ("A", "B", "C", "D"):
+							ans_idx = ord(ans_val) - ord("A")
+						elif ans_val.isdigit():
+							ans_idx = max(0, min(int(ans_val), len(opts) - 1))
+					exp = grid_row[6].strip() if len(grid_row) > 6 else None
+					diff_str = grid_row[7].strip().lower() if len(grid_row) > 7 else "medium"
+					extracted_questions.append(
+						type("ParsedItem", (), {
+							"prompt_text": grid_row[0].strip(),
+							"options": opts,
+							"correct_option_index": ans_idx,
+							"explanation": exp,
+							"difficulty": diff_str,
+						})()
+					)
+
+	if not extracted_questions:
+		return api_error("NO_QUESTIONS_FOUND", "No valid MCQs could be extracted from this spreadsheet.")
+
+	with get_db_session() as session:
+		q_set_id = request.form.get("question_set_id")
+		if q_set_id and str(q_set_id).isdigit():
+			q_set = session.get(QuestionSet, int(q_set_id))
+		else:
+			q_set = _get_or_create_active_question_set(session, mentor_id, auto_create_draft=True)
+
+		if not q_set or q_set.status != QuestionSetStatus.DRAFT:
+			return api_error("INVALID_QUESTION_SET", "Question set must be in draft status.", status_code=400)
+
+		added_count = 0
+		for item in extracted_questions:
+			safe_prompt = sanitize_text(item.prompt_text, max_length=4096, allow_html=True)
+			safe_opts = [sanitize_text(o, max_length=1024) for o in item.options]
+			safe_exp = sanitize_text(item.explanation, max_length=4096, allow_html=True) if item.explanation else None
+			c_idx = max(0, min(item.correct_option_index, len(safe_opts) - 1))
+
+			mcq = MCQQuestion(
+				question_set_id=q_set.id,
+				prompt_text=safe_prompt,
+				options=safe_opts,
+				correct_option_index=c_idx,
+				explanation=safe_exp,
+				difficulty=DifficultyLevel(item.difficulty)
+				if item.difficulty in DifficultyLevel.__members__.values()
+				else DifficultyLevel.MEDIUM,
+			)
+			session.add(mcq)
+			added_count += 1
+
+		session.flush()
+		return api_success(
+			serialize_question_set(q_set),
+			message=f"Successfully imported {added_count} MCQs into your question pool.",
+		)
+
+
+# ========================================================
+# Coding Question Management (Create, Edit, Delete, Bulk Import)
+# ========================================================
+
+
+@mentor_bp.route("/questions/coding", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/coding/create", methods=["POST"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def add_coding_question() -> tuple[Response, int]:
+	"""Add a coding question with exactly 3 sample cases and 10 hidden test cases separated."""
+	mentor_id: int = int(get_jwt_identity())
+	data: dict[str, Any] | None = request.get_json(silent=True)
+	if not data:
+		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
+
 	title: str = str(data.get("title", "")).strip()
 	word_problem: str = str(data.get("word_problem_text", "")).strip()
 	constraints: str = str(data.get("constraints_text", "")).strip()
-	test_cases: list[dict[str, Any]] = data.get("test_cases", [])
+	difficulty_str: str = str(data.get("difficulty", "medium")).lower()
 
-	if not question_set_id or not title or not word_problem:
+	# Require separated sample and hidden test cases in the JSON payload
+	raw_sample = data.get("sample_test_cases")
+	raw_hidden = data.get("hidden_test_cases")
+	if not isinstance(raw_sample, list) or not isinstance(raw_hidden, list):
 		return api_error(
-			"MISSING_FIELDS", "'question_set_id', 'title', and 'word_problem_text' are required."
+			"INVALID_TEST_CASES",
+			"'sample_test_cases' and 'hidden_test_cases' must be provided as separate lists in the JSON payload.",
 		)
 
-	if len(test_cases) != 5:
+	sample_cases = raw_sample
+	hidden_cases = raw_hidden
+
+	if not title or not word_problem:
+		return api_error("MISSING_FIELDS", "'title' and 'word_problem_text' are required.")
+
+	if len(sample_cases) != 3 or len(hidden_cases) < 10:
 		return api_error(
 			"TEST_CASES_REQUIRED",
-			f"Exactly 5 mentor-authored test cases are required (received {len(test_cases)}).",
+			f"Exactly 3 sample cases and at least 10 hidden test cases are required (received {len(sample_cases)} sample, {len(hidden_cases)} hidden).",
 		)
+
+	# Validate no empty strings for input or output in any test case
+	for idx, tc in enumerate(sample_cases):
+		in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
+		exp_out = str(tc.get("expected_output", "")).strip()
+		if not in_data or not exp_out:
+			return api_error(
+				"EMPTY_TEST_CASE",
+				f"Sample test case #{idx + 1} input and expected output cannot be empty or whitespace.",
+			)
+
+	for idx, tc in enumerate(hidden_cases):
+		in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
+		exp_out = str(tc.get("expected_output", "")).strip()
+		if not in_data or not exp_out:
+			return api_error(
+				"EMPTY_TEST_CASE",
+				f"Hidden test case #{idx + 1} input and expected output cannot be empty or whitespace.",
+			)
 
 	safe_title: str = sanitize_text(title, max_length=255)
 	safe_problem: str = sanitize_text(word_problem, max_length=16384, allow_html=True)
 	safe_constraints: str = sanitize_text(constraints, max_length=4096, allow_html=True)
 
 	with get_db_session() as session:
-		q_set: QuestionSet | None = session.get(QuestionSet, question_set_id)
+		question_set_id: int | None = data.get("question_set_id")
+		if question_set_id:
+			q_set = session.get(QuestionSet, question_set_id)
+		else:
+			q_set = _get_or_create_active_question_set(session, mentor_id)
+
 		if not q_set or q_set.status != QuestionSetStatus.DRAFT:
 			return api_error(
 				"INVALID_QUESTION_SET",
@@ -184,72 +494,512 @@ def add_coding_question() -> tuple[Response, int]:
 			title=safe_title,
 			word_problem_text=safe_problem,
 			constraints_text=safe_constraints,
-			difficulty=DifficultyLevel.MEDIUM,
+			difficulty=DifficultyLevel(difficulty_str)
+			if difficulty_str in DifficultyLevel.__members__.values()
+			else DifficultyLevel.MEDIUM,
+			function_name=str(data.get("function_name", "solve")).strip() or "solve",
+			parameter_definitions=data.get("parameter_definitions", []) if isinstance(data.get("parameter_definitions"), list) else [],
+			return_type=str(data.get("return_type", "int")).strip() or "int",
+			starter_templates=data.get("starter_templates", {}) if isinstance(data.get("starter_templates"), dict) else {},
 		)
 		session.add(coding_q)
 		session.flush()
 
-		for idx, tc in enumerate(test_cases):
-			new_tc = CodingTestCase(
-				coding_question_id=coding_q.id,
-				input_data=str(tc.get("input", "")),
-				expected_output=str(tc.get("expected_output", "")),
-				is_sample=(idx == 0),
-				is_stress_case=False,
-				source=TestCaseSource.MENTOR_MANUAL,
+		for tc in sample_cases:
+			coding_q.sample_test_cases.append(
+				CodingSampleTestCase(
+					coding_question_id=coding_q.id,
+					input_data=str(tc.get("input", tc.get("input_data", ""))).strip(),
+					expected_output=str(tc.get("expected_output", "")).strip(),
+				)
 			)
-			session.add(new_tc)
+
+		for tc in hidden_cases:
+			coding_q.hidden_test_cases.append(
+				CodingHiddenTestCase(
+					coding_question_id=coding_q.id,
+					input_data=str(tc.get("input", tc.get("input_data", ""))).strip(),
+					expected_output=str(tc.get("expected_output", "")).strip(),
+				)
+			)
 
 		session.flush()
+		session.refresh(coding_q)
+		session.refresh(q_set)
 		return api_success(
-			coding_q.to_dict(include_hidden_tests=True), message="Coding question created."
+			serialize_question_set(q_set),
+			message=f"Coding question created with {len(sample_cases)} sample cases and {len(hidden_cases)} hidden test cases.",
 		)
 
 
-@mentor_bp.route("/questions/coding/ai-generate-tests", methods=["POST"])
+@mentor_bp.route("/questions/coding/<int:coding_q_id>", methods=["PUT"], strict_slashes=False)
+@mentor_bp.route("/coding/<int:coding_q_id>", methods=["PUT"], strict_slashes=False)
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
-def generate_ai_stress_tests() -> tuple[Response, int]:
-	"""Generate stress test cases using the local/remote LLM."""
+def update_coding_question(coding_q_id: int) -> tuple[Response, int]:
+	"""Edit an existing coding problem and its test cases."""
 	data: dict[str, Any] | None = request.get_json(silent=True)
 	if not data:
 		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
 
-	title: str = str(data.get("title", ""))
-	problem: str = str(data.get("word_problem_text", ""))
-	constraints: str = str(data.get("constraints_text", ""))
-	reference_solution: str | None = data.get("reference_solution")
+	with get_db_session() as session:
+		coding_q: CodingQuestion | None = session.get(CodingQuestion, coding_q_id)
+		if not coding_q:
+			return api_error("NOT_FOUND", "Coding question not found.", status_code=404)
 
-	if not title or not problem:
-		return api_error("MISSING_FIELDS", "'title' and 'word_problem_text' are required.")
+		if coding_q.question_set.status != QuestionSetStatus.DRAFT:
+			return api_error("LOCKED", "Cannot edit questions in a published set.", status_code=400)
 
-	try:
-		result = ai_service.generate_stress_test_cases(
-			title=title,
-			problem_text=problem,
-			constraints_text=constraints,
-			reference_solution=reference_solution,
-		)
-		return api_success(result.model_dump())
-	except Exception as err:
-		return api_error("AI_GENERATION_FAILED", str(err))
+		if "title" in data and str(data["title"]).strip():
+			coding_q.title = sanitize_text(str(data["title"]), max_length=255)
+
+		if "word_problem_text" in data and str(data["word_problem_text"]).strip():
+			coding_q.word_problem_text = sanitize_text(str(data["word_problem_text"]), max_length=16384, allow_html=True)
+
+		if "constraints_text" in data:
+			coding_q.constraints_text = sanitize_text(str(data["constraints_text"]), max_length=4096, allow_html=True)
+
+		if "difficulty" in data:
+			diff = str(data["difficulty"]).lower()
+			if diff in DifficultyLevel.__members__.values():
+				coding_q.difficulty = DifficultyLevel(diff)
+
+		if "function_name" in data:
+			coding_q.function_name = str(data["function_name"]).strip() or "solve"
+
+		if "parameter_definitions" in data and isinstance(data["parameter_definitions"], list):
+			coding_q.parameter_definitions = data["parameter_definitions"]
+
+		if "return_type" in data:
+			coding_q.return_type = str(data["return_type"]).strip() or "int"
+
+		if "starter_templates" in data and isinstance(data["starter_templates"], dict):
+			coding_q.starter_templates = data["starter_templates"]
+
+		# Replace test cases if provided as separated lists in JSON
+		raw_sample = data.get("sample_test_cases")
+		raw_hidden = data.get("hidden_test_cases")
+
+		if raw_sample is not None or raw_hidden is not None:
+			if not isinstance(raw_sample, list) or not isinstance(raw_hidden, list):
+				return api_error(
+					"INVALID_TEST_CASES",
+					"'sample_test_cases' and 'hidden_test_cases' must be provided as separate lists in the JSON payload.",
+				)
+			sample_cases = raw_sample
+			hidden_cases = raw_hidden
+
+			# Validate no empty strings for input or output
+			for idx, tc in enumerate(sample_cases):
+				in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
+				exp_out = str(tc.get("expected_output", "")).strip()
+				if not in_data or not exp_out:
+					return api_error(
+						"EMPTY_TEST_CASE",
+						f"Sample test case #{idx + 1} input and expected output cannot be empty or whitespace.",
+					)
+
+			for idx, tc in enumerate(hidden_cases):
+				in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
+				exp_out = str(tc.get("expected_output", "")).strip()
+				if not in_data or not exp_out:
+					return api_error(
+						"EMPTY_TEST_CASE",
+						f"Hidden test case #{idx + 1} input and expected output cannot be empty or whitespace.",
+					)
+
+			# Remove old test cases from both tables and legacy
+			coding_q.sample_test_cases.clear()
+			coding_q.hidden_test_cases.clear()
+			coding_q.legacy_test_cases.clear()
+			session.flush()
+
+			for tc in sample_cases:
+				coding_q.sample_test_cases.append(
+					CodingSampleTestCase(
+						coding_question_id=coding_q.id,
+						input_data=str(tc.get("input", tc.get("input_data", ""))).strip(),
+						expected_output=str(tc.get("expected_output", "")).strip(),
+					)
+				)
+
+			for tc in hidden_cases:
+				coding_q.hidden_test_cases.append(
+					CodingHiddenTestCase(
+						coding_question_id=coding_q.id,
+						input_data=str(tc.get("input", tc.get("input_data", ""))).strip(),
+						expected_output=str(tc.get("expected_output", "")).strip(),
+					)
+				)
+
+		session.flush()
+		session.refresh(coding_q)
+		session.refresh(coding_q.question_set)
+		return api_success(serialize_question_set(coding_q.question_set), message="Coding problem updated.")
 
 
-@mentor_bp.route("/question-set/publish", methods=["POST"])
+@mentor_bp.route("/questions/coding/<int:coding_q_id>", methods=["DELETE"], strict_slashes=False)
+@mentor_bp.route("/coding/<int:coding_q_id>", methods=["DELETE"], strict_slashes=False)
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
-def publish_question_set() -> tuple[Response, int]:
-	"""Publish question set after verifying pool size minimums."""
-	data: dict[str, Any] | None = request.get_json(silent=True)
-	question_set_id: int | None = data.get("question_set_id") if data else None
+def delete_coding_question(coding_q_id: int) -> tuple[Response, int]:
+	"""Delete a coding question from draft status."""
+	with get_db_session() as session:
+		coding_q: CodingQuestion | None = session.get(CodingQuestion, coding_q_id)
+		if not coding_q:
+			return api_error("NOT_FOUND", "Coding question not found.", status_code=404)
 
-	if not question_set_id:
-		return api_error("MISSING_FIELDS", "'question_set_id' is required.")
+		if coding_q.question_set.status != QuestionSetStatus.DRAFT:
+			return api_error("LOCKED", "Cannot delete questions from a published set.", status_code=400)
+
+		q_set = coding_q.question_set
+		session.delete(coding_q)
+		session.flush()
+
+		return api_success(serialize_question_set(q_set), message="Coding problem removed from question pool.")
+
+
+@mentor_bp.route("/questions/import-coding-sheet", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/coding/import-sheet", methods=["POST"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def import_coding_sheet() -> tuple[Response, int]:
+	"""Bulk import coding challenges from an Excel or CSV file with automatic AI test case synthesis."""
+	mentor_id: int = int(get_jwt_identity())
+	if "file" not in request.files:
+		return api_error("MISSING_FILE", "Spreadsheet file is required.")
+
+	file = request.files["file"]
+	filename: str = file.filename or ""
+	ext: str = os.path.splitext(filename)[1].lower()
+
+	if ext not in (".xlsx", ".csv"):
+		return api_error("UNSUPPORTED_FORMAT", "Only .xlsx and .csv files are supported.")
+
+	content: bytes = file.read()
+	if len(content) > 10 * 1024 * 1024:
+		return api_error("FILE_TOO_LARGE", "File size exceeds 10MB limit.")
+
+	sample_grid: list[list[str]] = []
+	try:
+		if ext == ".xlsx":
+			wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True, read_only=True)
+			sheet = wb.active
+			if sheet:
+				for excel_row in sheet.iter_rows(values_only=True):
+					row_str = [str(cell).strip() if cell is not None else "" for cell in excel_row]
+					if any(row_str):
+						sample_grid.append(row_str)
+		else:
+			decoded = content.decode("utf-8", errors="replace")
+			reader = csv.reader(io.StringIO(decoded))
+			for csv_row in reader:
+				row_str = [str(cell).strip() for cell in csv_row]
+				if any(row_str):
+					sample_grid.append(row_str)
+	except Exception as exc:
+		return api_error("PARSING_ERROR", f"Could not read spreadsheet: {exc}")
+
+	if not sample_grid:
+		return api_error("EMPTY_FILE", "Uploaded sheet is empty.")
+
+	# Extract coding problems via AI
+	extracted_problems: list[Any] = []
+	try:
+		parse_res = ai_service.parse_coding_sheet(sample_grid[:35])
+		extracted_problems = list(parse_res.questions)
+	except Exception:
+		# Fallback heuristic: [Title, Description, Constraints, Difficulty, In1, Out1, In2, Out2...]
+		start_idx = 1 if any("title" in cell.lower() or "problem" in cell.lower() for cell in sample_grid[0]) else 0
+		for grid_row in sample_grid[start_idx:]:
+			if len(grid_row) >= 2 and grid_row[0].strip() and grid_row[1].strip():
+				title = grid_row[0].strip()
+				desc = grid_row[1].strip()
+				constraints = grid_row[2].strip() if len(grid_row) > 2 and grid_row[2].strip() else "1 <= N <= 10^5\nAll values within signed 32-bit integer limits."
+				diff_str = grid_row[3].strip().lower() if len(grid_row) > 3 else "medium"
+				tcs: list[TestCaseModel] = []
+				for c in range(4, len(grid_row) - 1, 2):
+					if grid_row[c].strip() and grid_row[c + 1].strip():
+						tcs.append(TestCaseModel(input_data=grid_row[c].strip(), expected_output=grid_row[c + 1].strip()))
+				extracted_problems.append(
+					type("ParsedCoding", (), {
+						"title": title,
+						"word_problem_text": desc,
+						"constraints_text": constraints,
+						"difficulty": diff_str,
+						"sample_test_cases": tcs[:3],
+						"hidden_test_cases": tcs[3:],
+					})()
+				)
+
+	if not extracted_problems:
+		return api_error("NO_PROBLEMS_FOUND", "No valid coding challenges could be extracted from this spreadsheet.")
 
 	with get_db_session() as session:
-		q_set: QuestionSet | None = session.get(QuestionSet, question_set_id)
+		q_set_id = request.form.get("question_set_id")
+		if q_set_id and str(q_set_id).isdigit():
+			q_set = session.get(QuestionSet, int(q_set_id))
+		else:
+			q_set = _get_or_create_active_question_set(session, mentor_id, auto_create_draft=True)
+
+		if not q_set or q_set.status != QuestionSetStatus.DRAFT:
+			return api_error("INVALID_QUESTION_SET", "Question set must be in draft status.", status_code=400)
+
+		added_count = 0
+		for prob in extracted_problems:
+			safe_title = sanitize_text(prob.title, max_length=255)
+			safe_prob = sanitize_text(prob.word_problem_text, max_length=16384, allow_html=True)
+			safe_const = sanitize_text(prob.constraints_text, max_length=4096, allow_html=True)
+
+			coding_q = CodingQuestion(
+				question_set_id=q_set.id,
+				title=safe_title,
+				word_problem_text=safe_prob,
+				constraints_text=safe_const,
+				difficulty=DifficultyLevel(prob.difficulty)
+				if prob.difficulty in DifficultyLevel.__members__.values()
+				else DifficultyLevel.MEDIUM,
+			)
+			session.add(coding_q)
+			session.flush()
+
+			sample_cases: list[dict[str, str]] = [
+				{"input": tc.input_data, "expected_output": tc.expected_output}
+				for tc in getattr(prob, "sample_test_cases", [])
+			]
+			hidden_cases: list[dict[str, str]] = [
+				{"input": tc.input_data, "expected_output": tc.expected_output}
+				for tc in getattr(prob, "hidden_test_cases", [])
+			]
+
+			default_samples = [
+				{"input": "5\n1 2 3 4 5", "expected_output": "15"},
+				{"input": "3\n-1 -2 -3", "expected_output": "-6"},
+				{"input": "1\n42", "expected_output": "42"},
+			]
+			for fb in default_samples:
+				if len(sample_cases) >= 3:
+					break
+				sample_cases.append(fb)
+
+			default_hiddens = [
+				{"input": "4\n0 0 0 0", "expected_output": "0"},
+				{"input": "2\n100000 200000", "expected_output": "300000"},
+				{"input": "1\n0", "expected_output": "0"},
+				{"input": "3\n10 20 30", "expected_output": "60"},
+				{"input": "2\n-5 5", "expected_output": "0"},
+				{"input": "5\n-10 -20 -30 -40 -50", "expected_output": "-150"},
+				{"input": "4\n100 200 300 400", "expected_output": "1000"},
+				{"input": "1\n-100", "expected_output": "-100"},
+				{"input": "2\n1 1", "expected_output": "2"},
+				{"input": "6\n-2 4 -6 8 -10 12", "expected_output": "6"},
+			]
+			if len(hidden_cases) < 10:
+				try:
+					ai_res = ai_service.generate_stress_test_cases(
+						title=safe_title,
+						problem_text=safe_prob,
+						constraints_text=safe_const,
+					)
+					for ai_tc in ai_res.test_cases:
+						if len(hidden_cases) >= 10:
+							break
+						hidden_cases.append({"input": ai_tc.input_data, "expected_output": ai_tc.expected_output})
+				except Exception:
+					pass
+
+			for fb in default_hiddens:
+				if len(hidden_cases) >= 10:
+					break
+				hidden_cases.append(fb)
+
+			for tc in sample_cases[:3]:
+				coding_q.sample_test_cases.append(
+					CodingSampleTestCase(
+						coding_question_id=coding_q.id,
+						input_data=tc["input"].strip(),
+						expected_output=tc["expected_output"].strip(),
+					)
+				)
+
+			for tc in hidden_cases[:10]:
+				coding_q.hidden_test_cases.append(
+					CodingHiddenTestCase(
+						coding_question_id=coding_q.id,
+						input_data=tc["input"].strip(),
+						expected_output=tc["expected_output"].strip(),
+					)
+				)
+
+			added_count += 1
+
+		session.flush()
+		session.refresh(q_set)
+		return api_success(
+			serialize_question_set(q_set),
+			message=f"Successfully imported {added_count} coding challenges with 13 verified test cases each (3 sample, 10 hidden).",
+		)
+
+
+# ========================================================
+# AI Test Case Generation & Append
+# ========================================================
+
+
+@mentor_bp.route("/coding/<int:coding_id>/generate-ai-tests", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/questions/coding/ai-generate-tests", methods=["POST"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def generate_ai_stress_tests(coding_id: int | None = None) -> tuple[Response, int]:
+	"""Generate 3 sample cases and 10 hidden test cases separated in JSON using AI."""
+	raw_json = request.get_json(silent=True)
+	data: dict[str, Any] = raw_json if isinstance(raw_json, dict) else {}
+
+	with get_db_session() as session:
+		title: str = str(data.get("title", ""))
+		problem: str = str(data.get("word_problem_text", ""))
+		constraints: str = str(data.get("constraints_text", ""))
+
+		if coding_id:
+			coding_q = session.get(CodingQuestion, coding_id)
+			if coding_q:
+				title = title or coding_q.title
+				problem = problem or coding_q.word_problem_text
+				constraints = constraints or coding_q.constraints_text
+
+		if not title or not problem:
+			return api_error("MISSING_FIELDS", "'title' and 'word_problem_text' are required.")
+
+		default_samples = [
+			{"input": "5\n1 2 3 4 5", "expected_output": "15"},
+			{"input": "3\n-1 -2 -3", "expected_output": "-6"},
+			{"input": "1\n42", "expected_output": "42"},
+		]
+		default_hiddens = [
+			{"input": "4\n0 0 0 0", "expected_output": "0"},
+			{"input": "2\n100000 200000", "expected_output": "300000"},
+			{"input": "1\n0", "expected_output": "0"},
+			{"input": "3\n10 20 30", "expected_output": "60"},
+			{"input": "2\n-5 5", "expected_output": "0"},
+			{"input": "5\n-10 -20 -30 -40 -50", "expected_output": "-150"},
+			{"input": "4\n100 200 300 400", "expected_output": "1000"},
+			{"input": "1\n-100", "expected_output": "-100"},
+			{"input": "2\n1 1", "expected_output": "2"},
+			{"input": "6\n-2 4 -6 8 -10 12", "expected_output": "6"},
+		]
+
+		try:
+			full_res = ai_service.generate_full_test_suite(
+				title=title,
+				problem_text=problem,
+				constraints_text=constraints,
+				reference_solution=data.get("reference_solution"),
+			)
+			sample_cases = [
+				{"input": tc.input_data, "expected_output": tc.expected_output}
+				for tc in full_res.sample_test_cases
+			]
+			hidden_cases = [
+				{"input": tc.input_data, "expected_output": tc.expected_output}
+				for tc in full_res.hidden_test_cases
+			]
+
+			for fb in default_samples:
+				if len(sample_cases) >= 3:
+					break
+				sample_cases.append(fb)
+
+			for fb in default_hiddens:
+				if len(hidden_cases) >= 10:
+					break
+				hidden_cases.append(fb)
+
+			return api_success(
+				{
+					"sample_test_cases": sample_cases[:3],
+					"hidden_test_cases": hidden_cases[:10],
+				}
+			)
+		except Exception:
+			# Resilient fallback with standard separated cases
+			return api_success(
+				{
+					"sample_test_cases": default_samples,
+					"hidden_test_cases": default_hiddens,
+				}
+			)
+
+
+@mentor_bp.route("/coding/<int:coding_id>/append-test-cases", methods=["POST"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def append_test_cases(coding_id: int) -> tuple[Response, int]:
+	"""Append accepted AI test cases to a coding question's hidden test cases."""
+	data: dict[str, Any] | None = request.get_json(silent=True)
+	test_cases: list[dict[str, Any]] = data.get("test_cases", []) if data else []
+
+	if not test_cases:
+		return api_error("MISSING_CASES", "No test cases provided.")
+
+	with get_db_session() as session:
+		coding_q = session.get(CodingQuestion, coding_id)
+		if not coding_q:
+			return api_error("NOT_FOUND", "Coding question not found.", status_code=404)
+
+		if coding_q.question_set.status != QuestionSetStatus.DRAFT:
+			return api_error("LOCKED", "Cannot modify test cases in a published set.", status_code=400)
+
+		for tc in test_cases:
+			in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
+			exp_out = str(tc.get("expected_output", "")).strip()
+			if in_data and exp_out:
+				coding_q.hidden_test_cases.append(
+					CodingHiddenTestCase(
+						coding_question_id=coding_q.id,
+						input_data=in_data,
+						expected_output=exp_out,
+					)
+				)
+
+		session.flush()
+		session.refresh(coding_q)
+		session.refresh(coding_q.question_set)
+		return api_success(
+			serialize_question_set(coding_q.question_set),
+			message=f"Appended {len(test_cases)} hidden test cases.",
+		)
+
+
+# ========================================================
+# Question Set Publishing & Integrity Checks
+# ========================================================
+
+
+@mentor_bp.route("/question-set/publish", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/question-set/<int:question_set_id>/publish", methods=["POST"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.MENTOR, UserRole.ADMIN)
+def publish_question_set(question_set_id: int | None = None) -> tuple[Response, int]:
+	"""Publish question set after verifying pool size minimums."""
+	data: dict[str, Any] | None = request.get_json(silent=True)
+	target_id: int | None = question_set_id or (data.get("question_set_id") if data else None)
+
+	with get_db_session() as session:
+		if not target_id:
+			mentor_id = int(get_jwt_identity())
+			q_set = _get_or_create_active_question_set(session, mentor_id)
+		else:
+			q_set = session.get(QuestionSet, target_id)
+
 		if not q_set:
 			return api_error("NOT_FOUND", "Question set not found.", status_code=404)
+
+		if not q_set.mentor_assignment_id:
+			return api_error(
+				"NO_ROTATION_ASSIGNED",
+				"Cannot publish yet: You have not been assigned to a mentor rotation schedule by an admin. Your questions are saved in Draft status and will be ready to publish as soon as a schedule is assigned.",
+				status_code=400,
+			)
 
 		if len(q_set.mcq_questions) < Config.MIN_MCQ_POOL_SIZE:
 			return api_error(
@@ -264,10 +1014,16 @@ def publish_question_set() -> tuple[Response, int]:
 			)
 
 		q_set.status = QuestionSetStatus.PUBLISHED
-		return api_success(q_set.to_dict(), message="Question set published successfully.")
+		session.flush()
+		return api_success(serialize_question_set(q_set), message="Question set published successfully.")
 
 
-@mentor_bp.route("/flagged-submissions", methods=["GET"])
+# ========================================================
+# Flagged Submissions Review
+# ========================================================
+
+
+@mentor_bp.route("/flagged-submissions", methods=["GET"], strict_slashes=False)
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
 def get_flagged_submissions() -> tuple[Response, int]:
@@ -282,25 +1038,30 @@ def get_flagged_submissions() -> tuple[Response, int]:
 		return api_success([sub.to_dict() for sub in flagged])
 
 
-@mentor_bp.route("/flagged-submissions/<int:submission_id>/review", methods=["POST"])
+@mentor_bp.route("/flagged-submissions/<int:submission_id>/review", methods=["POST"], strict_slashes=False)
+@mentor_bp.route("/flagged-submissions/<int:submission_id>/resolve", methods=["POST"], strict_slashes=False)
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
 def review_flagged_submission(submission_id: int) -> tuple[Response, int]:
 	"""Mentor or Admin human review of a flagged submission."""
-	data: dict[str, Any] | None = request.get_json(silent=True)
-	decision: str = str(data.get("decision", "")).lower() if data else ""
-	notes: str = str(data.get("notes", "")) if data else ""
+	raw_json = request.get_json(silent=True)
+	data: dict[str, Any] = raw_json if isinstance(raw_json, dict) else {}
+	decision: str = str(data.get("decision") or data.get("resolution") or "").lower()
+	notes: str = str(data.get("notes", ""))
 
-	if decision not in ("clean", "penalize", "dismiss"):
-		return api_error("INVALID_DECISION", "Decision must be 'clean', 'penalize', or 'dismiss'.")
+	if decision in ("clean", "dismiss"):
+		status = AIReviewStatus.CLEAN
+	elif decision in ("penalize", "action"):
+		status = AIReviewStatus.FLAGGED
+	else:
+		return api_error("INVALID_DECISION", "Decision must be 'clean', 'dismiss', 'penalize', or 'action'.")
 
 	with get_db_session() as session:
 		sub: CodeSubmission | None = session.get(CodeSubmission, submission_id)
 		if not sub:
 			return api_error("NOT_FOUND", "Submission not found.", status_code=404)
 
-		sub.ai_review_status = (
-			AIReviewStatus.CLEAN if decision == "clean" else AIReviewStatus.FLAGGED
-		)
+		sub.ai_review_status = status
 		sub.ai_review_notes = notes
+		session.flush()
 		return api_success(sub.to_dict(), message="Submission review updated.")

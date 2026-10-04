@@ -17,7 +17,7 @@ from app.models.user import User
 from app.services.sanitizer import sanitize_text
 from app.services.streak_service import get_student_total_points
 
-auth_bp: Blueprint = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
+auth_bp: Blueprint = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 @auth_bp.route("/login", methods=["POST"])

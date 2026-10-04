@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Date, Enum as SQLEnum, ForeignKey, Integer
+from sqlalchemy import Date, Enum as SQLEnum, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -44,3 +44,27 @@ class MentorAssignment(Base):
 			"status": self.status.value,
 			"created_by_admin_id": self.created_by_admin_id,
 		}
+
+
+class CustomLeave(Base):
+	__tablename__ = "custom_leaves"
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	title: Mapped[str] = mapped_column(String(128), nullable=False)
+	start_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+	end_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+	description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+	created_by_admin_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+	admin: Mapped[User] = relationship("User", foreign_keys=[created_by_admin_id])
+
+	def to_dict(self) -> dict[str, Any]:
+		return {
+			"id": self.id,
+			"title": self.title,
+			"start_date": self.start_date.isoformat(),
+			"end_date": self.end_date.isoformat(),
+			"description": self.description,
+			"created_by_admin_id": self.created_by_admin_id,
+		}
+

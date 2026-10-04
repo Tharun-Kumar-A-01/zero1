@@ -1,0 +1,101 @@
+/* Base16 Default Dark (Chris Kempson) for PrismJS */
+:root {
+	--base00: #181818;
+	--base01: #282828;
+	--base02: #383838;
+	--base03: #585858;
+	--base04: #b8b8b8;
+	--base05: #d8d8d8;
+	--base06: #e8e8e8;
+	--base07: #f8f8f8;
+	--base08: #ab4642; /* Red */
+	--base09: #dc9656; /* Orange */
+	--base0A: #f7ca88; /* Yellow */
+	--base0B: #a1b56c; /* Green */
+	--base0C: #86c1b9; /* Cyan */
+	--base0D: #7cafc2; /* Blue */
+	--base0E: #ba8baf; /* Magenta/Purple */
+	--base0F: #a16946; /* Brown */
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #747369; /* base03 */
+	font-style: italic;
+}
+
+.token.punctuation {
+	color: #d8d8d8; /* base05 */
+}
+
+.token.namespace {
+	opacity: 0.8;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #dc9656; /* base09 */
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted,
+.token.triple-quoted-string {
+	color: #a1b56c; /* base0B */
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.token.macro,
+.token.directive-hash,
+.token.decorator,
+.token.annotation,
+.language-css .token.string,
+.style .token.string {
+	color: #86c1b9; /* base0C */
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword,
+.token.directive.keyword {
+	color: #ba8baf; /* base0E */
+}
+
+.token.function {
+	color: #7cafc2; /* base0D */
+}
+
+.token.class-name {
+	color: #f7ca88; /* base0A */
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+	color: #ab4642; /* base08 */
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}

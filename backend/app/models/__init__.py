@@ -16,16 +16,26 @@ from app.models.enums import (
 )
 from app.models.gamification import Milestone, PointsLedger, Reward, Streak, StudentReward
 from app.models.import_job import ImportJob
-from app.models.mentor import MentorAssignment
-from app.models.question import CodingQuestion, CodingTestCase, MCQQuestion, QuestionSet
+from app.models.mentor import CustomLeave, MentorAssignment
+from app.models.question import (
+	CodingHiddenTestCase,
+	CodingQuestion,
+	CodingSampleTestCase,
+	CodingTestCase,
+	MCQQuestion,
+	QuestionSet,
+)
 from app.models.user import User
 
 __all__ = [
 	"User",
 	"MentorAssignment",
+	"CustomLeave",
 	"QuestionSet",
 	"MCQQuestion",
 	"CodingQuestion",
+	"CodingSampleTestCase",
+	"CodingHiddenTestCase",
 	"CodingTestCase",
 	"DailyAssignment",
 	"MCQSubmission",

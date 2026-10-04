@@ -16,12 +16,14 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
-    "@primevue/themes": "^4.5.4",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@types/prismjs": "^1.26.6",
     "pinia": "^4.0.3",
-    "primeicons": "^8.0.2",
-    "primevue": "^5.0.2",
+    "prism-themes": "^1.9.0",
+    "prismjs": "^1.30.0",
     "vue": "^3.5.42",
-    "vue-router": "^5.3.1"
+    "vue-router": "^5.3.1",
+    "vuestic-ui": "^1.10.3"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.5",

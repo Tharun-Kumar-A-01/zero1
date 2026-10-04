@@ -9,7 +9,7 @@ export interface ApiResponse<T = unknown> {
 	}
 }
 
-const BASE_URL = '/api/v1'
+const BASE_URL = '/api'
 
 export async function apiFetch<T = unknown>(
 	endpoint: string,
@@ -92,6 +92,33 @@ export const api = {
 	},
 	delete<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
 		return apiFetch<T>(endpoint, { ...options, method: 'DELETE' })
+	},
+	async upload<T = unknown>(endpoint: string, formData: FormData, options: RequestInit = {}): Promise<ApiResponse<T>> {
+		const token = localStorage.getItem('access_token')
+		const headers: Record<string, string> = {
+			...(options.headers as Record<string, string>),
+		}
+		if (token) {
+			headers['Authorization'] = `Bearer ${token}`
+		}
+		const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`
+		try {
+			const res = await fetch(url, {
+				...options,
+				method: 'POST',
+				headers,
+				body: formData,
+			})
+			return (await res.json()) as ApiResponse<T>
+		} catch (error) {
+			return {
+				success: false,
+				error: {
+					code: 'UPLOAD_ERROR',
+					message: error instanceof Error ? error.message : 'Upload failed',
+				},
+			}
+		}
 	},
 }
 

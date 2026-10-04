@@ -48,9 +48,11 @@ def app() -> Generator[Flask, None, None]:
 @pytest.fixture(autouse=True)
 def init_and_clean_db() -> Generator[None, None, None]:
 	"""Clean and recreate database tables before and after each test."""
+	db_session.remove()
 	Base.metadata.drop_all(bind=test_engine)
 	Base.metadata.create_all(bind=test_engine)
 	yield
+	db_session.remove()
 	Base.metadata.drop_all(bind=test_engine)
 
 

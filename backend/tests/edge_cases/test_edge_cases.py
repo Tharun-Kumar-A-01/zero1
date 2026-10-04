@@ -83,7 +83,7 @@ def test_oversized_code_rejection(
 ) -> None:
 	huge_code: str = "x = 1\n" * 20000  # > 65KB
 	res = client.post(
-		"/api/v1/student/daily/code-submit",
+		"/api/student/daily/code-submit",
 		headers=student_auth_headers,
 		json={
 			"assignment_id": 999999,

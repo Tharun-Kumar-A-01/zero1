@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from datetime import date, timedelta
 
 from sqlalchemy import func, select
@@ -9,6 +10,8 @@ from app.config import Config
 from app.models.assignment import DailyAssignment
 from app.models.enums import DailyCodingStatus, DailyMCQStatus, PointsReason
 from app.models.gamification import PointsLedger, Streak
+
+_sqlite_mutex: threading.Lock = threading.Lock()
 
 
 def get_student_total_points(session: Session, student_id: int) -> int:
@@ -30,6 +33,19 @@ def evaluate_daily_streak_and_points(
 	Deterministically calculate streaks and points using pessimistic locking.
 	Returns: (current_streak: int, points_awarded: int, is_solved_today: bool)
 	"""
+	is_sqlite: bool = getattr(session.get_bind().dialect, "name", "") == "sqlite"
+	if is_sqlite:
+		_sqlite_mutex.acquire()
+	try:
+		return _evaluate_daily_streak_and_points_impl(session, student_id, assignment_date)
+	finally:
+		if is_sqlite:
+			_sqlite_mutex.release()
+
+
+def _evaluate_daily_streak_and_points_impl(
+	session: Session, student_id: int, assignment_date: date
+) -> tuple[int, int, bool]:
 	# 1. Acquire exclusive row-level lock on the student's streak record
 	stmt_streak = select(Streak).where(Streak.student_id == student_id).with_for_update()
 	streak_record: Streak | None = session.scalars(stmt_streak).first()

@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine
     container_name: zero1-prod-postgres
     restart: unless-stopped
     environment:
@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
-      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro,z
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d zero1_db"]
       interval: 5s
@@ -19,7 +19,7 @@ services:
       retries: 5
 
   valkey:
-    image: valkey/valkey:7.2-alpine
+    image: docker.io/valkey/valkey:7.2-alpine
     container_name: zero1-prod-valkey
     restart: unless-stopped
     command: valkey-server --save "" --appendonly no
@@ -34,7 +34,7 @@ services:
       retries: 5
 
   judge0-server:
-    image: judge0/judge0:1.13.1
+    image: docker.io/judge0/judge0:1.13.1
     container_name: zero1-prod-judge0-server
     restart: unless-stopped
     ports:
@@ -55,7 +55,7 @@ services:
         condition: service_healthy
 
   judge0-workers:
-    image: judge0/judge0:1.13.1
+    image: docker.io/judge0/judge0:1.13.1
     container_name: zero1-prod-judge0-workers
     restart: unless-stopped
     command: ["./scripts/workers"]
@@ -87,6 +87,8 @@ services:
       CELERY_RESULT_BACKEND: valkey://valkey:6379/0
       RATE_LIMIT_STORAGE_URL: valkey://valkey:6379/1
       JUDGE0_URL: http://judge0-server:2358
+    volumes:
+      - ./backend/app:/app/app:z
     depends_on:
       postgres:
         condition: service_healthy

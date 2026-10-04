@@ -22,24 +22,29 @@ from app.models.enums import DifficultyLevel, QuestionSetStatus, TestCaseSource
 
 if TYPE_CHECKING:
 	from app.models.mentor import MentorAssignment
+	from app.models.user import User
 
 
 class QuestionSet(Base):
 	__tablename__ = "question_sets"
 
 	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-	mentor_assignment_id: Mapped[int] = mapped_column(
-		ForeignKey("mentor_assignments.id"), nullable=False, index=True
+	mentor_assignment_id: Mapped[int | None] = mapped_column(
+		ForeignKey("mentor_assignments.id"), nullable=True, index=True
 	)
-	week_start_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+	mentor_id: Mapped[int | None] = mapped_column(
+		ForeignKey("users.id"), nullable=True, index=True
+	)
+	week_start_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
 	status: Mapped[QuestionSetStatus] = mapped_column(
 		SQLEnum(QuestionSetStatus), default=QuestionSetStatus.DRAFT, nullable=False, index=True
 	)
 
 	# Relationships
-	assignment: Mapped[MentorAssignment] = relationship(
+	assignment: Mapped[MentorAssignment | None] = relationship(
 		"MentorAssignment", back_populates="question_set"
 	)
+	mentor: Mapped[User | None] = relationship("User", foreign_keys=[mentor_id])
 	mcq_questions: Mapped[list[MCQQuestion]] = relationship(
 		"MCQQuestion", back_populates="question_set", cascade="all, delete-orphan"
 	)
@@ -50,8 +55,9 @@ class QuestionSet(Base):
 	def to_dict(self) -> dict[str, Any]:
 		return {
 			"id": self.id,
+			"mentor_id": self.mentor_id,
 			"mentor_assignment_id": self.mentor_assignment_id,
-			"week_start_date": self.week_start_date.isoformat(),
+			"week_start_date": self.week_start_date.isoformat() if self.week_start_date else None,
 			"status": self.status.value,
 			"mcq_count": len(self.mcq_questions) if self.mcq_questions else 0,
 			"coding_count": len(self.coding_questions) if self.coding_questions else 0,
@@ -110,11 +116,19 @@ class CodingQuestion(Base):
 		SQLEnum(DifficultyLevel), default=DifficultyLevel.MEDIUM, nullable=False
 	)
 	allowed_languages: Mapped[list[str]] = mapped_column(
-		JSON, default=lambda: ["python", "cpp", "java"], nullable=False
+		JSON, default=lambda: ["python", "cpp", "java", "c"], nullable=False
 	)
 	time_limit_ms: Mapped[int] = mapped_column(Integer, default=2000, nullable=False)
 	memory_limit_kb: Mapped[int] = mapped_column(Integer, default=128000, nullable=False)
 	forbidden_constructs: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+	function_name: Mapped[str] = mapped_column(String(100), default="solve", nullable=False)
+	parameter_definitions: Mapped[list[dict[str, Any]]] = mapped_column(
+		JSON, default=list, nullable=False
+	)
+	return_type: Mapped[str] = mapped_column(String(50), default="int", nullable=False)
+	starter_templates: Mapped[dict[str, str]] = mapped_column(
+		JSON, default=dict, nullable=False
+	)
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
 	)
@@ -123,14 +137,33 @@ class CodingQuestion(Base):
 	question_set: Mapped[QuestionSet] = relationship(
 		"QuestionSet", back_populates="coding_questions"
 	)
-	test_cases: Mapped[list[CodingTestCase]] = relationship(
+	sample_test_cases: Mapped[list[CodingSampleTestCase]] = relationship(
+		"CodingSampleTestCase",
+		back_populates="coding_question",
+		cascade="all, delete-orphan",
+		order_by="CodingSampleTestCase.id",
+	)
+	hidden_test_cases: Mapped[list[CodingHiddenTestCase]] = relationship(
+		"CodingHiddenTestCase",
+		back_populates="coding_question",
+		cascade="all, delete-orphan",
+		order_by="CodingHiddenTestCase.id",
+	)
+	legacy_test_cases: Mapped[list[CodingTestCase]] = relationship(
 		"CodingTestCase", back_populates="coding_question", cascade="all, delete-orphan"
 	)
 
+	@property
+	def test_cases(self) -> list[Any]:
+		if self.sample_test_cases or self.hidden_test_cases:
+			return list(self.sample_test_cases) + list(self.hidden_test_cases)
+		return list(self.legacy_test_cases)
+
 	def to_dict(self, include_hidden_tests: bool = False) -> dict[str, Any]:
-		sample_tests: list[dict[str, Any]] = [
-			tc.to_dict() for tc in self.test_cases if tc.is_sample
-		]
+		samples = [tc.to_dict() for tc in self.sample_test_cases]
+		if not samples and self.legacy_test_cases:
+			samples = [tc.to_dict() for tc in self.legacy_test_cases if tc.is_sample]
+
 		data: dict[str, Any] = {
 			"id": self.id,
 			"question_set_id": self.question_set_id,
@@ -141,12 +174,76 @@ class CodingQuestion(Base):
 			"allowed_languages": self.allowed_languages,
 			"time_limit_ms": self.time_limit_ms,
 			"memory_limit_kb": self.memory_limit_kb,
-			"sample_test_cases": sample_tests,
+			"function_name": self.function_name,
+			"parameter_definitions": self.parameter_definitions,
+			"return_type": self.return_type,
+			"starter_templates": self.starter_templates,
+			"sample_test_cases": samples,
 			"created_at": self.created_at.isoformat(),
 		}
 		if include_hidden_tests:
-			data["all_test_cases"] = [tc.to_dict() for tc in self.test_cases]
+			hiddens = [tc.to_dict() for tc in self.hidden_test_cases]
+			if not hiddens and self.legacy_test_cases:
+				hiddens = [tc.to_dict() for tc in self.legacy_test_cases if not tc.is_sample]
+			data["hidden_test_cases"] = hiddens
+			data["all_test_cases"] = samples + hiddens
 		return data
+
+
+class CodingSampleTestCase(Base):
+	__tablename__ = "coding_sample_test_cases"
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	coding_question_id: Mapped[int] = mapped_column(
+		ForeignKey("coding_questions.id"), nullable=False, index=True
+	)
+	input_data: Mapped[str] = mapped_column(Text, nullable=False)
+	expected_output: Mapped[str] = mapped_column(Text, nullable=False)
+	weight: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+
+	# Relationships
+	coding_question: Mapped[CodingQuestion] = relationship(
+		"CodingQuestion", back_populates="sample_test_cases"
+	)
+
+	def to_dict(self) -> dict[str, Any]:
+		return {
+			"id": self.id,
+			"input_data": self.input_data,
+			"expected_output": self.expected_output,
+			"is_sample": True,
+			"is_stress_case": False,
+			"source": "mentor_manual",
+			"weight": self.weight,
+		}
+
+
+class CodingHiddenTestCase(Base):
+	__tablename__ = "coding_hidden_test_cases"
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	coding_question_id: Mapped[int] = mapped_column(
+		ForeignKey("coding_questions.id"), nullable=False, index=True
+	)
+	input_data: Mapped[str] = mapped_column(Text, nullable=False)
+	expected_output: Mapped[str] = mapped_column(Text, nullable=False)
+	weight: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+
+	# Relationships
+	coding_question: Mapped[CodingQuestion] = relationship(
+		"CodingQuestion", back_populates="hidden_test_cases"
+	)
+
+	def to_dict(self) -> dict[str, Any]:
+		return {
+			"id": self.id,
+			"input_data": self.input_data,
+			"expected_output": self.expected_output,
+			"is_sample": False,
+			"is_stress_case": False,
+			"source": "mentor_manual",
+			"weight": self.weight,
+		}
 
 
 class CodingTestCase(Base):
@@ -167,7 +264,7 @@ class CodingTestCase(Base):
 
 	# Relationships
 	coding_question: Mapped[CodingQuestion] = relationship(
-		"CodingQuestion", back_populates="test_cases"
+		"CodingQuestion", back_populates="legacy_test_cases"
 	)
 
 	def to_dict(self) -> dict[str, Any]:

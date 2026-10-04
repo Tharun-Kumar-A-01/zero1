@@ -9,7 +9,7 @@ from app.api.utils import api_success
 from app.database import get_db_session
 from app.services.rate_limiter import valkey_client
 
-health_bp: Blueprint = Blueprint("health", __name__, url_prefix="/api/v1")
+health_bp: Blueprint = Blueprint("health", __name__, url_prefix="/api")
 
 
 @health_bp.route("/health", methods=["GET"])

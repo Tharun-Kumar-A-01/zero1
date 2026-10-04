@@ -46,6 +46,14 @@ class DailyAssignment(Base):
 	coding_status: Mapped[DailyCodingStatus] = mapped_column(
 		SQLEnum(DailyCodingStatus), default=DailyCodingStatus.PENDING, nullable=False, index=True
 	)
+	coding_started_at: Mapped[datetime | None] = mapped_column(
+		DateTime(timezone=True), nullable=True
+	)
+	coding_completed_at: Mapped[datetime | None] = mapped_column(
+		DateTime(timezone=True), nullable=True
+	)
+	coding_time_spent_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+	submission_attempts_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
 	)
@@ -62,6 +70,16 @@ class DailyAssignment(Base):
 	)
 
 	def to_dict(self) -> dict[str, Any]:
+		now = datetime.now(UTC)
+		elapsed_seconds: int | None = None
+		if self.coding_started_at:
+			started_at = (
+				self.coding_started_at
+				if self.coding_started_at.tzinfo
+				else self.coding_started_at.replace(tzinfo=UTC)
+			)
+			elapsed_seconds = max(0, int((now - started_at).total_seconds()))
+
 		return {
 			"id": self.id,
 			"student_id": self.student_id,
@@ -72,6 +90,11 @@ class DailyAssignment(Base):
 			"coding_question": self.coding_question.to_dict() if self.coding_question else None,
 			"mcq_status": self.mcq_status.value,
 			"coding_status": self.coding_status.value,
+			"coding_started_at": self.coding_started_at.isoformat() if self.coding_started_at else None,
+			"coding_completed_at": self.coding_completed_at.isoformat() if self.coding_completed_at else None,
+			"coding_time_spent_seconds": self.coding_time_spent_seconds,
+			"elapsed_seconds": elapsed_seconds,
+			"submission_attempts_count": self.submission_attempts_count,
 			"created_at": self.created_at.isoformat(),
 		}
 

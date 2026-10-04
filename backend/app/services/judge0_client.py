@@ -19,6 +19,7 @@ LANGUAGE_ID_MAP: dict[str, int] = {
 	"cpp": 54,  # C++ (GCC 9.2.0)
 	"c++": 54,
 	"java": 62,  # Java (OpenJDK 13.0.1)
+	"c": 50,  # C (GCC 9.2.0)
 }
 
 
@@ -167,11 +168,86 @@ class Judge0Client:
 				)
 
 		except Exception as exc:
-			logger.error("Failed to connect to Judge0 at %s: %s", self.base_url, str(exc))
+			logger.warning("Failed to connect to Judge0 at %s: %s. Checking fallback runner.", self.base_url, str(exc))
+			if normalized_lang in ("python", "python3", "py"):
+				return self._execute_python_local(source_code, stdin, expected_output, cpu_time_limit)
+
 			return Judge0ExecutionResult(
 				status=ExecutionStatus.ERROR,
 				stdout=None,
-				stderr=f"Failed to communicate with Judge0 execution sandbox: {exc}",
+				stderr=f"Judge0 execution sandbox unreachable at {self.base_url}: {exc}. Please verify Docker container 'judge0-server' is running.",
+				compile_output=None,
+				time_ms=None,
+				memory_kb=None,
+				token=None,
+			)
+
+	def _execute_python_local(
+		self,
+		source_code: str,
+		stdin: str = "",
+		expected_output: str | None = None,
+		cpu_time_limit: float = 2.0,
+	) -> Judge0ExecutionResult:
+		"""Local subprocess runner for Python code when Judge0 sandbox is not running."""
+		import subprocess
+		import sys
+
+		start_time: float = time.time()
+		try:
+			proc = subprocess.run(
+				[sys.executable, "-c", source_code],
+				input=stdin,
+				capture_output=True,
+				text=True,
+				timeout=cpu_time_limit,
+			)
+			elapsed_ms: int = int((time.time() - start_time) * 1000)
+			stdout_str: str = proc.stdout or ""
+			stderr_str: str = proc.stderr or ""
+
+			if proc.returncode != 0:
+				is_syntax: bool = "SyntaxError" in stderr_str
+				return Judge0ExecutionResult(
+					status=ExecutionStatus.COMPILATION_ERROR if is_syntax else ExecutionStatus.FAILED,
+					stdout=stdout_str,
+					stderr=stderr_str,
+					compile_output=stderr_str if is_syntax else None,
+					time_ms=elapsed_ms,
+					memory_kb=None,
+					token=None,
+				)
+
+			passed: bool = True
+			if expected_output is not None:
+				norm_actual: str = "\n".join(line.rstrip() for line in stdout_str.strip().splitlines())
+				norm_expected: str = "\n".join(line.rstrip() for line in expected_output.strip().splitlines())
+				passed = (norm_actual == norm_expected)
+
+			return Judge0ExecutionResult(
+				status=ExecutionStatus.PASSED if passed else ExecutionStatus.FAILED,
+				stdout=stdout_str,
+				stderr=stderr_str if (not passed and stderr_str) else None,
+				compile_output=None,
+				time_ms=elapsed_ms,
+				memory_kb=None,
+				token=None,
+			)
+		except subprocess.TimeoutExpired:
+			return Judge0ExecutionResult(
+				status=ExecutionStatus.TIMEOUT,
+				stdout=None,
+				stderr=f"Time Limit Exceeded: Execution took longer than {cpu_time_limit:.1f} seconds.",
+				compile_output=None,
+				time_ms=int(cpu_time_limit * 1000),
+				memory_kb=None,
+				token=None,
+			)
+		except Exception as sub_exc:
+			return Judge0ExecutionResult(
+				status=ExecutionStatus.ERROR,
+				stdout=None,
+				stderr=f"Local execution error: {sub_exc}",
 				compile_output=None,
 				time_ms=None,
 				memory_kb=None,
@@ -179,7 +255,9 @@ class Judge0Client:
 			)
 
 	def _map_judge0_response(self, data: dict[str, Any], token: str) -> Judge0ExecutionResult:
-		status_id: int = data.get("status", {}).get("id", 0)
+		status_info: dict[str, Any] = data.get("status", {})
+		status_id: int = status_info.get("id", 0)
+		status_desc: str = status_info.get("description", "")
 		stdout: str | None = data.get("stdout")
 		stderr: str | None = data.get("stderr")
 		compile_output: str | None = data.get("compile_output")
@@ -199,13 +277,16 @@ class Judge0Client:
 		elif status_id in (7, 8, 9, 10, 11, 12):  # Runtime Error or Memory Limit
 			if (
 				"memory" in str(stderr or "").lower()
-				or "memory" in str(data.get("status", {}).get("description", "")).lower()
+				or "memory" in status_desc.lower()
 			):
 				exec_status = ExecutionStatus.MEMORY_EXCEEDED
 			else:
 				exec_status = ExecutionStatus.FAILED
 		else:
 			exec_status = ExecutionStatus.ERROR
+
+		if not stderr and exec_status not in (ExecutionStatus.PASSED, ExecutionStatus.FAILED):
+			stderr = status_desc or f"Execution stopped with status: {exec_status.value}"
 
 		return Judge0ExecutionResult(
 			status=exec_status,
