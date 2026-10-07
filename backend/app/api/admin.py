@@ -378,13 +378,11 @@ def delete_rotation(rotation_id: int) -> tuple[Response, int]:
 		if not assignment:
 			return api_error("NOT_FOUND", "Rotation not found.", status_code=404)
 
-		# If draft question set exists, preserve it for the mentor as an unassigned draft workspace
+		# If question set is associated, unlink it from this rotation so questions are preserved in the pool
 		if assignment.question_set:
+			assignment.question_set.mentor_assignment_id = None
 			if assignment.question_set.status == QuestionSetStatus.DRAFT:
-				assignment.question_set.mentor_assignment_id = None
 				assignment.question_set.week_start_date = None
-			else:
-				session.delete(assignment.question_set)
 
 		session.delete(assignment)
 		return api_success({"id": rotation_id}, message="Rotation deleted.")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import logging
 import time
 from typing import Any
@@ -21,6 +22,21 @@ LANGUAGE_ID_MAP: dict[str, int] = {
 	"java": 62,  # Java (OpenJDK 13.0.1)
 	"c": 50,  # C (GCC 9.2.0)
 }
+
+
+def _b64encode_str(val: str | None) -> str | None:
+	if val is None:
+		return None
+	return base64.b64encode(val.encode("utf-8")).decode("utf-8")
+
+
+def _b64decode_str(val: str | None) -> str | None:
+	if not val:
+		return None
+	try:
+		return base64.b64decode(val.encode("utf-8")).decode("utf-8", errors="replace")
+	except Exception:
+		return val
 
 
 class Judge0ExecutionResult:
@@ -55,7 +71,7 @@ class Judge0ExecutionResult:
 
 
 class Judge0Client:
-	"""Client wrapper for Judge0 code execution engine."""
+	"""Client wrapper for Judge0 code execution engine running in isolated container."""
 
 	def __init__(self) -> None:
 		self.base_url: str = Config.JUDGE0_URL
@@ -81,8 +97,8 @@ class Judge0Client:
 		memory_limit_kb: int = 128000,
 	) -> Judge0ExecutionResult:
 		"""
-		Submit code to Judge0 sandbox, poll until completion or timeout,
-		and return standard ExecutionResult.
+		Submits code strictly to Judge0 sandbox container, polls until completion or timeout,
+		and returns standard ExecutionResult. Zero local fallbacks.
 		"""
 		normalized_lang: str = language.strip().lower()
 		language_id: int | None = LANGUAGE_ID_MAP.get(normalized_lang)
@@ -98,24 +114,28 @@ class Judge0Client:
 			)
 
 		payload: dict[str, Any] = {
-			"source_code": source_code,
+			"source_code": _b64encode_str(source_code),
 			"language_id": language_id,
-			"stdin": stdin,
-			"expected_output": expected_output,
+			"stdin": _b64encode_str(stdin),
+			"expected_output": _b64encode_str(expected_output),
 			"cpu_time_limit": cpu_time_limit,
 			"wall_time_limit": cpu_time_limit * 2.0,
 			"memory_limit": memory_limit_kb,
-			"max_processes_and_or_threads": 10,
+			"max_processes_and_or_threads": 20,
 			"enable_network": False,
+			# Enforcing per-process/thread limits bypasses the cgroup v1 isolate requirement
+			# allowing Judge0's Linux namespace sandbox to run cleanly on modern cgroup v2 hosts
+			"enable_per_process_and_thread_time_limit": True,
+			"enable_per_process_and_thread_memory_limit": True,
 		}
 
 		headers: dict[str, str] = self._get_headers()
 
 		try:
 			with httpx.Client(timeout=10.0) as client:
-				# 1. Post submission (async / wait=false)
+				# 1. Post submission (async / wait=false, base64 encoded)
 				post_res: httpx.Response = client.post(
-					f"{self.base_url}/submissions?base64_encoded=false&wait=false",
+					f"{self.base_url}/submissions?base64_encoded=true&wait=false",
 					headers=headers,
 					json=payload,
 				)
@@ -126,7 +146,7 @@ class Judge0Client:
 					return Judge0ExecutionResult(
 						status=ExecutionStatus.ERROR,
 						stdout=None,
-						stderr=f"Judge0 error: HTTP {post_res.status_code}",
+						stderr=f"Judge0 error: HTTP {post_res.status_code} - {post_res.text}",
 						compile_output=None,
 						time_ms=None,
 						memory_kb=None,
@@ -140,7 +160,7 @@ class Judge0Client:
 				start_time: float = time.time()
 				while (time.time() - start_time) < self.poll_timeout:
 					get_res: httpx.Response = client.get(
-						f"{self.base_url}/submissions/{token}?base64_encoded=false",
+						f"{self.base_url}/submissions/{token}?base64_encoded=true",
 						headers=headers,
 					)
 					if get_res.status_code == 200:
@@ -168,86 +188,11 @@ class Judge0Client:
 				)
 
 		except Exception as exc:
-			logger.warning("Failed to connect to Judge0 at %s: %s. Checking fallback runner.", self.base_url, str(exc))
-			if normalized_lang in ("python", "python3", "py"):
-				return self._execute_python_local(source_code, stdin, expected_output, cpu_time_limit)
-
+			logger.error("Failed to execute code on Judge0 at %s: %s", self.base_url, str(exc))
 			return Judge0ExecutionResult(
 				status=ExecutionStatus.ERROR,
 				stdout=None,
-				stderr=f"Judge0 execution sandbox unreachable at {self.base_url}: {exc}. Please verify Docker container 'judge0-server' is running.",
-				compile_output=None,
-				time_ms=None,
-				memory_kb=None,
-				token=None,
-			)
-
-	def _execute_python_local(
-		self,
-		source_code: str,
-		stdin: str = "",
-		expected_output: str | None = None,
-		cpu_time_limit: float = 2.0,
-	) -> Judge0ExecutionResult:
-		"""Local subprocess runner for Python code when Judge0 sandbox is not running."""
-		import subprocess
-		import sys
-
-		start_time: float = time.time()
-		try:
-			proc = subprocess.run(
-				[sys.executable, "-c", source_code],
-				input=stdin,
-				capture_output=True,
-				text=True,
-				timeout=cpu_time_limit,
-			)
-			elapsed_ms: int = int((time.time() - start_time) * 1000)
-			stdout_str: str = proc.stdout or ""
-			stderr_str: str = proc.stderr or ""
-
-			if proc.returncode != 0:
-				is_syntax: bool = "SyntaxError" in stderr_str
-				return Judge0ExecutionResult(
-					status=ExecutionStatus.COMPILATION_ERROR if is_syntax else ExecutionStatus.FAILED,
-					stdout=stdout_str,
-					stderr=stderr_str,
-					compile_output=stderr_str if is_syntax else None,
-					time_ms=elapsed_ms,
-					memory_kb=None,
-					token=None,
-				)
-
-			passed: bool = True
-			if expected_output is not None:
-				norm_actual: str = "\n".join(line.rstrip() for line in stdout_str.strip().splitlines())
-				norm_expected: str = "\n".join(line.rstrip() for line in expected_output.strip().splitlines())
-				passed = (norm_actual == norm_expected)
-
-			return Judge0ExecutionResult(
-				status=ExecutionStatus.PASSED if passed else ExecutionStatus.FAILED,
-				stdout=stdout_str,
-				stderr=stderr_str if (not passed and stderr_str) else None,
-				compile_output=None,
-				time_ms=elapsed_ms,
-				memory_kb=None,
-				token=None,
-			)
-		except subprocess.TimeoutExpired:
-			return Judge0ExecutionResult(
-				status=ExecutionStatus.TIMEOUT,
-				stdout=None,
-				stderr=f"Time Limit Exceeded: Execution took longer than {cpu_time_limit:.1f} seconds.",
-				compile_output=None,
-				time_ms=int(cpu_time_limit * 1000),
-				memory_kb=None,
-				token=None,
-			)
-		except Exception as sub_exc:
-			return Judge0ExecutionResult(
-				status=ExecutionStatus.ERROR,
-				stdout=None,
-				stderr=f"Local execution error: {sub_exc}",
+				stderr=f"Judge0 service unavailable: {exc}",
 				compile_output=None,
 				time_ms=None,
 				memory_kb=None,
@@ -258,9 +203,10 @@ class Judge0Client:
 		status_info: dict[str, Any] = data.get("status", {})
 		status_id: int = status_info.get("id", 0)
 		status_desc: str = status_info.get("description", "")
-		stdout: str | None = data.get("stdout")
-		stderr: str | None = data.get("stderr")
-		compile_output: str | None = data.get("compile_output")
+		stdout: str | None = _b64decode_str(data.get("stdout"))
+		stderr: str | None = _b64decode_str(data.get("stderr"))
+		compile_output: str | None = _b64decode_str(data.get("compile_output"))
+		message: str | None = _b64decode_str(data.get("message"))
 
 		time_val: str | float | None = data.get("time")
 		time_ms: int | None = int(float(time_val) * 1000) if time_val is not None else None
@@ -285,7 +231,9 @@ class Judge0Client:
 		else:
 			exec_status = ExecutionStatus.ERROR
 
-		if not stderr and exec_status not in (ExecutionStatus.PASSED, ExecutionStatus.FAILED):
+		if not stderr and message:
+			stderr = message
+		elif not stderr and exec_status not in (ExecutionStatus.PASSED, ExecutionStatus.FAILED):
 			stderr = status_desc or f"Execution stopped with status: {exec_status.value}"
 
 		return Judge0ExecutionResult(

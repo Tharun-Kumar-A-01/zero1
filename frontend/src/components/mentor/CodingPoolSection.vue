@@ -58,29 +58,6 @@ function formatConstraints(str?: string): string {
 		.replace(/&#39;/g, "'")
 }
 
-function getDefaultSampleCases(): Array<{ input: string; expected_output: string }> {
-	return [
-		{ input: '5\n1 2 3 4 5', expected_output: '15' },
-		{ input: '3\n-1 -2 -3', expected_output: '-6' },
-		{ input: '1\n42', expected_output: '42' },
-	]
-}
-
-function getDefaultHiddenCases(): Array<{ input: string; expected_output: string }> {
-	return [
-		{ input: '4\n0 0 0 0', expected_output: '0' },
-		{ input: '2\n100000 200000', expected_output: '300000' },
-		{ input: '1\n0', expected_output: '0' },
-		{ input: '3\n10 20 30', expected_output: '60' },
-		{ input: '2\n-5 5', expected_output: '0' },
-		{ input: '5\n-10 -20 -30 -40 -50', expected_output: '-150' },
-		{ input: '4\n100 200 300 400', expected_output: '1000' },
-		{ input: '1\n-100', expected_output: '-100' },
-		{ input: '2\n1 1', expected_output: '2' },
-		{ input: '6\n-2 4 -6 8 -10 12', expected_output: '6' },
-	]
-}
-
 function getTestCaseCount(codeQ: CodingQuestionItem): number {
 	const samples = codeQ.sample_test_cases?.length ?? 0
 	const hiddens = codeQ.hidden_test_cases?.length ?? 0
@@ -90,7 +67,13 @@ function getTestCaseCount(codeQ: CodingQuestionItem): number {
 	if (codeQ.all_test_cases && codeQ.all_test_cases.length > 0) {
 		return codeQ.all_test_cases.length
 	}
-	return 13
+	return 0
+}
+
+function isTestCaseComplete(codeQ: CodingQuestionItem): boolean {
+	const samples = codeQ.sample_test_cases?.length ?? 0
+	const hiddens = codeQ.hidden_test_cases?.length ?? 0
+	return samples >= 3 && hiddens >= 10
 }
 
 // Add Problem Dialog State
@@ -106,8 +89,12 @@ const newParameterDefs = ref<Array<{ name: string; type: string }>>([
 const newReturnType = ref<string>('int')
 const isGeneratingInlineAi = ref<boolean>(false)
 
-const newSampleCases = ref<Array<{ input: string; expected_output: string }>>(getDefaultSampleCases())
-const newHiddenCases = ref<Array<{ input: string; expected_output: string }>>(getDefaultHiddenCases())
+const newSampleCases = ref<Array<{ input: string; expected_output: string }>>([
+	{ input: '', expected_output: '' },
+	{ input: '', expected_output: '' },
+	{ input: '', expected_output: '' },
+])
+const newHiddenCases = ref<Array<{ input: string; expected_output: string }>>([])
 
 // Edit Problem Dialog State
 const showEditDialog = ref<boolean>(false)
@@ -121,6 +108,38 @@ const editParameterDefs = ref<Array<{ name: string; type: string }>>([])
 const editReturnType = ref<string>('int')
 const editSampleCases = ref<Array<{ input: string; expected_output: string }>>([])
 const editHiddenCases = ref<Array<{ input: string; expected_output: string }>>([])
+
+function addSampleCase(isEdit: boolean): void {
+	if (isEdit) {
+		editSampleCases.value.push({ input: '', expected_output: '' })
+	} else {
+		newSampleCases.value.push({ input: '', expected_output: '' })
+	}
+}
+
+function removeSampleCase(isEdit: boolean, index: number): void {
+	if (isEdit) {
+		editSampleCases.value.splice(index, 1)
+	} else {
+		newSampleCases.value.splice(index, 1)
+	}
+}
+
+function addHiddenCase(isEdit: boolean): void {
+	if (isEdit) {
+		editHiddenCases.value.push({ input: '', expected_output: '' })
+	} else {
+		newHiddenCases.value.push({ input: '', expected_output: '' })
+	}
+}
+
+function removeHiddenCase(isEdit: boolean, index: number): void {
+	if (isEdit) {
+		editHiddenCases.value.splice(index, 1)
+	} else {
+		newHiddenCases.value.splice(index, 1)
+	}
+}
 
 // Delete Dialog State
 const showDeleteDialog = ref<boolean>(false)
@@ -167,8 +186,12 @@ function resetAddForm(): void {
 	newFunctionName.value = 'solve'
 	newParameterDefs.value = [{ name: 'nums', type: 'int[]' }]
 	newReturnType.value = 'int'
-	newSampleCases.value = getDefaultSampleCases()
-	newHiddenCases.value = getDefaultHiddenCases()
+	newSampleCases.value = [
+		{ input: '', expected_output: '' },
+		{ input: '', expected_output: '' },
+		{ input: '', expected_output: '' },
+	]
+	newHiddenCases.value = []
 }
 
 function addParameterDef(isEdit: boolean): void {
@@ -197,18 +220,24 @@ function handleSaveAdd(): void {
 		return
 	}
 
-	for (let i = 0; i < newSampleCases.value.length; i++) {
-		const tc = newSampleCases.value[i]!
+	const validSamples = newSampleCases.value.filter(
+		(tc) => tc.input.trim() || tc.expected_output.trim()
+	)
+	for (let i = 0; i < validSamples.length; i++) {
+		const tc = validSamples[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Sample Case ${i + 1} input and expected output cannot be empty.` })
+			notify({ color: 'danger', message: `Sample Case ${i + 1} requires both input and expected output.` })
 			return
 		}
 	}
 
-	for (let i = 0; i < newHiddenCases.value.length; i++) {
-		const tc = newHiddenCases.value[i]!
+	const validHiddens = newHiddenCases.value.filter(
+		(tc) => tc.input.trim() || tc.expected_output.trim()
+	)
+	for (let i = 0; i < validHiddens.length; i++) {
+		const tc = validHiddens[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Hidden Case ${i + 1} input and expected output cannot be empty.` })
+			notify({ color: 'danger', message: `Hidden Case ${i + 1} requires both input and expected output.` })
 			return
 		}
 	}
@@ -228,11 +257,11 @@ function handleSaveAdd(): void {
 		parameter_definitions: newParameterDefs.value.filter((p) => p.name.trim()),
 		return_type: newReturnType.value.trim() || 'int',
 		starter_templates: templates,
-		sample_test_cases: newSampleCases.value.map((tc) => ({
+		sample_test_cases: validSamples.map((tc) => ({
 			input: tc.input.trim(),
 			expected_output: tc.expected_output.trim(),
 		})),
-		hidden_test_cases: newHiddenCases.value.map((tc) => ({
+		hidden_test_cases: validHiddens.map((tc) => ({
 			input: tc.input.trim(),
 			expected_output: tc.expected_output.trim(),
 		})),
@@ -264,8 +293,8 @@ function openEditDialog(codeQ: CodingQuestionItem): void {
 		expected_output: tc.expected_output,
 	}))
 
-	editSampleCases.value = samples.length > 0 ? samples : getDefaultSampleCases()
-	editHiddenCases.value = hiddens.length > 0 ? hiddens : getDefaultHiddenCases()
+	editSampleCases.value = samples
+	editHiddenCases.value = hiddens
 	showEditDialog.value = true
 }
 
@@ -275,18 +304,24 @@ function handleSaveEdit(): void {
 		return
 	}
 
-	for (let i = 0; i < editSampleCases.value.length; i++) {
-		const tc = editSampleCases.value[i]!
+	const validSamples = editSampleCases.value.filter(
+		(tc) => tc.input.trim() || tc.expected_output.trim()
+	)
+	for (let i = 0; i < validSamples.length; i++) {
+		const tc = validSamples[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Sample Case ${i + 1} input and expected output cannot be empty.` })
+			notify({ color: 'danger', message: `Sample Case ${i + 1} requires both input and expected output.` })
 			return
 		}
 	}
 
-	for (let i = 0; i < editHiddenCases.value.length; i++) {
-		const tc = editHiddenCases.value[i]!
+	const validHiddens = editHiddenCases.value.filter(
+		(tc) => tc.input.trim() || tc.expected_output.trim()
+	)
+	for (let i = 0; i < validHiddens.length; i++) {
+		const tc = validHiddens[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Hidden Case ${i + 1} input and expected output cannot be empty.` })
+			notify({ color: 'danger', message: `Hidden Case ${i + 1} requires both input and expected output.` })
 			return
 		}
 	}
@@ -306,11 +341,11 @@ function handleSaveEdit(): void {
 		parameter_definitions: editParameterDefs.value.filter((p) => p.name.trim()),
 		return_type: editReturnType.value.trim() || 'int',
 		starter_templates: templates,
-		sample_test_cases: editSampleCases.value.map((tc) => ({
+		sample_test_cases: validSamples.map((tc) => ({
 			input: tc.input.trim(),
 			expected_output: tc.expected_output.trim(),
 		})),
-		hidden_test_cases: editHiddenCases.value.map((tc) => ({
+		hidden_test_cases: validHiddens.map((tc) => ({
 			input: tc.input.trim(),
 			expected_output: tc.expected_output.trim(),
 		})),
@@ -357,8 +392,8 @@ async function handleGenerateInlineAiCases(target: 'add' | 'edit'): Promise<void
 			}
 		)
 		if (res.success && res.data) {
-			const samples = res.data.sample_test_cases || getDefaultSampleCases()
-			const hiddens = res.data.hidden_test_cases || getDefaultHiddenCases()
+			const samples = res.data.sample_test_cases || []
+			const hiddens = res.data.hidden_test_cases || []
 
 			if (target === 'add') {
 				newSampleCases.value = samples
@@ -369,7 +404,7 @@ async function handleGenerateInlineAiCases(target: 'add' | 'edit'): Promise<void
 			}
 			notify({
 				color: 'success',
-				message: `Synthesized ${samples.length} sample cases and ${hiddens.length} hidden test cases via AI.`,
+				message: `Generated ${samples.length} sample cases and ${hiddens.length} hidden test cases via AI.`,
 			})
 		} else {
 			notify({ color: 'danger', message: res.error?.message || 'Could not generate AI cases.' })
@@ -465,9 +500,22 @@ function handleCommitImport(): void {
 						</div>
 
 						<div class="card-action-bar">
-							<VaBadge color="success" :text="`${getTestCaseCount(codeQ)} Verified Test Cases`">
+							<VaBadge
+								v-if="isTestCaseComplete(codeQ)"
+								color="success"
+								:text="`${getTestCaseCount(codeQ)} Verified Test Cases`"
+							>
 								<template #prepend>
 									<VaIcon name="check_circle" size="small" />
+								</template>
+							</VaBadge>
+							<VaBadge
+								v-else
+								color="warning"
+								:text="`Incomplete Test Cases (${(codeQ.sample_test_cases?.length ?? 0)}/3 sample, ${(codeQ.hidden_test_cases?.length ?? 0)}/10 hidden)`"
+							>
+								<template #prepend>
+									<VaIcon name="warning" size="small" />
 								</template>
 							</VaBadge>
 							<VaButton
@@ -620,8 +668,18 @@ function handleCommitImport(): void {
 					<!-- SECTION 1: SAMPLE TEST CASES -->
 					<div class="testcase-group">
 						<div class="group-header">
-							<span class="group-title">Sample Test Cases</span>
-							<VaBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+							<div class="flex items-center gap-2">
+								<span class="group-title">Sample Test Cases</span>
+								<VaBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+							</div>
+							<VaButton
+								preset="secondary"
+								size="small"
+								icon="add"
+								@click="addSampleCase(false)"
+							>
+								Add Sample Case
+							</VaButton>
 						</div>
 						<div class="testcases-list">
 							<VaCard
@@ -633,6 +691,14 @@ function handleCommitImport(): void {
 								<VaCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag sample-tag">Sample Case {{ i + 1 }}</span>
+										<VaButton
+											preset="plain"
+											icon="delete"
+											color="danger"
+											size="small"
+											aria-label="Remove sample case"
+											@click="removeSampleCase(false, i)"
+										/>
 									</div>
 									<div class="tc-grid">
 										<VaTextarea
@@ -640,14 +706,12 @@ function handleCommitImport(): void {
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
-											required
 										/>
 										<VaTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
-											required
 										/>
 									</div>
 								</VaCardContent>
@@ -658,10 +722,20 @@ function handleCommitImport(): void {
 					<!-- SECTION 2: HIDDEN TEST CASES -->
 					<div class="testcase-group mt-3">
 						<div class="group-header">
-							<span class="group-title">Hidden Test Cases</span>
-							<VaBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+							<div class="flex items-center gap-2">
+								<span class="group-title">Hidden Test Cases</span>
+								<VaBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+							</div>
+							<VaButton
+								preset="secondary"
+								size="small"
+								icon="add"
+								@click="addHiddenCase(false)"
+							>
+								Add Hidden Case
+							</VaButton>
 						</div>
-						<div class="testcases-list">
+						<div v-if="newHiddenCases.length > 0" class="testcases-list">
 							<VaCard
 								v-for="(tc, i) in newHiddenCases"
 								:key="'new-hidden-' + i"
@@ -671,6 +745,14 @@ function handleCommitImport(): void {
 								<VaCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag hidden-tag">Hidden Case {{ i + 1 }}</span>
+										<VaButton
+											preset="plain"
+											icon="delete"
+											color="danger"
+											size="small"
+											aria-label="Remove hidden case"
+											@click="removeHiddenCase(false, i)"
+										/>
 									</div>
 									<div class="tc-grid">
 										<VaTextarea
@@ -678,18 +760,19 @@ function handleCommitImport(): void {
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
-											required
 										/>
 										<VaTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
-											required
 										/>
 									</div>
 								</VaCardContent>
 							</VaCard>
+						</div>
+						<div v-else class="text-xs text-gray-500 italic p-2">
+							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize via AI".
 						</div>
 					</div>
 				</div>
@@ -823,8 +906,18 @@ function handleCommitImport(): void {
 					<!-- SECTION 1: SAMPLE TEST CASES -->
 					<div class="testcase-group">
 						<div class="group-header">
-							<span class="group-title">Sample Test Cases</span>
-							<VaBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+							<div class="flex items-center gap-2">
+								<span class="group-title">Sample Test Cases</span>
+								<VaBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+							</div>
+							<VaButton
+								preset="secondary"
+								size="small"
+								icon="add"
+								@click="addSampleCase(true)"
+							>
+								Add Sample Case
+							</VaButton>
 						</div>
 						<div class="testcases-list">
 							<VaCard
@@ -836,6 +929,14 @@ function handleCommitImport(): void {
 								<VaCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag sample-tag">Sample Case {{ i + 1 }}</span>
+										<VaButton
+											preset="plain"
+											icon="delete"
+											color="danger"
+											size="small"
+											aria-label="Remove sample case"
+											@click="removeSampleCase(true, i)"
+										/>
 									</div>
 									<div class="tc-grid">
 										<VaTextarea
@@ -843,14 +944,12 @@ function handleCommitImport(): void {
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
-											required
 										/>
 										<VaTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
-											required
 										/>
 									</div>
 								</VaCardContent>
@@ -861,10 +960,20 @@ function handleCommitImport(): void {
 					<!-- SECTION 2: HIDDEN TEST CASES -->
 					<div class="testcase-group mt-3">
 						<div class="group-header">
-							<span class="group-title">Hidden Test Cases</span>
-							<VaBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+							<div class="flex items-center gap-2">
+								<span class="group-title">Hidden Test Cases</span>
+								<VaBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+							</div>
+							<VaButton
+								preset="secondary"
+								size="small"
+								icon="add"
+								@click="addHiddenCase(true)"
+							>
+								Add Hidden Case
+							</VaButton>
 						</div>
-						<div class="testcases-list">
+						<div v-if="editHiddenCases.length > 0" class="testcases-list">
 							<VaCard
 								v-for="(tc, i) in editHiddenCases"
 								:key="'edit-hidden-' + i"
@@ -874,6 +983,14 @@ function handleCommitImport(): void {
 								<VaCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag hidden-tag">Hidden Case {{ i + 1 }}</span>
+										<VaButton
+											preset="plain"
+											icon="delete"
+											color="danger"
+											size="small"
+											aria-label="Remove hidden case"
+											@click="removeHiddenCase(true, i)"
+										/>
 									</div>
 									<div class="tc-grid">
 										<VaTextarea
@@ -881,18 +998,19 @@ function handleCommitImport(): void {
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
-											required
 										/>
 										<VaTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
-											required
 										/>
 									</div>
 								</VaCardContent>
 							</VaCard>
+						</div>
+						<div v-else class="text-xs text-gray-500 italic p-2">
+							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize via AI".
 						</div>
 					</div>
 				</div>

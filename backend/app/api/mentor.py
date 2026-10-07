@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import os
+import time
 from datetime import datetime
 from typing import Any, cast
 
@@ -431,45 +432,27 @@ def add_coding_question() -> tuple[Response, int]:
 	constraints: str = str(data.get("constraints_text", "")).strip()
 	difficulty_str: str = str(data.get("difficulty", "medium")).lower()
 
-	# Require separated sample and hidden test cases in the JSON payload
-	raw_sample = data.get("sample_test_cases")
-	raw_hidden = data.get("hidden_test_cases")
+	# Optional test cases in the JSON payload (empty lists allowed in draft)
+	raw_sample = data.get("sample_test_cases", [])
+	raw_hidden = data.get("hidden_test_cases", [])
 	if not isinstance(raw_sample, list) or not isinstance(raw_hidden, list):
 		return api_error(
 			"INVALID_TEST_CASES",
-			"'sample_test_cases' and 'hidden_test_cases' must be provided as separate lists in the JSON payload.",
+			"'sample_test_cases' and 'hidden_test_cases' must be provided as lists.",
 		)
 
-	sample_cases = raw_sample
-	hidden_cases = raw_hidden
+	# Collect valid non-empty test cases; empty ones are ignored/omitted
+	sample_cases = [
+		tc for tc in raw_sample
+		if str(tc.get("input", tc.get("input_data", ""))).strip() and str(tc.get("expected_output", "")).strip()
+	]
+	hidden_cases = [
+		tc for tc in raw_hidden
+		if str(tc.get("input", tc.get("input_data", ""))).strip() and str(tc.get("expected_output", "")).strip()
+	]
 
 	if not title or not word_problem:
 		return api_error("MISSING_FIELDS", "'title' and 'word_problem_text' are required.")
-
-	if len(sample_cases) != 3 or len(hidden_cases) < 10:
-		return api_error(
-			"TEST_CASES_REQUIRED",
-			f"Exactly 3 sample cases and at least 10 hidden test cases are required (received {len(sample_cases)} sample, {len(hidden_cases)} hidden).",
-		)
-
-	# Validate no empty strings for input or output in any test case
-	for idx, tc in enumerate(sample_cases):
-		in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
-		exp_out = str(tc.get("expected_output", "")).strip()
-		if not in_data or not exp_out:
-			return api_error(
-				"EMPTY_TEST_CASE",
-				f"Sample test case #{idx + 1} input and expected output cannot be empty or whitespace.",
-			)
-
-	for idx, tc in enumerate(hidden_cases):
-		in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
-		exp_out = str(tc.get("expected_output", "")).strip()
-		if not in_data or not exp_out:
-			return api_error(
-				"EMPTY_TEST_CASE",
-				f"Hidden test case #{idx + 1} input and expected output cannot be empty or whitespace.",
-			)
 
 	safe_title: str = sanitize_text(title, max_length=255)
 	safe_problem: str = sanitize_text(word_problem, max_length=16384, allow_html=True)
@@ -576,37 +559,26 @@ def update_coding_question(coding_q_id: int) -> tuple[Response, int]:
 		if "starter_templates" in data and isinstance(data["starter_templates"], dict):
 			coding_q.starter_templates = data["starter_templates"]
 
-		# Replace test cases if provided as separated lists in JSON
+		# Replace test cases if provided
 		raw_sample = data.get("sample_test_cases")
 		raw_hidden = data.get("hidden_test_cases")
 
 		if raw_sample is not None or raw_hidden is not None:
-			if not isinstance(raw_sample, list) or not isinstance(raw_hidden, list):
+			if (raw_sample is not None and not isinstance(raw_sample, list)) or (
+				raw_hidden is not None and not isinstance(raw_hidden, list)
+			):
 				return api_error(
 					"INVALID_TEST_CASES",
-					"'sample_test_cases' and 'hidden_test_cases' must be provided as separate lists in the JSON payload.",
+					"'sample_test_cases' and 'hidden_test_cases' must be provided as lists.",
 				)
-			sample_cases = raw_sample
-			hidden_cases = raw_hidden
-
-			# Validate no empty strings for input or output
-			for idx, tc in enumerate(sample_cases):
-				in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
-				exp_out = str(tc.get("expected_output", "")).strip()
-				if not in_data or not exp_out:
-					return api_error(
-						"EMPTY_TEST_CASE",
-						f"Sample test case #{idx + 1} input and expected output cannot be empty or whitespace.",
-					)
-
-			for idx, tc in enumerate(hidden_cases):
-				in_data = str(tc.get("input", tc.get("input_data", ""))).strip()
-				exp_out = str(tc.get("expected_output", "")).strip()
-				if not in_data or not exp_out:
-					return api_error(
-						"EMPTY_TEST_CASE",
-						f"Hidden test case #{idx + 1} input and expected output cannot be empty or whitespace.",
-					)
+			sample_cases = [
+				tc for tc in (raw_sample or [])
+				if str(tc.get("input", tc.get("input_data", ""))).strip() and str(tc.get("expected_output", "")).strip()
+			]
+			hidden_cases = [
+				tc for tc in (raw_hidden or [])
+				if str(tc.get("input", tc.get("input_data", ""))).strip() and str(tc.get("expected_output", "")).strip()
+			]
 
 			# Remove old test cases from both tables and legacy
 			coding_q.sample_test_cases.clear()
@@ -703,34 +675,51 @@ def import_coding_sheet() -> tuple[Response, int]:
 	if not sample_grid:
 		return api_error("EMPTY_FILE", "Uploaded sheet is empty.")
 
-	# Extract coding problems via AI
+	# Extract coding problems from the spreadsheet
 	extracted_problems: list[Any] = []
-	try:
-		parse_res = ai_service.parse_coding_sheet(sample_grid[:35])
-		extracted_problems = list(parse_res.questions)
-	except Exception:
-		# Fallback heuristic: [Title, Description, Constraints, Difficulty, In1, Out1, In2, Out2...]
-		start_idx = 1 if any("title" in cell.lower() or "problem" in cell.lower() for cell in sample_grid[0]) else 0
-		for grid_row in sample_grid[start_idx:]:
-			if len(grid_row) >= 2 and grid_row[0].strip() and grid_row[1].strip():
-				title = grid_row[0].strip()
-				desc = grid_row[1].strip()
-				constraints = grid_row[2].strip() if len(grid_row) > 2 and grid_row[2].strip() else "1 <= N <= 10^5\nAll values within signed 32-bit integer limits."
-				diff_str = grid_row[3].strip().lower() if len(grid_row) > 3 else "medium"
-				tcs: list[TestCaseModel] = []
-				for c in range(4, len(grid_row) - 1, 2):
-					if grid_row[c].strip() and grid_row[c + 1].strip():
-						tcs.append(TestCaseModel(input_data=grid_row[c].strip(), expected_output=grid_row[c + 1].strip()))
-				extracted_problems.append(
-					type("ParsedCoding", (), {
-						"title": title,
-						"word_problem_text": desc,
-						"constraints_text": constraints,
-						"difficulty": diff_str,
-						"sample_test_cases": tcs[:3],
-						"hidden_test_cases": tcs[3:],
-					})()
-				)
+	header_row = [c.lower() for c in sample_grid[0]] if sample_grid else []
+	has_title_header = any("title" in h or "problem" in h for h in header_row)
+
+	# Direct column extraction when sheet has standard table structure
+	start_idx = 1 if has_title_header else 0
+	for grid_row in sample_grid[start_idx:]:
+		if len(grid_row) >= 2 and grid_row[0].strip() and grid_row[1].strip():
+			title = grid_row[0].strip()
+			desc = grid_row[1].strip()
+			constraints = grid_row[2].strip() if len(grid_row) > 2 and grid_row[2].strip() else "1 <= N <= 10^5\nAll values within signed 32-bit integer limits."
+			diff_str = grid_row[3].strip().lower() if len(grid_row) > 3 else "medium"
+
+			sample_tcs: list[TestCaseModel] = []
+			hidden_tcs: list[TestCaseModel] = []
+
+			# Extract test case pairs from columns
+			for c in range(4, len(grid_row) - 1, 2):
+				in_val = grid_row[c].strip()
+				out_val = grid_row[c + 1].strip()
+				if in_val or out_val:
+					col_header = header_row[c] if c < len(header_row) else ""
+					if "hidden" in col_header:
+						hidden_tcs.append(TestCaseModel(input_data=in_val, expected_output=out_val))
+					else:
+						sample_tcs.append(TestCaseModel(input_data=in_val, expected_output=out_val))
+
+			extracted_problems.append(
+				type("ParsedCoding", (), {
+					"title": title,
+					"word_problem_text": desc,
+					"constraints_text": constraints,
+					"difficulty": diff_str,
+					"sample_test_cases": sample_tcs,
+					"hidden_test_cases": hidden_tcs,
+				})()
+			)
+
+	if not extracted_problems:
+		try:
+			parse_res = ai_service.parse_coding_sheet(sample_grid[:35])
+			extracted_problems = list(parse_res.questions)
+		except Exception as exc:
+			logger.warning("AI parse_coding_sheet failed: %s", str(exc))
 
 	if not extracted_problems:
 		return api_error("NO_PROBLEMS_FOUND", "No valid coding challenges could be extracted from this spreadsheet.")
@@ -764,72 +753,69 @@ def import_coding_sheet() -> tuple[Response, int]:
 			session.flush()
 
 			sample_cases: list[dict[str, str]] = [
-				{"input": tc.input_data, "expected_output": tc.expected_output}
+				{"input_data": tc.input_data, "expected_output": tc.expected_output}
 				for tc in getattr(prob, "sample_test_cases", [])
+				if tc.input_data or tc.expected_output
 			]
 			hidden_cases: list[dict[str, str]] = [
-				{"input": tc.input_data, "expected_output": tc.expected_output}
+				{"input_data": tc.input_data, "expected_output": tc.expected_output}
 				for tc in getattr(prob, "hidden_test_cases", [])
+				if tc.input_data or tc.expected_output
 			]
 
-			default_samples = [
-				{"input": "5\n1 2 3 4 5", "expected_output": "15"},
-				{"input": "3\n-1 -2 -3", "expected_output": "-6"},
-				{"input": "1\n42", "expected_output": "42"},
-			]
-			for fb in default_samples:
-				if len(sample_cases) >= 3:
-					break
-				sample_cases.append(fb)
-
-			default_hiddens = [
-				{"input": "4\n0 0 0 0", "expected_output": "0"},
-				{"input": "2\n100000 200000", "expected_output": "300000"},
-				{"input": "1\n0", "expected_output": "0"},
-				{"input": "3\n10 20 30", "expected_output": "60"},
-				{"input": "2\n-5 5", "expected_output": "0"},
-				{"input": "5\n-10 -20 -30 -40 -50", "expected_output": "-150"},
-				{"input": "4\n100 200 300 400", "expected_output": "1000"},
-				{"input": "1\n-100", "expected_output": "-100"},
-				{"input": "2\n1 1", "expected_output": "2"},
-				{"input": "6\n-2 4 -6 8 -10 12", "expected_output": "6"},
-			]
-			if len(hidden_cases) < 10:
+			# If fewer than 3 samples or fewer than 10 hidden cases, use AI to generate the missing cases
+			if len(sample_cases) < 3 or len(hidden_cases) < 10:
 				try:
-					ai_res = ai_service.generate_stress_test_cases(
+					ai_res = ai_service.generate_full_test_suite(
 						title=safe_title,
 						problem_text=safe_prob,
 						constraints_text=safe_const,
+						existing_samples=sample_cases,
+						existing_hiddens=hidden_cases,
 					)
-					for ai_tc in ai_res.test_cases:
-						if len(hidden_cases) >= 10:
-							break
-						hidden_cases.append({"input": ai_tc.input_data, "expected_output": ai_tc.expected_output})
-				except Exception:
-					pass
+					ai_samples = [
+						{"input_data": tc.input_data.strip(), "expected_output": tc.expected_output.strip()}
+						for tc in ai_res.sample_test_cases
+						if tc.input_data.strip() and tc.expected_output.strip()
+					]
+					ai_hiddens = [
+						{"input_data": tc.input_data.strip(), "expected_output": tc.expected_output.strip()}
+						for tc in ai_res.hidden_test_cases
+						if tc.input_data.strip() and tc.expected_output.strip()
+					]
+					if ai_samples:
+						sample_cases = ai_samples
+					if ai_hiddens:
+						hidden_cases = ai_hiddens
+				except Exception as e:
+					logger.warning("AI test generation failed for '%s': %s", safe_title, str(e))
+					# Strictly NO fallback! If AI fails, missing test cases are left empty.
 
-			for fb in default_hiddens:
-				if len(hidden_cases) >= 10:
-					break
-				hidden_cases.append(fb)
+				time.sleep(1.0)
 
-			for tc in sample_cases[:3]:
-				coding_q.sample_test_cases.append(
-					CodingSampleTestCase(
-						coding_question_id=coding_q.id,
-						input_data=tc["input"].strip(),
-						expected_output=tc["expected_output"].strip(),
+			for tc in sample_cases:
+				in_d = tc.get("input_data", "").strip()
+				exp_o = tc.get("expected_output", "").strip()
+				if in_d and exp_o:
+					coding_q.sample_test_cases.append(
+						CodingSampleTestCase(
+							coding_question_id=coding_q.id,
+							input_data=in_d,
+							expected_output=exp_o,
+						)
 					)
-				)
 
-			for tc in hidden_cases[:10]:
-				coding_q.hidden_test_cases.append(
-					CodingHiddenTestCase(
-						coding_question_id=coding_q.id,
-						input_data=tc["input"].strip(),
-						expected_output=tc["expected_output"].strip(),
+			for tc in hidden_cases:
+				in_d = tc.get("input_data", "").strip()
+				exp_o = tc.get("expected_output", "").strip()
+				if in_d and exp_o:
+					coding_q.hidden_test_cases.append(
+						CodingHiddenTestCase(
+							coding_question_id=coding_q.id,
+							input_data=in_d,
+							expected_output=exp_o,
+						)
 					)
-				)
 
 			added_count += 1
 
@@ -837,7 +823,7 @@ def import_coding_sheet() -> tuple[Response, int]:
 		session.refresh(q_set)
 		return api_success(
 			serialize_question_set(q_set),
-			message=f"Successfully imported {added_count} coding challenges with 13 verified test cases each (3 sample, 10 hidden).",
+			message=f"Successfully imported {added_count} coding challenges into question pool.",
 		)
 
 
@@ -867,26 +853,26 @@ def generate_ai_stress_tests(coding_id: int | None = None) -> tuple[Response, in
 				problem = problem or coding_q.word_problem_text
 				constraints = constraints or coding_q.constraints_text
 
+		existing_samples: list[dict[str, str]] = []
+		existing_hiddens: list[dict[str, str]] = []
+
+		if coding_id:
+			coding_q = session.get(CodingQuestion, coding_id)
+			if coding_q:
+				title = title or coding_q.title
+				problem = problem or coding_q.word_problem_text
+				constraints = constraints or coding_q.constraints_text
+				existing_samples = [
+					{"input_data": s.input_data, "expected_output": s.expected_output}
+					for s in coding_q.sample_test_cases
+				]
+				existing_hiddens = [
+					{"input_data": h.input_data, "expected_output": h.expected_output}
+					for h in coding_q.hidden_test_cases
+				]
+
 		if not title or not problem:
 			return api_error("MISSING_FIELDS", "'title' and 'word_problem_text' are required.")
-
-		default_samples = [
-			{"input": "5\n1 2 3 4 5", "expected_output": "15"},
-			{"input": "3\n-1 -2 -3", "expected_output": "-6"},
-			{"input": "1\n42", "expected_output": "42"},
-		]
-		default_hiddens = [
-			{"input": "4\n0 0 0 0", "expected_output": "0"},
-			{"input": "2\n100000 200000", "expected_output": "300000"},
-			{"input": "1\n0", "expected_output": "0"},
-			{"input": "3\n10 20 30", "expected_output": "60"},
-			{"input": "2\n-5 5", "expected_output": "0"},
-			{"input": "5\n-10 -20 -30 -40 -50", "expected_output": "-150"},
-			{"input": "4\n100 200 300 400", "expected_output": "1000"},
-			{"input": "1\n-100", "expected_output": "-100"},
-			{"input": "2\n1 1", "expected_output": "2"},
-			{"input": "6\n-2 4 -6 8 -10 12", "expected_output": "6"},
-		]
 
 		try:
 			full_res = ai_service.generate_full_test_suite(
@@ -894,39 +880,32 @@ def generate_ai_stress_tests(coding_id: int | None = None) -> tuple[Response, in
 				problem_text=problem,
 				constraints_text=constraints,
 				reference_solution=data.get("reference_solution"),
+				existing_samples=existing_samples,
+				existing_hiddens=existing_hiddens,
 			)
 			sample_cases = [
-				{"input": tc.input_data, "expected_output": tc.expected_output}
+				{"input": tc.input_data.strip(), "expected_output": tc.expected_output.strip()}
 				for tc in full_res.sample_test_cases
+				if tc.input_data.strip() and tc.expected_output.strip()
 			]
 			hidden_cases = [
-				{"input": tc.input_data, "expected_output": tc.expected_output}
+				{"input": tc.input_data.strip(), "expected_output": tc.expected_output.strip()}
 				for tc in full_res.hidden_test_cases
+				if tc.input_data.strip() and tc.expected_output.strip()
 			]
 
-			for fb in default_samples:
-				if len(sample_cases) >= 3:
-					break
-				sample_cases.append(fb)
-
-			for fb in default_hiddens:
-				if len(hidden_cases) >= 10:
-					break
-				hidden_cases.append(fb)
-
 			return api_success(
 				{
-					"sample_test_cases": sample_cases[:3],
-					"hidden_test_cases": hidden_cases[:10],
+					"sample_test_cases": sample_cases,
+					"hidden_test_cases": hidden_cases,
 				}
 			)
-		except Exception:
-			# Resilient fallback with standard separated cases
-			return api_success(
-				{
-					"sample_test_cases": default_samples,
-					"hidden_test_cases": default_hiddens,
-				}
+		except Exception as e:
+			logger.warning("AI generate_full_test_suite failed: %s", str(e))
+			return api_error(
+				"AI_GENERATION_FAILED",
+				f"AI test case generation failed: {e}. Missing test cases left empty.",
+				status_code=500,
 			)
 
 
@@ -980,7 +959,7 @@ def append_test_cases(coding_id: int) -> tuple[Response, int]:
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
 def publish_question_set(question_set_id: int | None = None) -> tuple[Response, int]:
-	"""Publish question set after verifying pool size minimums."""
+	"""Publish question set after verifying pool size minimums and test case completeness."""
 	data: dict[str, Any] | None = request.get_json(silent=True)
 	target_id: int | None = question_set_id or (data.get("question_set_id") if data else None)
 
@@ -1011,6 +990,19 @@ def publish_question_set(question_set_id: int | None = None) -> tuple[Response, 
 			return api_error(
 				"INSUFFICIENT_CODING",
 				f"At least {Config.MIN_CODING_POOL_SIZE} coding questions are required to publish (current: {len(q_set.coding_questions)}).",
+			)
+
+		# Verify all coding questions have full verified test cases (3 sample, 10 hidden)
+		incomplete_questions: list[str] = [
+			f"'{q.title}' ({len(q.sample_test_cases)}/3 sample, {len(q.hidden_test_cases)}/10 hidden)"
+			for q in q_set.coding_questions
+			if len(q.sample_test_cases) < 3 or len(q.hidden_test_cases) < 10
+		]
+		if incomplete_questions:
+			return api_error(
+				"INCOMPLETE_TEST_CASES",
+				f"Cannot publish: All coding questions require at least 3 sample test cases and 10 hidden test cases. Incomplete questions: {', '.join(incomplete_questions)}.",
+				status_code=400,
 			)
 
 		q_set.status = QuestionSetStatus.PUBLISHED

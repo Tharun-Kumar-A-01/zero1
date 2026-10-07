@@ -34,10 +34,10 @@ class DailyAssignment(Base):
 	assignment_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
 
 	mcq_question_id: Mapped[int | None] = mapped_column(
-		ForeignKey("mcq_questions.id"), nullable=True
+		ForeignKey("mcq_questions.id", ondelete="SET NULL"), nullable=True
 	)
 	coding_question_id: Mapped[int | None] = mapped_column(
-		ForeignKey("coding_questions.id"), nullable=True
+		ForeignKey("coding_questions.id", ondelete="SET NULL"), nullable=True
 	)
 
 	mcq_status: Mapped[DailyMCQStatus] = mapped_column(

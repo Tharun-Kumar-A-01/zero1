@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any, Literal, TypeVar
 
 import httpx
@@ -32,17 +33,16 @@ class ExcelMappingResult(BaseModel):
 
 
 class TestCaseModel(BaseModel):
-	input_data: str = Field(description="Standard input string. Must never be empty or whitespace.")
-	expected_output: str = Field(description="Expected standard output string. Must never be empty or whitespace.")
+	input_data: str = Field(description="Standard input string.")
+	expected_output: str = Field(description="Expected standard output string.")
 	is_stress_case: bool = True
 
-	@field_validator("input_data", "expected_output")
+	@field_validator("input_data", "expected_output", mode="before")
 	@classmethod
-	def validate_non_empty(cls, value: str) -> str:
-		trimmed = str(value).strip()
-		if not trimmed:
-			raise ValueError("Test case input and output strings must never be empty or whitespace.")
-		return trimmed
+	def validate_string(cls, value: Any) -> str:
+		if value is None:
+			return ""
+		return str(value)
 
 
 class StressTestCaseResult(BaseModel):
@@ -124,25 +124,40 @@ class AIClientService:
 			"temperature": 0.1,
 		}
 
-		try:
-			with httpx.Client(timeout=45.0) as client:
-				response: httpx.Response = client.post(
-					f"{self.remote_base_url}/chat/completions",
-					headers=headers,
-					json=payload,
-				)
-				if response.status_code == 200:
-					data: dict[str, Any] = response.json()
-					content: str = data["choices"][0]["message"]["content"]
-					return content
-				else:
-					logger.warning(
-						"Remote LLM failed with status %d: %s", response.status_code, response.text
+		max_attempts: int = 5
+		for attempt in range(max_attempts):
+			try:
+				with httpx.Client(timeout=45.0) as client:
+					response: httpx.Response = client.post(
+						f"{self.remote_base_url}/chat/completions",
+						headers=headers,
+						json=payload,
 					)
-					return None
-		except Exception as e:
-			logger.warning("Exception contacting remote LLM: %s. Falling back to Ollama.", str(e))
-			return None
+					if response.status_code == 200:
+						data: dict[str, Any] = response.json()
+						content: str = data["choices"][0]["message"]["content"]
+						return content
+					elif response.status_code == 429:
+						wait_time = 2.0 * (attempt + 1)
+						logger.warning(
+							"Remote LLM returned 429 (rate limited) on attempt %d/%d. Waiting %.1fs before retry...",
+							attempt + 1,
+							max_attempts,
+							wait_time,
+						)
+						time.sleep(wait_time)
+						continue
+					else:
+						logger.warning(
+							"Remote LLM failed with status %d: %s", response.status_code, response.text
+						)
+						return None
+			except Exception as e:
+				logger.warning("Exception contacting remote LLM on attempt %d: %s", attempt + 1, str(e))
+				time.sleep(1.0)
+
+		logger.warning("All %d remote LLM attempts exhausted. Falling back to Ollama.", max_attempts)
+		return None
 
 	def _call_ollama(self, system_prompt: str, user_prompt: str) -> str | None:
 		payload: dict[str, Any] = {
@@ -273,23 +288,37 @@ class AIClientService:
 		problem_text: str,
 		constraints_text: str,
 		reference_solution: str | None = None,
+		existing_samples: list[dict[str, str]] | None = None,
+		existing_hiddens: list[dict[str, str]] | None = None,
 	) -> FullTestSuiteResult:
-		"""Generate exactly 3 sample test cases and 10 normal hidden test cases separated in JSON."""
+		"""Generate or complete a full test suite: exactly 3 sample cases and exactly 10 hidden test cases."""
+		known_samples = existing_samples or []
+		known_hiddens = existing_hiddens or []
+
 		system_prompt = (
-			"You are an automated competitive programming test-case generator. "
-			"Generate a complete test suite for the coding problem with two separate lists:\n"
+			"You are an automated competitive programming test-case generator.\n"
+			"Generate a complete, verified test suite for the coding problem with two separate lists:\n"
 			"1. sample_test_cases: Exactly 3 clear, representative sample test cases for students to see in the problem description.\n"
 			"2. hidden_test_cases: Exactly 10 standard validation hidden test cases adhering to problem constraints. "
-			"These must be normal, regular test cases—NOT trick or obscure edge cases.\n"
-			"Do NOT use HTML entities (use plain '<', '<=', '>', '>='). "
-			"CRITICAL REQUIREMENT: Neither 'input_data' nor 'expected_output' must ever be empty, blank, or whitespace-only strings. "
-			"Return ONLY a JSON object conforming to the FullTestSuiteResult schema."
+			"These must be standard validation test cases covering normal, valid inputs within constraints—NOT obscure or trick edge cases.\n"
+			"CRITICAL INSTRUCTIONS:\n"
+			"- If existing test cases from a spreadsheet are provided in the prompt, you MUST preserve and include them first, "
+			"and generate only the additional cases needed to reach exactly 3 sample test cases and exactly 10 hidden test cases.\n"
+			"- You must follow the EXACT input format (number of lines, spacing, delimiters) and expected output format demonstrated in the problem statement and existing cases.\n"
+			"- Every test case must be unique and specifically solved for this problem. Never output generic or identical placeholder test cases.\n"
+			"- Do NOT use HTML entities (use plain '<', '<=', '>', '>=').\n"
+			"Return ONLY a JSON object conforming to the FullTestSuiteResult schema:\n"
+			'{"sample_test_cases": [{"input_data": "...", "expected_output": "..."}], "hidden_test_cases": [{"input_data": "...", "expected_output": "..."}]}'
 		)
 		user_prompt = (
 			f"Problem Title: {title}\nStatement: {problem_text}\nConstraints: {constraints_text}\n"
 		)
+		if known_samples:
+			user_prompt += f"\nExisting Sample Cases from Spreadsheet ({len(known_samples)} provided):\n{json.dumps(known_samples, ensure_ascii=False, indent=2)}\n"
+		if known_hiddens:
+			user_prompt += f"\nExisting Hidden Cases from Spreadsheet ({len(known_hiddens)} provided):\n{json.dumps(known_hiddens, ensure_ascii=False, indent=2)}\n"
 		if reference_solution:
-			user_prompt += f"Reference Solution Code:\n{reference_solution}\n"
+			user_prompt += f"\nReference Solution Code:\n{reference_solution}\n"
 
 		return self.query_structured_json(system_prompt, user_prompt, FullTestSuiteResult)
 

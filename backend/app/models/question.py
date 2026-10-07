@@ -164,6 +164,28 @@ class CodingQuestion(Base):
 		if not samples and self.legacy_test_cases:
 			samples = [tc.to_dict() for tc in self.legacy_test_cases if tc.is_sample]
 
+		fn: str = self.function_name or "solve"
+		params: list[dict[str, Any]] = list(self.parameter_definitions) if self.parameter_definitions else []
+		ret: str = self.return_type or "int"
+		templates: dict[str, str] = dict(self.starter_templates) if self.starter_templates else {}
+
+		if not templates or not params or any("def solve(self, *args):" in v for v in templates.values()):
+			from app.services.code_boilerplate import (
+				generate_boilerplate_templates,
+				resolve_problem_signature,
+			)
+
+			fn, inferred_params, ret = resolve_problem_signature(
+				title=self.title,
+				function_name=self.function_name,
+				parameters=self.parameter_definitions,
+				return_type=self.return_type,
+				sample_cases=samples,
+				problem_text=self.word_problem_text,
+			)
+			params = list(inferred_params)
+			templates = generate_boilerplate_templates(fn, params, ret)
+
 		data: dict[str, Any] = {
 			"id": self.id,
 			"question_set_id": self.question_set_id,
@@ -174,10 +196,10 @@ class CodingQuestion(Base):
 			"allowed_languages": self.allowed_languages,
 			"time_limit_ms": self.time_limit_ms,
 			"memory_limit_kb": self.memory_limit_kb,
-			"function_name": self.function_name,
-			"parameter_definitions": self.parameter_definitions,
-			"return_type": self.return_type,
-			"starter_templates": self.starter_templates,
+			"function_name": fn,
+			"parameter_definitions": params,
+			"return_type": ret,
+			"starter_templates": templates,
 			"sample_test_cases": samples,
 			"created_at": self.created_at.isoformat(),
 		}

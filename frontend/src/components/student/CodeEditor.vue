@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-c'
 import 'prismjs/components/prism-cpp'
@@ -23,6 +23,8 @@ const emit = defineEmits<{
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const preRef = ref<HTMLElement | null>(null)
 const gutterRef = ref<HTMLElement | null>(null)
+const dropdownRef = ref<HTMLElement | null>(null)
+const isDropdownOpen = ref<boolean>(false)
 
 const languageOptions = [
 	{ label: 'Python 3', value: 'python' },
@@ -44,9 +46,39 @@ const filteredLanguageOptions = computed(() => {
 	return filtered.length > 0 ? filtered : languageOptions
 })
 
+const currentLanguageLabel = computed<string>(() => {
+	const current = props.language.toLowerCase()
+	const target = current === 'c++' ? 'cpp' : current
+	const match = languageOptions.find((l) => l.value === target)
+	return match ? match.label : props.language
+})
+
 const lineCount = computed<number>(() => {
 	const lines = (props.modelValue || '').split('\n').length
 	return Math.max(lines, 1)
+})
+
+function toggleDropdown(): void {
+	isDropdownOpen.value = !isDropdownOpen.value
+}
+
+function selectOption(val: string): void {
+	handleLanguageChange(val)
+	isDropdownOpen.value = false
+}
+
+function handleDocClick(e: MouseEvent): void {
+	if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+		isDropdownOpen.value = false
+	}
+}
+
+onMounted(() => {
+	document.addEventListener('click', handleDocClick)
+})
+
+onUnmounted(() => {
+	document.removeEventListener('click', handleDocClick)
 })
 
 function handleScroll(): void {
@@ -159,15 +191,46 @@ watch(
 		<!-- Editor Top Toolbar -->
 		<div class="editor-header-bar">
 			<div class="editor-left-tools">
-				<VaSelect
-					:model-value="language"
-					:options="filteredLanguageOptions"
-					value-by="value"
-					text-by="label"
-					size="small"
-					class="lang-select"
-					@update:modelValue="handleLanguageChange"
-				/>
+				<!-- Custom Language Dropdown: Pointer cursor, instant mouse click handling, high z-index -->
+				<div class="lang-selector-container" ref="dropdownRef">
+					<button
+						type="button"
+						class="lang-dropdown-trigger"
+						:class="{ open: isDropdownOpen }"
+						aria-haspopup="listbox"
+						:aria-expanded="isDropdownOpen"
+						@click="toggleDropdown"
+					>
+						<span class="lang-selected-label">{{ currentLanguageLabel }}</span>
+						<svg class="dropdown-chevron" :class="{ rotated: isDropdownOpen }" viewBox="0 0 20 20" fill="currentColor">
+							<path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+						</svg>
+					</button>
+
+					<div
+						v-if="isDropdownOpen"
+						class="lang-dropdown-menu"
+						role="listbox"
+					>
+						<button
+							v-for="opt in filteredLanguageOptions"
+							:key="opt.value"
+							type="button"
+							role="option"
+							:aria-selected="opt.value === language"
+							class="lang-dropdown-item"
+							:class="{ active: opt.value === language }"
+							@mousedown.prevent
+							@click="selectOption(opt.value)"
+						>
+							<span class="option-name">{{ opt.label }}</span>
+							<svg v-if="opt.value === language" class="check-icon" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+							</svg>
+						</button>
+					</div>
+				</div>
+
 				<span class="tab-note">Tab: 4 spaces</span>
 			</div>
 
@@ -234,6 +297,8 @@ watch(
 }
 
 .editor-header-bar {
+	position: relative;
+	z-index: 50;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -249,16 +314,103 @@ watch(
 	gap: 0.85rem;
 }
 
-.lang-select {
-	width: 140px;
+.lang-selector-container {
+	position: relative;
+	display: inline-block;
 }
 
-.lang-select,
-.lang-select :deep(.va-input-wrapper),
-.lang-select :deep(.va-input-wrapper__field),
-.lang-select :deep(input),
-.lang-select :deep(.va-select__value) {
+.lang-dropdown-trigger {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	min-width: 130px;
+	height: 32px;
+	padding: 0 0.75rem;
+	background: #2a2a2a;
+	color: #e0e0e0;
+	border: 1px solid #3d3d3d;
+	border-radius: 4px;
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 0.8125rem;
+	font-weight: 500;
 	cursor: pointer !important;
+	user-select: none;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.lang-dropdown-trigger:hover {
+	background: #333333;
+	border-color: #505050;
+}
+
+.lang-dropdown-trigger.open {
+	border-color: #2563eb;
+	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.dropdown-chevron {
+	width: 16px;
+	height: 16px;
+	color: #999;
+	transition: transform 0.2s;
+	flex-shrink: 0;
+}
+
+.dropdown-chevron.rotated {
+	transform: rotate(180deg);
+}
+
+.lang-dropdown-menu {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 100;
+	min-width: 140px;
+	background: #242424;
+	border: 1px solid #383838;
+	border-radius: 6px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+	padding: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.lang-dropdown-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 0.45rem 0.65rem;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: #d0d0d0;
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 0.8125rem;
+	text-align: left;
+	cursor: pointer !important;
+	user-select: none;
+	transition: background 0.15s, color 0.15s;
+}
+
+.lang-dropdown-item:hover {
+	background: #333333;
+	color: #ffffff;
+}
+
+.lang-dropdown-item.active {
+	background: #1e3a5f;
+	color: #60a5fa;
+	font-weight: 600;
+}
+
+.check-icon {
+	width: 14px;
+	height: 14px;
+	color: #60a5fa;
+	flex-shrink: 0;
 }
 
 .tab-note {
@@ -328,7 +480,8 @@ watch(
 	line-height: 1.6rem !important;
 	letter-spacing: 0 !important;
 	font-variant-ligatures: none !important;
-	font-feature-settings: 'liga' 0, 'calt' 0 !important;
+	-webkit-font-variant-ligatures: none !important;
+	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
 	white-space: pre !important;
 	word-wrap: normal !important;
 	tab-size: 4 !important;
@@ -347,7 +500,7 @@ watch(
 }
 
 .syntax-overlay * {
-  font-family: 'JetBrains Mono', monospace !important;
+	font-family: 'JetBrains Mono', monospace !important;
 }
 
 .code-input {

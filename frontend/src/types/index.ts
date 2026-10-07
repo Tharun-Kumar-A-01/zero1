@@ -58,6 +58,17 @@ export interface DailyChallengeData {
 	coding_question: CodingQuestionData | null
 }
 
+export interface TestCaseResultItem {
+	case_number: number
+	status: string
+	input: string
+	expected_output: string
+	actual_output: string
+	error_message?: string | null
+	runtime_ms?: number | null
+	memory_kb?: number | null
+}
+
 export interface CodeSubmissionResult {
 	execution_status: string
 	mode?: 'run' | 'submit'
@@ -75,6 +86,7 @@ export interface CodeSubmissionResult {
 	ai_review_notes?: string | null
 	coding_time_spent_seconds?: number | null
 	submission_attempts_count?: number
+	test_case_results?: TestCaseResultItem[]
 }
 
 export interface StudentRewardBadge {

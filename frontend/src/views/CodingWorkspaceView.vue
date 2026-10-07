@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vuestic-ui'
 import api from '@/services/api'
 import type { DailyChallengeData, CodingQuestionData, CodeSubmissionResult } from '@/types'
 import { decodeHtmlEntities, formatDuration, getDifficultyColor } from '@/utils/text'
+import { getProblemStarterTemplates } from '@/utils/boilerplate'
 import MarkdownRenderer from '@/components/common/MarkdownRenderer.vue'
 import CodeEditor from '@/components/student/CodeEditor.vue'
 import TestcaseConsole from '@/components/student/TestcaseConsole.vue'
@@ -41,54 +42,49 @@ const isTimerRunning = ref<boolean>(false)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 const submissionAttempts = ref<number>(0)
 
-const defaultStarterTemplates: Record<string, string> = {
-	python: `# Write your solution here
-class Solution:
-    def solve(self, *args):
-        pass
-`,
-	cpp: `#include <iostream>
-#include <vector>
-#include <string>
-
-using namespace std;
-
-class Solution {
-public:
-    int solve() {
-        return 0;
-    }
-};
-`,
-	java: `import java.util.*;
-
-public class Solution {
-    public int solve() {
-        return 0;
-    }
-}
-`,
-	c: `#include <stdio.h>
-#include <stdlib.h>
-
-int solve() {
-    return 0;
-}
-`,
-}
-
 const activeStarterTemplates = computed<Record<string, string>>(() => {
-	if (codingQuestion.value?.starter_templates && Object.keys(codingQuestion.value.starter_templates).length > 0) {
-		return { ...defaultStarterTemplates, ...codingQuestion.value.starter_templates }
-	}
-	return defaultStarterTemplates
+	const q = codingQuestion.value
+	if (!q) return {}
+	return getProblemStarterTemplates(
+		q.title,
+		q.function_name,
+		q.parameter_definitions,
+		q.return_type,
+		q.sample_test_cases,
+		q.starter_templates,
+		q.word_problem_text
+	)
 })
+
+watch(
+	() => codingQuestion.value,
+	(q) => {
+		if (q) {
+			const templates = activeStarterTemplates.value
+			const lang = selectedLanguage.value
+			const isStaticOrEmpty =
+				!sourceCode.value ||
+				sourceCode.value.includes('def solve(self, *args):') ||
+				sourceCode.value.includes('int solve() {\n        return 0;\n    }')
+			if (isStaticOrEmpty && templates[lang]) {
+				sourceCode.value = templates[lang]
+				languageCodes.value[lang] = templates[lang]
+			}
+		}
+	},
+	{ immediate: true }
+)
 
 function initStarterCode(): void {
 	const templates = activeStarterTemplates.value
 	const lang = selectedLanguage.value
-	if (!languageCodes.value[lang]) {
-		const initialCode = templates[lang] || defaultStarterTemplates[lang] || ''
+	const isStaticOrEmpty =
+		!languageCodes.value[lang] ||
+		languageCodes.value[lang]?.includes('def solve(self, *args):') ||
+		languageCodes.value[lang]?.includes('int solve() {\n        return 0;\n    }')
+
+	if (isStaticOrEmpty) {
+		const initialCode = templates[lang] || ''
 		languageCodes.value[lang] = initialCode
 		sourceCode.value = initialCode
 	} else {
@@ -105,18 +101,24 @@ function handleLanguageChange(newLang: string): void {
 	languageCodes.value[selectedLanguage.value] = sourceCode.value
 	selectedLanguage.value = targetLang
 
-	// Retrieve code for new language, or fallback to starter template
-	if (languageCodes.value[targetLang] !== undefined) {
-		sourceCode.value = languageCodes.value[targetLang]!
+	// Retrieve code for new language, or fallback to dynamic starter template
+	const existing = languageCodes.value[targetLang]
+	const isStaticOrEmpty =
+		!existing ||
+		existing.includes('def solve(self, *args):') ||
+		existing.includes('int solve() {\n        return 0;\n    }')
+
+	if (!isStaticOrEmpty) {
+		sourceCode.value = existing
 	} else {
-		const template = activeStarterTemplates.value[targetLang] || defaultStarterTemplates[targetLang] || ''
+		const template = activeStarterTemplates.value[targetLang] || ''
 		languageCodes.value[targetLang] = template
 		sourceCode.value = template
 	}
 }
 
 function handleResetCode(): void {
-	const template = activeStarterTemplates.value[selectedLanguage.value] || defaultStarterTemplates[selectedLanguage.value] || ''
+	const template = activeStarterTemplates.value[selectedLanguage.value] || ''
 	sourceCode.value = template
 	languageCodes.value[selectedLanguage.value] = template
 }
@@ -476,6 +478,9 @@ onUnmounted(() => {
 
 .timer-digits {
 	font-family: 'JetBrains Mono', monospace !important;
+	font-variant-ligatures: none !important;
+	-webkit-font-variant-ligatures: none !important;
+	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
 }
 
 .topbar-right {
@@ -557,6 +562,9 @@ onUnmounted(() => {
 	border: 1px solid var(--va-background-border);
 	border-radius: 6px;
 	font-family: 'JetBrains Mono', monospace !important;
+	font-variant-ligatures: none !important;
+	-webkit-font-variant-ligatures: none !important;
+	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
 	font-size: 0.85rem;
 	white-space: pre-wrap;
 	color: var(--va-text-primary);

@@ -14,12 +14,27 @@ const emit = defineEmits<{
 	(e: 'publish'): void
 }>()
 
-const isReadyToPublish = computed<boolean>(() => props.mcqCount >= 7 && props.codingCount >= 7)
+const hasIncompleteCodingQuestions = computed<boolean>(() => {
+	if (!props.questionSet?.coding_questions || props.questionSet.coding_questions.length === 0) return false
+	return props.questionSet.coding_questions.some(
+		(q) => (q.sample_test_cases?.length ?? 0) < 3 || (q.hidden_test_cases?.length ?? 0) < 10
+	)
+})
+
+const isReadyToPublish = computed<boolean>(() => 
+	props.mcqCount >= 7 && 
+	props.codingCount >= 7 && 
+	!hasIncompleteCodingQuestions.value
+)
 
 const readinessPercentage = computed<number>(() => {
 	const mcqScore = Math.min(7, props.mcqCount)
 	const codingScore = Math.min(7, props.codingCount)
-	return Math.round(((mcqScore + codingScore) / 14) * 100)
+	const baseScore = Math.round(((mcqScore + codingScore) / 14) * 100)
+	if (hasIncompleteCodingQuestions.value && baseScore === 100) {
+		return 90
+	}
+	return baseScore
 })
 </script>
 
@@ -65,6 +80,16 @@ const readinessPercentage = computed<number>(() => {
 						<VaIcon :name="codingCount >= 7 ? 'check_circle' : 'radio_button_unchecked'" size="small" />
 					</template>
 				</VaBadge>
+				<VaBadge
+					v-if="hasIncompleteCodingQuestions"
+					color="warning"
+					text="Test Cases Incomplete"
+					title="Every coding problem must have 3 sample and 10 hidden test cases to publish."
+				>
+					<template #prepend>
+						<VaIcon name="warning" size="small" />
+					</template>
+				</VaBadge>
 			</div>
 
 			<VaButton
@@ -72,10 +97,16 @@ const readinessPercentage = computed<number>(() => {
 				size="small"
 				:disabled="!isReadyToPublish || !questionSet?.mentor_assignment_id"
 				:loading="isPublishing"
-				:icon="questionSet?.mentor_assignment_id ? 'send' : 'schedule'"
+				:icon="questionSet?.mentor_assignment_id ? (hasIncompleteCodingQuestions ? 'warning' : 'send') : 'schedule'"
 				@click="emit('publish')"
 			>
-				{{ !questionSet?.mentor_assignment_id ? 'Awaiting Schedule Assignment' : 'Publish Set' }}
+				{{
+					!questionSet?.mentor_assignment_id
+						? 'Awaiting Schedule Assignment'
+						: hasIncompleteCodingQuestions
+							? 'Incomplete Test Cases'
+							: 'Publish Set'
+				}}
 			</VaButton>
 			<VaBadge v-else color="success" text="PUBLISHED" />
 		</div>

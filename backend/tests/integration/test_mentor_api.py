@@ -219,3 +219,89 @@ def test_unassigned_mentor_draft_flow(
 	assert len(assigned_qs_data["mcqs"]) == 1
 	assert len(assigned_qs_data["coding_questions"]) == 1
 
+
+def test_publish_blocked_on_incomplete_test_cases(
+	client: FlaskClient, mentor_auth_headers: dict[str, str], test_mentor_user: User, admin_auth_headers: dict[str, str]
+) -> None:
+	"""Verify that a question set cannot be published if any coding problem has incomplete test cases."""
+	today = date.today()
+	days_ahead = (0 - today.weekday() + 7) % 7
+	next_monday = today + timedelta(days=days_ahead if days_ahead > 0 else 7)
+	next_saturday = next_monday + timedelta(days=5)
+
+	# 1. Admin assigns mentor
+	assign_payload = {
+		"user_id": test_mentor_user.id,
+		"week_start_date": next_monday.isoformat(),
+		"week_end_date": next_saturday.isoformat(),
+	}
+	res_schedule = client.post("/api/admin/mentors/schedule", json=assign_payload, headers=admin_auth_headers)
+	assert res_schedule.status_code == 200
+
+	# 2. Get active question set
+	res_qs = client.get("/api/mentor/question-set/my-week", headers=mentor_auth_headers)
+	assert res_qs.status_code == 200
+	qs_id = res_qs.get_json()["data"]["id"]
+
+	# 3. Add 7 MCQs
+	for i in range(7):
+		client.post(
+			"/api/mentor/questions/mcq",
+			json={
+				"question_set_id": qs_id,
+				"prompt_text": f"Question {i + 1}?",
+				"options": ["A", "B", "C", "D"],
+				"correct_option_index": 0,
+			},
+			headers=mentor_auth_headers,
+		)
+
+	# 4. Add 7 coding questions, but one has incomplete test cases (only 2 sample, 0 hidden)
+	for i in range(6):
+		client.post(
+			"/api/mentor/questions/coding",
+			json={
+				"question_set_id": qs_id,
+				"title": f"Complete Problem {i + 1}",
+				"word_problem_text": f"Description for problem {i + 1}",
+				"constraints_text": "1 <= N <= 100",
+				"sample_test_cases": [
+					{"input": "1", "expected_output": "1"},
+					{"input": "2", "expected_output": "2"},
+					{"input": "3", "expected_output": "3"},
+				],
+				"hidden_test_cases": [
+					{"input": f"{h}", "expected_output": f"{h}"}
+					for h in range(10)
+				],
+			},
+			headers=mentor_auth_headers,
+		)
+
+	# Add the 7th question with incomplete test cases
+	res_incomplete = client.post(
+		"/api/mentor/questions/coding",
+		json={
+			"question_set_id": qs_id,
+			"title": "Incomplete Problem",
+			"word_problem_text": "This problem has only 2 sample cases and no hidden cases.",
+			"constraints_text": "1 <= N <= 100",
+			"sample_test_cases": [
+				{"input": "1", "expected_output": "1"},
+				{"input": "2", "expected_output": "2"},
+			],
+			"hidden_test_cases": [],
+		},
+		headers=mentor_auth_headers,
+	)
+	assert res_incomplete.status_code == 200
+	assert len(res_incomplete.get_json()["data"]["coding_questions"]) == 7
+
+	# 5. Attempt to publish -> MUST be blocked because 1 question has incomplete test cases
+	res_pub = client.post(f"/api/mentor/question-set/{qs_id}/publish", headers=mentor_auth_headers)
+	assert res_pub.status_code == 400
+	err = res_pub.get_json()["error"]
+	assert err["code"] == "INCOMPLETE_TEST_CASES"
+	assert "Incomplete Problem" in err["message"]
+
+
