@@ -1,41 +1,141 @@
+@font-face {
+  font-family: 'Departure Mono';
+  src: url('./fonts/DepartureMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Habitica RPG Palette */
+  --pixel-bg: #1e192b;
+  --pixel-bg-alt: #161220;
+  --pixel-surface: #262235;
+  --pixel-surface-alt: #2f2a42;
+  --pixel-surface-raised: #3b3552;
+  --pixel-border: #443d5e;
+  --pixel-border-dark: #15121e;
+  --pixel-border-bright: #685e8d;
+
+  --pixel-text: #f3effa;
+  --pixel-text-muted: #9f97ba;
+  --pixel-text-dim: #71698a;
+
+  /* Button Color Palettes (Surface, Border, 4px Shadow Shade, Hover) */
+  --pixel-btn-primary-bg: #5a32a3;
+  --pixel-btn-primary-border: #351a66;
+  --pixel-btn-primary-shade: #210d44;
+  --pixel-btn-primary-hover: #6c3fc2;
+  --pixel-btn-primary-text: #ffffff;
+
+  --pixel-btn-success-bg: #288746;
+  --pixel-btn-success-border: #16522a;
+  --pixel-btn-success-shade: #0d381c;
+  --pixel-btn-success-hover: #329e54;
+  --pixel-btn-success-text: #ffffff;
+
+  --pixel-btn-danger-bg: #b83333;
+  --pixel-btn-danger-border: #751a1a;
+  --pixel-btn-danger-shade: #4d1010;
+  --pixel-btn-danger-hover: #cc3f3f;
+  --pixel-btn-danger-text: #ffffff;
+
+  --pixel-btn-warning-bg: #c97716;
+  --pixel-btn-warning-border: #7e4507;
+  --pixel-btn-warning-shade: #542d03;
+  --pixel-btn-warning-hover: #e0871d;
+  --pixel-btn-warning-text: #ffffff;
+
+  --pixel-btn-info-bg: #1d7baf;
+  --pixel-btn-info-border: #0e4b6d;
+  --pixel-btn-info-shade: #09344d;
+  --pixel-btn-info-hover: #2691ce;
+  --pixel-btn-info-text: #ffffff;
+
+  --pixel-btn-secondary-bg: #443e59;
+  --pixel-btn-secondary-border: #282436;
+  --pixel-btn-secondary-shade: #191624;
+  --pixel-btn-secondary-hover: #534c6c;
+  --pixel-btn-secondary-text: #ece8f5;
+
+  /* Ranks / Medals */
+  --gold-glow: #f59e0b;
+  --silver-glow: #94a3b8;
+  --bronze-glow: #b45309;
+
+  /* Fonts */
+  --font-pixel: 'Departure Mono', monospace;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 *,
 *::before,
 *::after {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-	font-variant-ligatures: none !important;
-	-webkit-font-variant-ligatures: none !important;
-	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-variant-ligatures: none !important;
+  -webkit-font-variant-ligatures: none !important;
+  font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
 }
 
 body {
-	margin: 0;
-	padding: 0;
-	min-height: 100vh;
-	background-color: var(--va-background-primary);
-	color: var(--va-text-primary);
-	font-family: 'IBM Plex Sans', sans-serif;
-	line-height: 1.5;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--pixel-bg);
+  color: var(--pixel-text);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
-	width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--pixel-bg);
 }
 
 a {
-	text-decoration: none;
-	color: inherit;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Headings use Departure Mono */
+h1, h2, h3, h4, h5, h6, .font-pixel, .pixel-heading {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: -0.01em;
+  font-weight: normal;
 }
 
 code, pre, kbd, samp, .font-mono, [class*="mono"], .line-gutter, .syntax-overlay, .code-input, textarea.code-input, .io-pre {
-	font-family: 'JetBrains Mono', monospace !important;
-	font-variant-ligatures: none !important;
-	-webkit-font-variant-ligatures: none !important;
-	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
+  font-family: var(--font-mono) !important;
+  font-variant-ligatures: none !important;
+  -webkit-font-variant-ligatures: none !important;
+  font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
+}
+
+.pixelated, img.pixel-icon, .pixel-sprite {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Custom Pixel Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--pixel-bg-alt);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-surface-raised);
+  border: 2px solid var(--pixel-bg-alt);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pixel-border-bright);
 }

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createVuestic } from 'vuestic-ui'
 import ConsistencyTracker from '@/components/student/ConsistencyTracker.vue'
 import type { ProgressData } from '@/types'
 
@@ -18,7 +17,6 @@ describe('ConsistencyTracker component', () => {
 				progress: mockProgress,
 				isTodaySolved: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		expect(wrapper.text()).toContain('6')
@@ -41,7 +39,6 @@ describe('ConsistencyTracker component', () => {
 				progress: masterProgress,
 				isTodaySolved: true,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		expect(wrapper.text()).toContain('Master Coder')

@@ -178,36 +178,37 @@ function handleCommitImport(): void {
 		<div class="pool-header">
 			<h2 class="section-title">MCQ Questions</h2>
 			<div v-if="!isPublished" class="header-action-group">
-				<VaButton
+				<PixelButton
 					size="small"
-					preset="secondary"
-					icon="upload_file"
+					color="secondary"
+					icon="upload"
 					@click="showImportDialog = true"
 				>
 					Import XLSX
-				</VaButton>
-				<VaButton
+				</PixelButton>
+				<PixelButton
 					size="small"
-					icon="add"
+					color="primary"
+					icon="plus"
 					@click="showAddDialog = true"
 				>
 					Add MCQ
-				</VaButton>
+				</PixelButton>
 			</div>
 		</div>
 
 		<div v-if="mcqs.length > 0" class="cards-list">
-			<VaCard
+			<PixelCard
 				v-for="(mcq, index) in mcqs"
 				:key="mcq.id"
 				class="item-card"
 			>
-				<VaCardContent>
+				<PixelCardContent>
 					<div class="card-inner">
 						<div class="card-meta">
 							<div class="meta-left">
-								<VaBadge color="backgroundElement" :text="`Q${index + 1}`" />
-								<VaBadge
+								<PixelBadge color="secondary" :text="`Q${index + 1}`" />
+								<PixelBadge
 									:color="mcq.difficulty === 'hard' ? 'danger' : mcq.difficulty === 'medium' ? 'warning' : 'success'"
 									:text="mcq.difficulty.toUpperCase()"
 								/>
@@ -217,18 +218,17 @@ function handleCommitImport(): void {
 								/>
 							</div>
 							<div v-if="!isPublished" class="meta-actions">
-								<VaButton
-									preset="plain"
-									icon="edit"
+								<PixelButton
+									color="secondary"
 									size="small"
+									icon="edit"
 									aria-label="Edit question"
 									@click="openEditDialog(mcq)"
 								/>
-								<VaButton
-									preset="plain"
-									icon="delete"
+								<PixelButton
 									color="danger"
 									size="small"
+									icon="trash"
 									aria-label="Delete question"
 									@click="openDeleteDialog(mcq)"
 								/>
@@ -237,54 +237,48 @@ function handleCommitImport(): void {
 
 						<p class="question-text">{{ formatEntities(mcq.prompt_text) }}</p>
 
-						<VaList class="options-list">
-							<VaListItem
+						<div class="options-list">
+							<div
 								v-for="(opt, oIdx) in mcq.options"
 								:key="oIdx"
 								class="option-item"
 								:class="{ correct: oIdx === mcq.correct_option_index }"
 							>
-								<VaListItemSection avatar>
-									<VaBadge
+								<div class="option-badge-wrap">
+									<PixelBadge
 										:text="String.fromCharCode(65 + oIdx)"
-										:color="oIdx === mcq.correct_option_index ? 'success' : 'backgroundElement'"
-										:text-color="oIdx === mcq.correct_option_index ? 'textInverted' : undefined"
+										:color="oIdx === mcq.correct_option_index ? 'success' : 'secondary'"
 									/>
-								</VaListItemSection>
+								</div>
 
-								<VaListItemSection>
-									<VaListItemLabel class="option-content">
-										{{ formatEntities(opt) }}
-									</VaListItemLabel>
-								</VaListItemSection>
+								<div class="option-content">
+									{{ formatEntities(opt) }}
+								</div>
 
-								<VaListItemSection icon v-if="oIdx === mcq.correct_option_index">
-									<VaIcon name="check" color="success" />
-								</VaListItemSection>
-							</VaListItem>
-						</VaList>
+								<div v-if="oIdx === mcq.correct_option_index" class="option-check">
+									<PixelIcon name="check" :size="14" color="#34d399" />
+								</div>
+							</div>
+						</div>
 
-						<VaAlert v-if="mcq.explanation" color="info" border="left" class="explanation-alert">
-							<template #icon>
-								<VaIcon name="info" />
-							</template>
+						<PixelAlert v-if="mcq.explanation" color="info" class="explanation-alert">
 							{{ formatEntities(mcq.explanation) }}
-						</VaAlert>
+						</PixelAlert>
 					</div>
-				</VaCardContent>
-			</VaCard>
+				</PixelCardContent>
+			</PixelCard>
 		</div>
 
-		<VaCard v-else class="empty-pool-card">
-			<VaCardContent class="empty-content">
-				<VaIcon name="edit_note" size="48px" color="secondary" class="empty-pool-icon" />
+		<PixelCard v-else class="empty-pool-card">
+			<PixelCardContent class="empty-content">
+				<PixelIcon name="edit" :size="48" class="empty-pool-icon" />
 				<h3>No MCQs added yet</h3>
 				<p>Author or bulk import at least 7 aptitude questions to fulfill the weekly set quota.</p>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 
 		<!-- MODAL 1: CREATE MCQ -->
-		<VaModal
+		<PixelModal
 			v-model="showAddDialog"
 			title="Author Aptitude MCQ"
 			ok-text="Save MCQ"
@@ -292,17 +286,16 @@ function handleCommitImport(): void {
 			:loading="isSubmitting"
 			@ok="handleSaveAdd"
 		>
-			<VaForm class="dialog-form">
-				<VaTextarea
+			<form class="dialog-form" @submit.prevent="handleSaveAdd">
+				<PixelTextarea
 					v-model="newPrompt"
 					label="Question Statement"
 					placeholder="Enter the full question prompt..."
-					autosize
-					:min-rows="3"
+					:rows="3"
 					required
 				/>
 
-				<VaInput
+				<PixelInput
 					v-for="(_, i) in newOptions"
 					:key="i"
 					v-model="newOptions[i]"
@@ -311,7 +304,7 @@ function handleCommitImport(): void {
 					required
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="newCorrectIndex"
 					:options="correctOptionChoices"
 					label="Correct Option"
@@ -320,7 +313,7 @@ function handleCommitImport(): void {
 					required
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="newDifficulty"
 					:options="difficultyOptions"
 					label="Question Difficulty"
@@ -328,18 +321,17 @@ function handleCommitImport(): void {
 					text-by="label"
 				/>
 
-				<VaTextarea
+				<PixelTextarea
 					v-model="newExplanation"
 					label="Explanation (Optional)"
 					placeholder="Explain why the correct answer is right..."
-					autosize
-					:min-rows="2"
+					:rows="2"
 				/>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- MODAL 2: EDIT MCQ -->
-		<VaModal
+		<PixelModal
 			v-model="showEditDialog"
 			title="Edit Aptitude MCQ"
 			ok-text="Update MCQ"
@@ -347,17 +339,16 @@ function handleCommitImport(): void {
 			:loading="isSubmitting"
 			@ok="handleSaveEdit"
 		>
-			<VaForm class="dialog-form">
-				<VaTextarea
+			<form class="dialog-form" @submit.prevent="handleSaveEdit">
+				<PixelTextarea
 					v-model="editPrompt"
 					label="Question Statement"
 					placeholder="Enter the full question prompt..."
-					autosize
-					:min-rows="3"
+					:rows="3"
 					required
 				/>
 
-				<VaInput
+				<PixelInput
 					v-for="(_, i) in editOptions"
 					:key="i"
 					v-model="editOptions[i]"
@@ -366,7 +357,7 @@ function handleCommitImport(): void {
 					required
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="editCorrectIndex"
 					:options="correctOptionChoices"
 					label="Correct Option"
@@ -375,7 +366,7 @@ function handleCommitImport(): void {
 					required
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="editDifficulty"
 					:options="difficultyOptions"
 					label="Question Difficulty"
@@ -383,23 +374,21 @@ function handleCommitImport(): void {
 					text-by="label"
 				/>
 
-				<VaTextarea
+				<PixelTextarea
 					v-model="editExplanation"
 					label="Explanation (Optional)"
 					placeholder="Explain why the correct answer is right..."
-					autosize
-					:min-rows="2"
+					:rows="2"
 				/>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- MODAL 3: DELETE CONFIRMATION -->
-		<VaModal
+		<PixelModal
 			v-model="showDeleteDialog"
 			title="Delete MCQ Question"
 			ok-text="Delete"
 			cancel-text="Cancel"
-			ok-color="danger"
 			@ok="handleConfirmDelete"
 		>
 			<p v-if="deleteTargetMcq">
@@ -407,10 +396,10 @@ function handleCommitImport(): void {
 				<br />
 				<strong>"{{ deleteTargetMcq.prompt_text }}"</strong>
 			</p>
-		</VaModal>
+		</PixelModal>
 
 		<!-- MODAL 4: BULK IMPORT XLSX -->
-		<VaModal
+		<PixelModal
 			v-model="showImportDialog"
 			title="Bulk Import MCQs from Spreadsheet"
 			hide-default-actions
@@ -420,33 +409,35 @@ function handleCommitImport(): void {
 					Upload an <code>.xlsx</code> or <code>.csv</code> spreadsheet containing MCQs. AI will automatically parse the questions, options, correct answers, and explanations.
 				</p>
 
-				<VaFileUpload
+				<PixelFileUpload
 					v-model="uploadedImportFiles"
-					dropzone
 					file-types=".xlsx,.csv"
 					type="single"
 					@update:model-value="handleFileChange"
 				/>
 
 				<div class="modal-actions-row">
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
+						size="small"
 						:disabled="isImporting"
 						@click="showImportDialog = false"
 					>
 						Cancel
-					</VaButton>
-					<VaButton
+					</PixelButton>
+					<PixelButton
+						color="primary"
+						size="small"
 						:loading="isImporting"
 						:disabled="!selectedImportFile"
-						icon="auto_awesome"
+						icon="upload"
 						@click="handleCommitImport"
 					>
 						Import with AI
-					</VaButton>
+					</PixelButton>
 				</div>
 			</div>
-		</VaModal>
+		</PixelModal>
 	</div>
 </template>
 

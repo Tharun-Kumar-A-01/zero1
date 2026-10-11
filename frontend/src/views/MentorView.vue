@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useToast } from 'vuestic-ui'
+import { usePixelToast } from '@/components/pixel/usePixelToast'
+import PixelTabs from '@/components/pixel/PixelTabs.vue'
+import PixelTab from '@/components/pixel/PixelTab.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import PixelCard from '@/components/pixel/PixelCard.vue'
+import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
 
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
@@ -11,7 +16,7 @@ import CodingPoolSection from '@/components/mentor/CodingPoolSection.vue'
 import AiStressTestDialog from '@/components/mentor/AiStressTestDialog.vue'
 import FlaggedSubmissionsSection from '@/components/mentor/FlaggedSubmissionsSection.vue'
 
-const { init: notify } = useToast()
+const { notify } = usePixelToast()
 const authStore = useAuthStore()
 
 // Only users with the 'mentor' role can manage questions/publish
@@ -331,26 +336,26 @@ onMounted(async (): Promise<void> => {
 		<!-- Sub-navigation between Pools & AI Review Queue — mentor only -->
 		<template v-if="isMentor">
 			<div class="section-switch-bar">
-				<VaTabs v-model="activeSection">
-					<VaTab name="mcqs">
+				<PixelTabs v-model="activeSection">
+					<PixelTab name="mcqs">
 						<span class="tab-item-content">
-							<VaIcon name="list" size="small" />
+							<PixelIcon name="list" :size="14" />
 							<span>Aptitude MCQs ({{ mcqPoolCount }})</span>
 						</span>
-					</VaTab>
-					<VaTab name="coding">
+					</PixelTab>
+					<PixelTab name="coding">
 						<span class="tab-item-content">
-							<VaIcon name="code" size="small" />
+							<PixelIcon name="code" :size="14" />
 							<span>Coding Problems ({{ codingPoolCount }})</span>
 						</span>
-					</VaTab>
-					<VaTab name="flagged">
+					</PixelTab>
+					<PixelTab name="flagged">
 						<span class="tab-item-content">
-							<VaIcon name="flag" size="small" />
+							<PixelIcon name="alert" :size="14" />
 							<span>AI Flagged Review ({{ flaggedSubmissions.length }})</span>
 						</span>
-					</VaTab>
-				</VaTabs>
+					</PixelTab>
+				</PixelTabs>
 			</div>
 
 			<!-- SECTION 1: MCQ POOL -->
@@ -400,14 +405,14 @@ onMounted(async (): Promise<void> => {
 		</template>
 
 		<!-- Students see only the rotation overview — no question management -->
-		<VaCard v-else class="student-mentor-notice">
-			<VaCardContent>
+		<PixelCard v-else class="student-mentor-notice">
+			<PixelCardContent>
 				<div class="notice-row">
-					<VaIcon name="info" color="info" />
+					<PixelIcon name="info" :size="16" />
 					<span>Question management is available to mentors only. Your rotation overview is shown above.</span>
 				</div>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 	</div>
 </template>
 

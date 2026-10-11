@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createVuestic } from 'vuestic-ui'
 import CodeEditor from '@/components/student/CodeEditor.vue'
 
 describe('CodeEditor component', () => {
@@ -13,7 +12,6 @@ describe('CodeEditor component', () => {
 					python: 'def solve():\n    pass',
 				},
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		expect(wrapper.find('textarea').exists()).toBe(true)
@@ -27,7 +25,6 @@ describe('CodeEditor component', () => {
 				modelValue: 'def solve():',
 				language: 'python',
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		const textarea = wrapper.find('textarea')

@@ -1,98 +1,101 @@
 <script setup lang="ts">
 import type { DailyChallengeData } from '@/types'
+import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
 
 defineProps<{
-	challenge: DailyChallengeData | null
-	studentName: string
+  challenge: DailyChallengeData | null
+  studentName: string
 }>()
 </script>
 
 <template>
-	<div class="focus-header-bar">
-		<div>
-			<h1 class="page-title">Daily Practice</h1>
-		</div>
+  <div class="focus-header-bar">
+    <div>
+      <h1 class="page-title">Daily Practice</h1>
+    </div>
 
-		<!-- Flat status strip (no nested cards or shadows) -->
-		<div class="status-strip">
-			<div class="status-item">
-				<VaAvatar
-					size="small"
-					:color="challenge?.mcq_status === 'correct' ? 'success' : 'backgroundElement'"
-					:text-color="challenge?.mcq_status === 'correct' ? 'textInverted' : undefined"
-				>
-					<VaIcon :name="challenge?.mcq_status === 'correct' ? 'check' : 'help_outline'" size="small" />
-				</VaAvatar>
-				<span class="status-label">MCQ:</span>
-				<VaBadge
-					:text="challenge?.mcq_status === 'correct' ? 'Solved (+20 XP)' : challenge?.mcq_status === 'incorrect' ? 'Retry' : 'Pending'"
-					:color="challenge?.mcq_status === 'correct' ? 'success' : challenge?.mcq_status === 'incorrect' ? 'danger' : 'secondary'"
-				/>
-			</div>
+    <!-- Status strip with tactile pixel indicators -->
+    <div class="status-strip">
+      <div class="status-item">
+        <PixelAvatar
+          size="small"
+          :color="challenge?.mcq_status === 'correct' ? 'success' : 'secondary'"
+        >
+          <PixelIcon :name="challenge?.mcq_status === 'correct' ? 'check' : 'help'" :size="12" />
+        </PixelAvatar>
+        <span class="status-label">MCQ:</span>
+        <PixelBadge
+          :text="challenge?.mcq_status === 'correct' ? 'SOLVED (+20 XP)' : challenge?.mcq_status === 'incorrect' ? 'RETRY' : 'PENDING'"
+          :color="challenge?.mcq_status === 'correct' ? 'success' : challenge?.mcq_status === 'incorrect' ? 'danger' : 'secondary'"
+        />
+      </div>
 
-			<VaDivider vertical class="strip-divider" />
+      <div class="strip-divider" />
 
-			<div class="status-item">
-				<VaAvatar
-					size="small"
-					:color="challenge?.coding_status === 'solved' ? 'success' : 'backgroundElement'"
-					:text-color="challenge?.coding_status === 'solved' ? 'textInverted' : undefined"
-				>
-					<VaIcon :name="challenge?.coding_status === 'solved' ? 'check' : 'code'" size="small" />
-				</VaAvatar>
-				<span class="status-label">Coding:</span>
-				<VaBadge
-					:text="challenge?.coding_status === 'solved' ? 'Passed (+30 XP)' : challenge?.coding_status === 'attempted_unsolved' ? 'Attempted' : 'Pending'"
-					:color="challenge?.coding_status === 'solved' ? 'success' : challenge?.coding_status === 'attempted_unsolved' ? 'warning' : 'secondary'"
-				/>
-			</div>
-		</div>
-	</div>
+      <div class="status-item">
+        <PixelAvatar
+          size="small"
+          :color="challenge?.coding_status === 'solved' ? 'success' : 'secondary'"
+        >
+          <PixelIcon :name="challenge?.coding_status === 'solved' ? 'check' : 'code'" :size="12" />
+        </PixelAvatar>
+        <span class="status-label">Coding:</span>
+        <PixelBadge
+          :text="challenge?.coding_status === 'solved' ? 'PASSED (+30 XP)' : challenge?.coding_status === 'attempted_unsolved' ? 'ATTEMPTED' : 'PENDING'"
+          :color="challenge?.coding_status === 'solved' ? 'success' : challenge?.coding_status === 'attempted_unsolved' ? 'warning' : 'secondary'"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 .focus-header-bar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	flex-wrap: wrap;
-	gap: 1rem;
-	margin-bottom: 1.5rem;
-	padding-bottom: 1rem;
-	border-bottom: 1px solid var(--va-background-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .page-title {
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: var(--va-text-primary);
-	margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 1.75rem;
+  letter-spacing: -0.01em;
+  color: var(--pixel-text);
+  margin: 0;
 }
 
 .status-strip {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	padding: 0.5rem 0.875rem;
-	background: var(--va-background-element);
-	border: 1px solid var(--va-background-border);
-	flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background-color: var(--pixel-surface);
+  border: 2px solid var(--pixel-border);
+  box-shadow: 0 3px 0 0 var(--pixel-border-dark);
+  border-radius: 4px;
+  padding: 6px 14px;
 }
 
 .status-item {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .status-label {
-	font-size: 0.875rem;
-	font-weight: 600;
-	color: var(--va-text-primary);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--pixel-text-muted);
 }
 
 .strip-divider {
-	height: 1.25rem;
-	margin: 0 0.25rem;
+  width: 2px;
+  height: 20px;
+  background-color: var(--pixel-border);
 }
 </style>

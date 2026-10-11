@@ -1,209 +1,241 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { CodingQuestionItem } from '@/types'
+import PixelModal from '@/components/pixel/PixelModal.vue'
+import PixelButton from '@/components/pixel/PixelButton.vue'
+import PixelCard from '@/components/pixel/PixelCard.vue'
+import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import PixelSprite from '@/components/pixel/PixelSprite.vue'
 
 defineProps<{
-	visible: boolean
-	question: CodingQuestionItem | null
-	isGenerating: boolean
-	generatedCases: Array<{ input: string; expected_output: string; rationale?: string }>
+  visible: boolean
+  question: CodingQuestionItem | null
+  isGenerating: boolean
+  generatedCases: Array<{ input: string; expected_output: string; rationale?: string }>
 }>()
 
 const emit = defineEmits<{
-	(e: 'update:visible', val: boolean): void
-	(e: 'generate'): void
-	(e: 'accept', cases: Array<{ input: string; expected_output: string }>): void
+  (e: 'update:visible', val: boolean): void
+  (e: 'generate'): void
+  (e: 'accept', cases: Array<{ input: string; expected_output: string }>): void
 }>()
 
-const selectedIndices = ref<Set<number>>(new Set([0, 1, 2]))
+const selectedIndices = ref<Set<number>>(new Set())
 
 function toggleSelect(index: number): void {
-	if (selectedIndices.value.has(index)) {
-		selectedIndices.value.delete(index)
-	} else {
-		selectedIndices.value.add(index)
-	}
+  if (selectedIndices.value.has(index)) {
+    selectedIndices.value.delete(index)
+  } else {
+    selectedIndices.value.add(index)
+  }
 }
 
 function handleAccept(cases: Array<{ input: string; expected_output: string }>): void {
-	const accepted = cases.filter((_, idx) => selectedIndices.value.has(idx))
-	emit('accept', accepted)
+  const accepted = cases.filter((_, idx) => selectedIndices.value.has(idx))
+  emit('accept', accepted)
 }
 </script>
 
 <template>
-	<VaModal
-		:model-value="visible"
-		title="AI Stress-Test Case Generator"
-		ok-text="Accept Selected Cases"
-		cancel-text="Close"
-		:hide-default-actions="true"
-		@update:model-value="emit('update:visible', $event)"
-	>
-		<div class="stress-dialog-body">
-			<div class="dialog-explainer">
-				<p>
-					Targeted Gemini 2.5 Pro reasoning automatically synthesizes boundary conditions,
-					worst-case inputs, and edge traps to stress-test student solutions.
-				</p>
-			</div>
+  <PixelModal
+    :model-value="visible"
+    title="AI Stress-Test Generator"
+    max-width="640px"
+    hide-default-actions
+    @update:model-value="emit('update:visible', $event)"
+  >
+    <div class="stress-dialog-body">
+      <div class="dialog-explainer">
+        <p>
+          AI reasoning automatically synthesizes boundary conditions,
+          worst-case inputs, and edge traps to stress-test student solutions.
+        </p>
+      </div>
 
-			<div class="generate-trigger-bar">
-				<VaButton
-					:loading="isGenerating"
-					size="small"
-					icon="auto_awesome"
-					@click="emit('generate')"
-				>
-					Run AI Stress Analysis
-				</VaButton>
-			</div>
+      <div class="generate-trigger-bar">
+        <PixelButton
+          :loading="isGenerating"
+          size="small"
+          color="primary"
+          @click="emit('generate')"
+        >
+          <PixelSprite name="star" :size="14" />
+          Run AI Stress Analysis
+        </PixelButton>
+      </div>
 
-			<div v-if="generatedCases.length > 0" class="cases-results">
-				<h4 class="cases-heading">Generated Boundary Candidates</h4>
-				<VaList class="cases-list">
-					<VaCard
-						v-for="(tc, idx) in generatedCases"
-						:key="idx"
-						color="backgroundPrimary"
-						class="generated-item"
-					>
-						<VaCardContent class="case-card-content">
-							<div class="gen-header">
-								<VaCheckbox
-									:model-value="selectedIndices.has(idx)"
-									:label="`Edge Case #${idx + 1}`"
-									@update:model-value="toggleSelect(idx)"
-								/>
-								<span v-if="tc.rationale" class="gen-reason">{{ tc.rationale }}</span>
-							</div>
-							<div class="gen-io">
-								<div class="io-col">
-									<span>Input:</span>
-									<code class="code-box">{{ tc.input }}</code>
-								</div>
-								<div class="io-col">
-									<span>Expected Output:</span>
-									<code class="code-box">{{ tc.expected_output }}</code>
-								</div>
-							</div>
-						</VaCardContent>
-					</VaCard>
-				</VaList>
-			</div>
-		</div>
+      <div v-if="generatedCases.length > 0" class="cases-results">
+        <h4 class="cases-heading">Generated Boundary Candidates</h4>
+        <div class="cases-list">
+          <PixelCard
+            v-for="(tc, idx) in generatedCases"
+            :key="idx"
+            class="generated-item"
+          >
+            <PixelCardContent class="case-card-content">
+              <div class="gen-header">
+                <label class="pixel-checkbox-label" @click.prevent="toggleSelect(idx)">
+                  <span class="pixel-checkbox" :class="{ checked: selectedIndices.has(idx) }">
+                    <PixelIcon v-if="selectedIndices.has(idx)" name="check" :size="12" />
+                  </span>
+                  <span>Edge Case #{{ idx + 1 }}</span>
+                </label>
+                <span v-if="tc.rationale" class="gen-reason">{{ tc.rationale }}</span>
+              </div>
+              <div class="gen-io">
+                <div class="io-col">
+                  <span>Input:</span>
+                  <code class="code-box">{{ tc.input }}</code>
+                </div>
+                <div class="io-col">
+                  <span>Expected Output:</span>
+                  <code class="code-box">{{ tc.expected_output }}</code>
+                </div>
+              </div>
+            </PixelCardContent>
+          </PixelCard>
+        </div>
+      </div>
+    </div>
 
-		<template #footer>
-			<div class="modal-footer-actions">
-				<VaButton preset="secondary" @click="emit('update:visible', false)">
-					Cancel
-				</VaButton>
-				<VaButton
-					v-if="generatedCases.length > 0"
-					icon="check"
-					@click="handleAccept(generatedCases)"
-				>
-					Accept ({{ selectedIndices.size }})
-				</VaButton>
-			</div>
-		</template>
-	</VaModal>
+    <template #footer>
+      <div class="modal-footer-actions">
+        <PixelButton color="secondary" size="small" @click="emit('update:visible', false)">
+          Cancel
+        </PixelButton>
+        <PixelButton
+          v-if="generatedCases.length > 0"
+          color="primary"
+          size="small"
+          icon="check"
+          @click="handleAccept(generatedCases)"
+        >
+          Accept ({{ selectedIndices.size }})
+        </PixelButton>
+      </div>
+    </template>
+  </PixelModal>
 </template>
 
 <style scoped>
 .stress-dialog-body {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.dialog-explainer p {
-	font-size: 0.85rem;
-	color: var(--va-text-secondary);
-	margin: 0;
-	line-height: 1.5;
+.dialog-explainer {
+  font-size: 0.9rem;
+  color: var(--pixel-text-muted);
+  line-height: 1.5;
 }
 
 .generate-trigger-bar {
-	display: flex;
-	justify-content: flex-end;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .cases-results {
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .cases-heading {
-	font-size: 0.85rem;
-	font-weight: 700;
-	color: var(--va-text-primary);
-	margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--pixel-text);
+  margin: 0;
 }
 
 .cases-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	max-height: 320px;
-	overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 340px;
+  overflow-y: auto;
 }
 
 .generated-item {
-	border: 1px solid var(--va-background-border);
+  background-color: var(--pixel-bg-alt);
 }
 
 .case-card-content {
-	padding: 0.75rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .gen-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pixel-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--pixel-text);
+  user-select: none;
+}
+
+.pixel-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--pixel-border);
+  background-color: var(--pixel-surface);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pixel-checkbox.checked {
+  background-color: var(--pixel-btn-primary-bg);
+  border-color: var(--pixel-btn-primary-border);
 }
 
 .gen-reason {
-	color: var(--va-text-secondary);
-	font-style: italic;
-	font-size: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--pixel-text-dim);
+  font-style: italic;
 }
 
 .gen-io {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .io-col {
-	display: flex;
-	flex-direction: column;
-	gap: 0.15rem;
-}
-
-.io-col span {
-	font-size: 0.7rem;
-	color: var(--va-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .code-box {
-	background: var(--va-background-element);
-	color: var(--va-text-primary);
-	padding: 0.35rem 0.5rem;
-	font-family: monospace;
-	font-size: 0.8rem;
-	white-space: pre-wrap;
+  font-family: var(--font-mono);
+  background-color: var(--pixel-surface);
+  border: 1px solid var(--pixel-border);
+  padding: 4px 6px;
+  border-radius: 2px;
+  white-space: pre-wrap;
+  color: var(--pixel-text);
 }
 
 .modal-footer-actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
 }
 </style>

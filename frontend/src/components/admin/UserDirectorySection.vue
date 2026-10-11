@@ -195,50 +195,50 @@ function handleCommit(): void {
 		<div class="users-header">
 			<h2 class="section-title">Users Directory</h2>
 			<div class="header-actions">
-				<VaButton
+				<PixelButton
 					size="small"
 					icon="upload_file"
-					preset="secondary"
+					color="secondary"
 					@click="showImportDialog = true"
 				>
 					Import Roster
-				</VaButton>
-				<VaButton
+				</PixelButton>
+				<PixelButton
 					size="small"
 					icon="person_add"
 					@click="showCreateDialog = true"
 				>
 					Add User
-				</VaButton>
+				</PixelButton>
 			</div>
 		</div>
 
 		<!-- Filter Bar -->
 		<div class="directory-filter-bar">
-			<VaTabs v-model="filterRole">
-				<VaTab name="all">All Roles ({{ users.length }})</VaTab>
-				<VaTab name="student">Students</VaTab>
-				<VaTab name="mentor">Mentors</VaTab>
-				<VaTab name="admin">Admins</VaTab>
-			</VaTabs>
+			<PixelTabs v-model="filterRole">
+				<PixelTab name="all">All Roles ({{ users.length }})</PixelTab>
+				<PixelTab name="student">Students</PixelTab>
+				<PixelTab name="mentor">Mentors</PixelTab>
+				<PixelTab name="admin">Admins</PixelTab>
+			</PixelTabs>
 
 			<div class="search-box">
-				<VaInput
+				<PixelInput
 					v-model="searchQuery"
 					placeholder="Search by name, email, roll..."
 					clearable
 				>
 					<template #prependInner>
-						<VaIcon name="search" size="small" />
+						<PixelIcon name="search" size="small" />
 					</template>
-				</VaInput>
+				</PixelInput>
 			</div>
 		</div>
 
 		<!-- User Data Table -->
-		<VaCard v-if="filteredUsers.length > 0">
-			<VaCardContent>
-				<VaDataTable
+		<PixelCard v-if="filteredUsers.length > 0">
+			<PixelCardContent>
+				<PixelDataTable
 					:items="filteredUsers"
 					:columns="columns"
 					:per-page="perPage"
@@ -248,9 +248,9 @@ function handleCommit(): void {
 				>
 					<template #cell(name)="{ rowData }">
 						<div class="user-cell clickable-user" @click="openProfileModal(rowData as UserItem)">
-							<VaAvatar size="small" color="primary">
+							<PixelAvatar size="small" color="primary">
 								{{ (rowData as UserItem).name.charAt(0).toUpperCase() }}
-							</VaAvatar>
+							</PixelAvatar>
 							<div class="user-details">
 								<span class="user-name">{{ (rowData as UserItem).name }}</span>
 								<span class="user-email">{{ (rowData as UserItem).email }}</span>
@@ -259,7 +259,7 @@ function handleCommit(): void {
 					</template>
 
 					<template #cell(role)="{ rowData }">
-						<VaBadge
+						<PixelBadge
 							:text="(rowData as UserItem).role.toUpperCase()"
 							:color="(rowData as UserItem).role === 'admin' ? 'danger' : (rowData as UserItem).role === 'mentor' ? 'warning' : 'primary'"
 						/>
@@ -278,43 +278,43 @@ function handleCommit(): void {
 					</template>
 
 					<template #cell(is_active)="{ rowData }">
-						<VaBadge
+						<PixelBadge
 							:text="(rowData as UserItem).is_active ? 'ACTIVE' : 'INACTIVE'"
 							:color="(rowData as UserItem).is_active ? 'success' : 'secondary'"
 						/>
 					</template>
 
 					<template #cell(actions)="{ rowData }">
-						<VaButton
+						<PixelButton
 							size="small"
-							preset="plain"
+							color="secondary"
 							icon="edit"
 							title="Edit User"
 							@click="openEditModal(rowData as UserItem)"
 						/>
 					</template>
-				</VaDataTable>
+				</PixelDataTable>
 
 				<div v-if="totalPages > 1" class="table-pagination">
-					<VaPagination
+					<PixelPagination
 						v-model="currentPage"
 						:pages="totalPages"
 						:visible-pages="5"
 					/>
 				</div>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 
-		<VaCard v-else class="empty-state-card">
-			<VaCardContent class="empty-content">
-				<VaIcon name="search" size="48px" color="secondary" class="empty-icon" />
+		<PixelCard v-else class="empty-state-card">
+			<PixelCardContent class="empty-content">
+				<PixelIcon name="search" size="48px" color="secondary" class="empty-icon" />
 				<h3>No users match your filter</h3>
 				<p>Try searching with another keyword or resetting the role filter.</p>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 
 		<!-- CREATE USER MODAL -->
-		<VaModal
+		<PixelModal
 			v-model="showCreateDialog"
 			title="Create User Account"
 			ok-text="Create Account"
@@ -322,15 +322,15 @@ function handleCommit(): void {
 			:loading="isCreating"
 			@ok="handleCreate"
 		>
-			<VaForm class="dialog-form">
-				<VaInput
+			<form class="dialog-form">
+				<PixelInput
 					v-model="newName"
 					label="Full Name"
 					placeholder="John Doe"
 					required
 				/>
 
-				<VaInput
+				<PixelInput
 					v-model="newEmail"
 					type="email"
 					label="Email Address"
@@ -338,7 +338,7 @@ function handleCommit(): void {
 					required
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="newRole"
 					:options="roleOptions"
 					label="Account Role"
@@ -347,17 +347,17 @@ function handleCommit(): void {
 					required
 				/>
 
-				<VaInput
+				<PixelInput
 					v-model="newPassword"
 					type="password"
 					label="Temporary Password"
 					required
 				/>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- EDIT USER MODAL -->
-		<VaModal
+		<PixelModal
 			v-model="showEditDialog"
 			title="Edit User Account"
 			ok-text="Save Changes"
@@ -365,21 +365,21 @@ function handleCommit(): void {
 			:loading="isUpdating"
 			@ok="handleUpdate"
 		>
-			<VaForm class="dialog-form">
-				<VaInput
+			<form class="dialog-form">
+				<PixelInput
 					v-model="editName"
 					label="Full Name"
 					required
 				/>
 
-				<VaInput
+				<PixelInput
 					v-model="editEmail"
 					type="email"
 					label="Email Address"
 					required
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="editRole"
 					:options="roleOptions"
 					label="Account Role"
@@ -388,17 +388,17 @@ function handleCommit(): void {
 					required
 				/>
 
-				<VaInput
+				<PixelInput
 					v-model="editPassword"
 					type="password"
 					label="New Password (optional)"
 					placeholder="Leave blank to keep unchanged"
 				/>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- INLINE ROSTER IMPORT MODAL -->
-		<VaModal
+		<PixelModal
 			v-model="showImportDialog"
 			title="Import Student Roster (.xlsx / .csv)"
 			hide-default-actions
@@ -408,7 +408,7 @@ function handleCommit(): void {
 				<!-- Step 1: File & Target Year Upload -->
 				<div class="upload-controls-layout">
 					<div class="batch-field">
-						<VaInput
+						<PixelInput
 							v-model="targetYearBatch"
 							label="Target Year Batch"
 							placeholder="e.g. 2026"
@@ -416,7 +416,7 @@ function handleCommit(): void {
 					</div>
 
 					<div class="file-field">
-						<VaFileUpload
+						<PixelFileUpload
 							v-model="uploadedFiles"
 							dropzone
 							file-types=".xlsx,.csv"
@@ -426,14 +426,14 @@ function handleCommit(): void {
 					</div>
 
 					<div class="action-field">
-						<VaButton
+						<PixelButton
 							:loading="isUploadingSheet"
 							:disabled="!selectedFile || !targetYearBatch.trim()"
 							icon="auto_awesome"
 							@click="handleUpload"
 						>
 							Analyze Spreadsheet
-						</VaButton>
+						</PixelButton>
 					</div>
 				</div>
 
@@ -441,28 +441,28 @@ function handleCommit(): void {
 				<div v-if="importJob" class="mapping-section">
 					<div class="mapping-header">
 						<h4 class="subsection-title">Column Mapping</h4>
-						<VaBadge
+						<PixelBadge
 							:text="`AI Confidence: ${Math.round((importJob.inferred_mapping.confidence || 0) * 100)}%`"
 							color="success"
 						/>
 					</div>
 
 					<div class="mapping-selectors">
-						<VaSelect
+						<PixelSelect
 							v-model="customColumnMapping.name"
 							:options="columnDropdownOptions"
 							label="Full Name Column"
 							value-by="value"
 							text-by="label"
 						/>
-						<VaSelect
+						<PixelSelect
 							v-model="customColumnMapping.email"
 							:options="columnDropdownOptions"
 							label="Email Address Column"
 							value-by="value"
 							text-by="label"
 						/>
-						<VaSelect
+						<PixelSelect
 							v-model="customColumnMapping.roll_number"
 							:options="columnDropdownOptions"
 							label="Roll Number Column"
@@ -474,7 +474,7 @@ function handleCommit(): void {
 					<!-- Sample Data Preview -->
 					<div class="sample-preview">
 						<span class="preview-title">Sample Data Preview</span>
-						<VaDataTable
+						<PixelDataTable
 							:items="sampleTableItems"
 							:columns="sampleTableColumns"
 							striped
@@ -483,55 +483,52 @@ function handleCommit(): void {
 					</div>
 
 					<div class="commit-action">
-						<VaButton
+						<PixelButton
 							:loading="isCommittingImport"
 							icon="check"
 							@click="handleCommit"
 						>
 							Confirm & Import Roster
-						</VaButton>
+						</PixelButton>
 					</div>
 				</div>
 
 				<!-- Step 3: Import Results -->
 				<div v-if="importSummary" class="summary-section">
 					<div class="summary-head">
-						<VaIcon name="check_circle" color="success" size="large" />
+						<PixelIcon name="check_circle" color="success" size="large" />
 						<h4 class="summary-title">Import Summary</h4>
 					</div>
 
 					<div class="summary-stats-row">
-						<VaBadge
+						<PixelBadge
 							:text="`${importSummary.imported_count} Students Imported`"
 							color="success"
 						/>
-						<VaBadge
+						<PixelBadge
 							v-if="importSummary.skipped_count > 0"
 							:text="`${importSummary.skipped_count} Skipped / Duplicates`"
 							color="warning"
 						/>
 					</div>
 
-					<VaAlert v-if="importSummary.errors.length > 0" color="danger" border="left" class="errors-alert">
-						<template #icon>
-							<VaIcon name="warning" />
-						</template>
+					<PixelAlert v-if="importSummary.errors.length > 0" color="danger" class="errors-alert">
 						<div class="errors-box">
 							<strong class="errors-title">Skipped Entries Log:</strong>
 							<ul class="errors-list">
 								<li v-for="(err, eIdx) in importSummary.errors" :key="eIdx">{{ err }}</li>
 							</ul>
 						</div>
-					</VaAlert>
+					</PixelAlert>
 				</div>
 
 				<div class="modal-footer">
-					<VaButton preset="secondary" @click="showImportDialog = false">
+					<PixelButton color="secondary" @click="showImportDialog = false">
 						Close
-					</VaButton>
+					</PixelButton>
 				</div>
 			</div>
-		</VaModal>
+		</PixelModal>
 
 		<!-- USER PROFILE MODAL -->
 		<UserProfileModal

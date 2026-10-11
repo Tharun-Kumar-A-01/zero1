@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createVuestic } from 'vuestic-ui'
 import McqChallengeCard from '@/components/student/McqChallengeCard.vue'
 import type { MCQQuestionData, DailyChallengeData } from '@/types'
 
@@ -31,7 +30,6 @@ describe('McqChallengeCard component', () => {
 				explanation: null,
 				isSubmitting: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		expect(wrapper.text()).toContain('What is the time complexity of binary search?')
@@ -47,7 +45,6 @@ describe('McqChallengeCard component', () => {
 				explanation: null,
 				isSubmitting: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		const options = wrapper.findAll('.option-tile')
@@ -77,7 +74,6 @@ describe('McqChallengeCard component', () => {
 				explanation: 'Binary search halves the search space each step.',
 				isSubmitting: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		expect(wrapper.text()).toContain('Aptitude challenge verified (+20 XP).')
@@ -92,7 +88,6 @@ describe('McqChallengeCard component', () => {
 				explanation: null,
 				isSubmitting: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		const radioIndicators = wrapper.findAll('.radio-indicator')

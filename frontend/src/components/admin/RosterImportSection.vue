@@ -96,11 +96,11 @@ function handleCommit(): void {
 		</div>
 
 		<!-- Single Clean Upload Card -->
-		<VaCard class="upload-main-card">
-			<VaCardContent>
+		<PixelCard class="upload-main-card">
+			<PixelCardContent>
 				<div class="upload-controls-layout">
 					<div class="batch-field">
-						<VaInput
+						<PixelInput
 							v-model="targetYearBatch"
 							label="Target Year Batch"
 							placeholder="e.g. 2026"
@@ -108,7 +108,7 @@ function handleCommit(): void {
 					</div>
 
 					<div class="file-field">
-						<VaFileUpload
+						<PixelFileUpload
 							v-model="uploadedFiles"
 							dropzone
 							file-types=".xlsx,.csv"
@@ -118,14 +118,14 @@ function handleCommit(): void {
 					</div>
 
 					<div class="action-field">
-						<VaButton
+						<PixelButton
 							:loading="isUploading"
 							:disabled="!selectedFile || !targetYearBatch.trim()"
-							icon="auto_awesome"
+							icon="star"
 							@click="handleUpload"
 						>
 							Analyze Spreadsheet
-						</VaButton>
+						</PixelButton>
 					</div>
 				</div>
 
@@ -133,28 +133,28 @@ function handleCommit(): void {
 				<div v-if="importJob" class="mapping-section">
 					<div class="mapping-header">
 						<h3 class="subsection-title">Column Mapping</h3>
-						<VaBadge
+						<PixelBadge
 							:text="`AI Confidence: ${Math.round((importJob.inferred_mapping.confidence || 0) * 100)}%`"
 							color="success"
 						/>
 					</div>
 
 					<div class="mapping-selectors">
-						<VaSelect
+						<PixelSelect
 							v-model="customColumnMapping.name"
 							:options="columnDropdownOptions"
 							label="Full Name Column"
 							value-by="value"
 							text-by="label"
 						/>
-						<VaSelect
+						<PixelSelect
 							v-model="customColumnMapping.email"
 							:options="columnDropdownOptions"
 							label="Email Address Column"
 							value-by="value"
 							text-by="label"
 						/>
-						<VaSelect
+						<PixelSelect
 							v-model="customColumnMapping.roll_number"
 							:options="columnDropdownOptions"
 							label="Roll Number Column"
@@ -166,7 +166,7 @@ function handleCommit(): void {
 					<!-- Sample Data Preview -->
 					<div class="sample-preview">
 						<h4 class="preview-title">Sample Data Preview</h4>
-						<VaDataTable
+						<PixelDataTable
 							:items="sampleTableItems"
 							:columns="sampleTableColumns"
 							striped
@@ -175,38 +175,38 @@ function handleCommit(): void {
 					</div>
 
 					<div class="commit-action">
-						<VaButton
+						<PixelButton
 							:loading="isCommitting"
 							icon="check"
 							@click="handleCommit"
 						>
 							Confirm & Import Roster
-						</VaButton>
+						</PixelButton>
 					</div>
 				</div>
 
 				<!-- Step 3: Import Results (Flat panel) -->
 				<div v-if="summary" class="summary-section">
 					<div class="summary-head">
-						<VaIcon name="check_circle" color="success" size="large" />
+						<PixelIcon name="check_circle" color="success" size="large" />
 						<h3 class="summary-title">Import Summary</h3>
 					</div>
 
 					<div class="summary-stats-row">
-						<VaBadge
+						<PixelBadge
 							:text="`${summary.imported_count} Students Imported`"
 							color="success"
 						/>
-						<VaBadge
+						<PixelBadge
 							v-if="summary.skipped_count > 0"
 							:text="`${summary.skipped_count} Skipped / Duplicates`"
 							color="warning"
 						/>
 					</div>
 
-					<VaAlert v-if="summary.errors.length > 0" color="danger" border="left" class="errors-alert">
+					<PixelAlert v-if="summary.errors.length > 0" color="danger" border="left" class="errors-alert">
 						<template #icon>
-							<VaIcon name="warning" />
+							<PixelIcon name="warning" />
 						</template>
 						<div class="errors-box">
 							<strong class="errors-title">Skipped Entries Log:</strong>
@@ -214,10 +214,10 @@ function handleCommit(): void {
 								<li v-for="(err, eIdx) in summary.errors" :key="eIdx">{{ err }}</li>
 							</ul>
 						</div>
-					</VaAlert>
+					</PixelAlert>
 				</div>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 	</div>
 </template>
 

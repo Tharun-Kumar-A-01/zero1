@@ -2,226 +2,237 @@
 import { ref } from 'vue'
 import type { DailyChallengeData, MCQQuestionData } from '@/types'
 import { getDifficultyColor } from '@/utils/text'
+import PixelCard from '@/components/pixel/PixelCard.vue'
+import PixelCardTitle from '@/components/pixel/PixelCardTitle.vue'
+import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
+import PixelCardActions from '@/components/pixel/PixelCardActions.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
+import PixelButton from '@/components/pixel/PixelButton.vue'
+import PixelAlert from '@/components/pixel/PixelAlert.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import PixelSprite from '@/components/pixel/PixelSprite.vue'
 
 const props = defineProps<{
-	challenge: DailyChallengeData | null
-	mcq: MCQQuestionData | null
-	explanation: string | null
-	isSubmitting: boolean
+  challenge: DailyChallengeData | null
+  mcq: MCQQuestionData | null
+  explanation: string | null
+  isSubmitting: boolean
 }>()
 
 const emit = defineEmits<{
-	(e: 'submit', optionIndex: number): void
+  (e: 'submit', optionIndex: number): void
 }>()
 
 const selectedOption = ref<number | null>(null)
 
 function handleSelect(index: number): void {
-	if (props.challenge?.mcq_status === 'correct') return
-	selectedOption.value = index
+  if (props.challenge?.mcq_status === 'correct') return
+  selectedOption.value = index
 }
 
 function handleSubmit(): void {
-	if (selectedOption.value !== null) {
-		emit('submit', selectedOption.value)
-	}
+  if (selectedOption.value !== null) {
+    emit('submit', selectedOption.value)
+  }
 }
 </script>
 
 <template>
-	<VaCard class="challenge-card">
-		<VaCardTitle class="card-header-row">
-			<div class="question-meta-group">
-				<VaBadge text="APTITUDE MCQ" color="primary">
-					<template #prepend>
-						<VaIcon name="psychology" size="small" />
-					</template>
-				</VaBadge>
-				<VaBadge
-					v-if="mcq?.difficulty"
-					:text="mcq.difficulty.toUpperCase()"
-					:color="getDifficultyColor(mcq.difficulty)"
-				/>
-			</div>
-		</VaCardTitle>
+  <PixelCard class="challenge-card">
+    <PixelCardTitle class="card-header-row">
+      <div class="question-meta-group">
+        <PixelBadge text="APTITUDE MCQ" color="primary" />
+        <PixelBadge
+          v-if="mcq?.difficulty"
+          :text="mcq.difficulty.toUpperCase()"
+          :color="getDifficultyColor(mcq.difficulty)"
+        />
+        <PixelBadge text="+20 XP" color="warning" />
+      </div>
+    </PixelCardTitle>
 
-		<VaCardContent>
-			<div v-if="mcq" class="mcq-body">
-				<p class="question-stem">{{ mcq.prompt_text }}</p>
+    <PixelCardContent>
+      <div v-if="mcq" class="mcq-body">
+        <p class="question-stem">{{ mcq.prompt_text }}</p>
 
-				<div class="options-container">
-					<div
-						v-for="(opt, idx) in mcq.options"
-						:key="idx"
-						class="option-tile"
-						:class="{
-							selected: selectedOption === idx,
-							disabled: challenge?.mcq_status === 'correct'
-						}"
-						@click="handleSelect(idx)"
-					>
-						<div class="radio-indicator" :class="{ checked: selectedOption === idx }">
-							<div v-if="selectedOption === idx" class="radio-dot" />
-						</div>
-						<VaBadge
-							:text="String.fromCharCode(65 + idx)"
-							color="backgroundElement"
-						/>
-						<span class="option-text">{{ opt }}</span>
-					</div>
-				</div>
+        <div class="options-container">
+          <div
+            v-for="(opt, idx) in mcq.options"
+            :key="idx"
+            class="option-tile"
+            :class="{
+              selected: selectedOption === idx,
+              disabled: challenge?.mcq_status === 'correct',
+            }"
+            @click="handleSelect(idx)"
+          >
+            <div class="radio-indicator" :class="{ checked: selectedOption === idx }">
+              <div v-if="selectedOption === idx" class="radio-dot" />
+            </div>
+            <PixelBadge
+              :text="String.fromCharCode(65 + idx)"
+              color="secondary"
+            />
+            <span class="option-text">{{ opt }}</span>
+          </div>
+        </div>
 
-				<VaAlert
-					v-if="explanation"
-					color="info"
-					border="top"
-					class="explanation-box"
-				>
-					<template #icon>
-						<VaIcon name="info" />
-					</template>
-					<strong>Explanation:</strong> {{ explanation }}
-				</VaAlert>
+        <PixelAlert
+          v-if="explanation"
+          color="info"
+          class="explanation-box"
+        >
+          <strong>Explanation:</strong> {{ explanation }}
+        </PixelAlert>
 
-				<VaCardActions class="action-footer">
-					<VaButton
-						v-if="challenge?.mcq_status !== 'correct'"
-						:disabled="selectedOption === null"
-						:loading="isSubmitting"
-						icon="check"
-						@click="handleSubmit"
-					>
-						Submit Answer
-					</VaButton>
-					<div v-else class="completed-msg">
-						<VaIcon name="check_circle" color="success" />
-						<span>Aptitude challenge verified (+20 XP).</span>
-					</div>
-				</VaCardActions>
-			</div>
+        <PixelCardActions class="action-footer">
+          <PixelButton
+            v-if="challenge?.mcq_status !== 'correct'"
+            color="primary"
+            :disabled="selectedOption === null"
+            :loading="isSubmitting"
+            icon="check"
+            @click="handleSubmit"
+          >
+            Submit Answer
+          </PixelButton>
+          <div v-else class="completed-msg">
+            <PixelIcon name="check" :size="16" color="#34d399" />
+            <span>Aptitude challenge verified (+20 XP).</span>
+          </div>
+        </PixelCardActions>
+      </div>
 
-			<div v-else class="empty-state">
-				<VaIcon name="inbox" size="48px" color="secondary" class="empty-icon" />
-				<p>No MCQ question assigned for today yet.</p>
-			</div>
-		</VaCardContent>
-	</VaCard>
+      <div v-else class="empty-state">
+        <PixelSprite name="scroll" :size="36" class="empty-icon" />
+        <p>No MCQ question assigned for today yet.</p>
+      </div>
+    </PixelCardContent>
+  </PixelCard>
 </template>
 
 <style scoped>
-.challenge-card {
-	border: 1px solid var(--va-background-border);
-}
-
 .card-header-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	flex-wrap: wrap;
-	gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .question-meta-group {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mcq-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .question-stem {
-	font-size: 1.05rem;
-	line-height: 1.6;
-	margin-bottom: 1.25rem;
-	color: var(--va-text-primary);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--pixel-text);
+  margin: 0;
 }
 
 .options-container {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .option-tile {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	border: 1px solid var(--va-background-border);
-	border-radius: 6px;
-	padding: 0.75rem 1rem;
-	cursor: pointer;
-	transition: all 0.15s ease;
-	background: var(--va-background-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 10px 14px;
+  background-color: var(--pixel-surface-alt);
+  border: 2px solid var(--pixel-border);
+  box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.08s ease;
 }
 
 .option-tile:hover:not(.disabled) {
-	border-color: var(--va-primary);
-	background: var(--va-background-primary);
+  background-color: var(--pixel-surface-raised);
+  border-color: var(--pixel-border-bright);
 }
 
 .option-tile.selected {
-	border-color: var(--va-primary);
-	background: var(--va-background-element);
+  border-color: var(--pixel-btn-primary-bg);
+  background-color: rgba(90, 50, 163, 0.2);
+  box-shadow: 0 3px 0 0 var(--pixel-btn-primary-shade);
+  transform: translateY(-1px);
 }
 
 .option-tile.disabled {
-	cursor: default;
+  cursor: default;
+  opacity: 0.7;
 }
 
 .radio-indicator {
-	width: 18px;
-	height: 18px;
-	border-radius: 50%;
-	border: 2px solid var(--va-background-border);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	transition: all 0.2s ease;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 2px solid var(--pixel-border);
+  background-color: var(--pixel-bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .radio-indicator.checked {
-	border-color: var(--va-primary);
+  border-color: var(--pixel-btn-primary-bg);
+  background-color: var(--pixel-btn-primary-shade);
 }
 
 .radio-dot {
-	width: 10px;
-	height: 10px;
-	border-radius: 50%;
-	background-color: var(--va-primary);
+  width: 6px;
+  height: 6px;
+  background-color: #fff;
+  border-radius: 1px;
 }
 
 .option-text {
-	color: var(--va-text-primary);
-	font-size: 0.95rem;
+  font-size: 0.95rem;
+  color: var(--pixel-text);
+  line-height: 1.4;
 }
 
 .explanation-box {
-	margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .action-footer {
-	padding: 1rem 0 0;
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
+  padding: 0;
+  margin-top: 0.5rem;
+  background: transparent;
+  border-top: none;
 }
 
 .completed-msg {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	color: var(--va-success);
-	font-weight: 600;
-	font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: #34d399;
 }
 
 .empty-state {
-	text-align: center;
-	padding: 3rem 1rem;
-	color: var(--va-text-secondary);
-}
-
-.empty-icon {
-	margin-bottom: 0.5rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--pixel-text-dim);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 </style>

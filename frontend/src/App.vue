@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
+import PixelToastContainer from '@/components/pixel/PixelToastContainer.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -19,6 +20,7 @@ onMounted(async (): Promise<void> => {
 		<main class="app-main-content">
 			<RouterView />
 		</main>
+		<PixelToastContainer />
 	</div>
 </template>
 
@@ -27,6 +29,7 @@ onMounted(async (): Promise<void> => {
 	display: flex;
 	min-height: 100vh;
 	width: 100%;
+	background-color: var(--pixel-bg);
 }
 
 .app-main-content {
@@ -35,6 +38,6 @@ onMounted(async (): Promise<void> => {
 	flex-direction: column;
 	width: 100%;
 	min-width: 0;
-	background-color: var(--va-background-primary);
+	background-color: var(--pixel-bg);
 }
 </style>

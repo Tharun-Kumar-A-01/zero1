@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useToast } from 'vuestic-ui'
+import { usePixelToast } from '@/components/pixel/usePixelToast'
+import PixelTabs from '@/components/pixel/PixelTabs.vue'
+import PixelTab from '@/components/pixel/PixelTab.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
 
 import api from '@/services/api'
 import type { UserItem, RotationItem, CustomLeaveItem, ImportJobResponse } from '@/types'
@@ -8,7 +11,7 @@ import AdminHubBanner from '@/components/admin/AdminHubBanner.vue'
 import MentorScheduleSection from '@/components/admin/MentorScheduleSection.vue'
 import UserDirectorySection from '@/components/admin/UserDirectorySection.vue'
 
-const { init: notify } = useToast()
+const { init: notify } = usePixelToast()
 
 const activeTab = ref<'rotations' | 'users'>('users')
 const isLoading = ref<boolean>(true)
@@ -262,18 +265,16 @@ onMounted(async (): Promise<void> => {
 		/>
 
 		<!-- Section Tabs -->
-		<VaTabs v-model="activeTab" class="admin-tabs">
-			<template #tabs>
-				<VaTab name="users">
-					<VaIcon name="people" size="small" class="tab-icon" />
-					User Directory ({{ users.length }})
-				</VaTab>
-				<VaTab name="rotations">
-					<VaIcon name="calendar_month" size="small" class="tab-icon" />
-					Mentor Schedule ({{ rotations.length }})
-				</VaTab>
-			</template>
-		</VaTabs>
+		<PixelTabs v-model="activeTab" class="admin-tabs">
+			<PixelTab name="users">
+				<PixelIcon name="user" :size="14" class="tab-icon" />
+				User Directory ({{ users.length }})
+			</PixelTab>
+			<PixelTab name="rotations">
+				<PixelIcon name="calendar" :size="14" class="tab-icon" />
+				Mentor Schedule ({{ rotations.length }})
+			</PixelTab>
+		</PixelTabs>
 
 		<!-- SECTION 1: USER DIRECTORY (WITH INLINE ROSTER IMPORT & USER EDITING) -->
 		<UserDirectorySection

@@ -2,130 +2,153 @@
 import { computed } from 'vue'
 import type { LeaderboardEntry } from '@/types'
 import XpStarBadge from '@/components/common/XpStarBadge.vue'
+import PixelCard from '@/components/pixel/PixelCard.vue'
+import PixelCardTitle from '@/components/pixel/PixelCardTitle.vue'
+import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
+import PixelSprite from '@/components/pixel/PixelSprite.vue'
 
 const props = defineProps<{
-	leaderboard: LeaderboardEntry[]
-	currentUserId?: number
+  leaderboard: LeaderboardEntry[]
+  currentUserId?: number
 }>()
 
 // Sort ascending by rank so rank 1 (highest XP) is always at top
 const sortedLeaderboard = computed<LeaderboardEntry[]>(() =>
-	[...props.leaderboard].sort((a, b) => a.rank - b.rank).slice(0, 5)
+  [...props.leaderboard].sort((a, b) => a.rank - b.rank).slice(0, 5),
 )
 </script>
 
 <template>
-	<VaCard class="cohort-card">
-		<VaCardTitle class="tracker-header">
-			<VaIcon name="people" color="primary" />
-			<span class="tracker-title">Top Peers (Batch)</span>
-		</VaCardTitle>
+  <PixelCard class="cohort-card">
+    <PixelCardTitle class="tracker-header">
+      <PixelSprite name="crown" :size="18" />
+      <span class="tracker-title">Top Peers (Cohort)</span>
+    </PixelCardTitle>
 
-		<VaCardContent>
-			<VaList class="peer-list">
-				<VaListItem
-					v-for="entry in sortedLeaderboard"
-					:key="entry.student_id"
-					class="peer-item"
-					:class="{ 'is-me': entry.student_id === currentUserId }"
-				>
-					<VaListItemSection avatar class="peer-rank-section">
-						<VaIcon v-if="entry.rank === 1" name="military_tech" color="warning" size="22px" />
-						<VaIcon v-else-if="entry.rank === 2" name="military_tech" color="secondary" size="22px" />
-						<VaIcon v-else-if="entry.rank === 3" name="military_tech" color="warning" size="22px" />
-						<span v-else class="peer-rank-num">#{{ entry.rank }}</span>
-					</VaListItemSection>
+    <PixelCardContent>
+      <div class="peer-list">
+        <div
+          v-for="entry in sortedLeaderboard"
+          :key="entry.student_id"
+          class="peer-item"
+          :class="{ 'is-me': entry.student_id === currentUserId }"
+        >
+          <div class="peer-rank-section">
+            <PixelSprite v-if="entry.rank === 1" name="crown" :size="20" />
+            <PixelSprite v-else-if="entry.rank === 2" name="silver" :size="20" />
+            <PixelSprite v-else-if="entry.rank === 3" name="bronze" :size="20" />
+            <span v-else class="peer-rank-num">#{{ entry.rank }}</span>
+          </div>
 
-					<VaListItemSection>
-						<VaListItemLabel class="peer-name">
-							{{ entry.name }}
-						</VaListItemLabel>
-						<VaListItemLabel caption>
-							{{ entry.roll_number || 'Student' }}
-						</VaListItemLabel>
-					</VaListItemSection>
+          <div class="peer-info">
+            <span class="peer-name">
+              {{ entry.name }}
+            </span>
+            <span class="peer-roll">
+              {{ entry.roll_number || 'Student' }}
+            </span>
+          </div>
 
-					<VaListItemSection icon class="peer-stats">
-						<XpStarBadge :points="entry.total_points" size="small" />
-						<span class="peer-streak">
-							<VaIcon name="local_fire_department" size="small" class="streak-fire-icon" />
-							<span>{{ entry.current_streak }}d</span>
-						</span>
-					</VaListItemSection>
-				</VaListItem>
-			</VaList>
-		</VaCardContent>
-	</VaCard>
+          <div class="peer-stats">
+            <XpStarBadge :points="entry.total_points" size="small" />
+            <span class="peer-streak">
+              <PixelSprite name="flame" :size="14" />
+              <span>{{ entry.current_streak }}d</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </PixelCardContent>
+  </PixelCard>
 </template>
 
 <style scoped>
-.cohort-card {
-	border: 1px solid var(--va-background-border);
-}
-
 .tracker-header {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .tracker-title {
-	font-size: 1.05rem;
-	font-weight: 700;
-	color: var(--va-text-primary);
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pixel-text);
 }
 
 .peer-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .peer-item {
-	padding: 0.4rem 0.5rem;
-	transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background-color: var(--pixel-surface-alt);
+  border: 1px solid var(--pixel-border);
+  border-radius: 3px;
+  transition: transform 0.1s;
 }
 
 .peer-item.is-me {
-	background: var(--va-background-element);
-	border: 1px solid var(--va-primary);
+  border-color: var(--pixel-btn-primary-bg);
+  background-color: rgba(90, 50, 163, 0.18);
 }
 
 .peer-rank-section {
-	min-width: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .peer-rank-num {
-	font-size: 0.85rem;
-	font-weight: 700;
-	color: var(--va-text-secondary);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--pixel-text-dim);
+}
+
+.peer-info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
 }
 
 .peer-name {
-	font-weight: 600;
-	font-size: 0.88rem;
-	color: var(--va-text-primary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--pixel-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.peer-streak {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.15rem;
-	font-size: 0.78rem;
-	font-weight: 700;
-	color: var(--va-text-secondary);
-}
-
-.streak-fire-icon {
-	color: var(--va-warning);
+.peer-roll {
+  font-size: 11px;
+  color: var(--pixel-text-dim);
 }
 
 .peer-stats {
-	display: flex;
-	align-items: center;
-	gap: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.peer-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: #fbbf24;
 }
 </style>

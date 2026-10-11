@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createVuestic } from 'vuestic-ui'
 import TestcaseConsole from '@/components/student/TestcaseConsole.vue'
 import type { SampleTestCase, CodeSubmissionResult } from '@/types'
 
@@ -17,7 +16,6 @@ describe('TestcaseConsole component', () => {
 				executionResult: null,
 				isCollapsed: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		expect(wrapper.text()).toContain('Testcase')
@@ -49,7 +47,6 @@ describe('TestcaseConsole component', () => {
 				executionResult: result,
 				isCollapsed: false,
 			},
-			global: { plugins: [createVuestic()] },
 		})
 
 		// Switch to Test Result tab

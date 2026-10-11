@@ -78,7 +78,7 @@ function insertLinePrefix(prefix: string): void {
 					:class="{ active: activeTab === 'write' }"
 					@click="activeTab = 'write'"
 				>
-					<VaIcon name="edit" size="14px" />
+					<PixelIcon name="edit" :size="14" />
 					Write
 				</button>
 				<button
@@ -87,7 +87,7 @@ function insertLinePrefix(prefix: string): void {
 					:class="{ active: activeTab === 'preview' }"
 					@click="activeTab = 'preview'"
 				>
-					<VaIcon name="visibility" size="14px" />
+					<PixelIcon name="visibility" :size="14" />
 					Preview
 				</button>
 			</div>
@@ -101,7 +101,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Bold"
 				@click="applyFormat('**', '**', 'bold text')"
 			>
-				<VaIcon name="format_bold" size="16px" />
+				<PixelIcon name="format_bold" :size="16" />
 			</button>
 			<button
 				type="button"
@@ -109,7 +109,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Italic"
 				@click="applyFormat('*', '*', 'italic text')"
 			>
-				<VaIcon name="format_italic" size="16px" />
+				<PixelIcon name="format_italic" :size="16" />
 			</button>
 			<button
 				type="button"
@@ -117,7 +117,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Heading 3"
 				@click="insertLinePrefix('### ')"
 			>
-				<VaIcon name="title" size="16px" />
+				<PixelIcon name="title" :size="16" />
 			</button>
 			<span class="toolbar-divider"></span>
 			<button
@@ -126,7 +126,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Inline Code"
 				@click="applyFormat('`', '`', 'code')"
 			>
-				<VaIcon name="code" size="16px" />
+				<PixelIcon name="code" :size="16" />
 			</button>
 			<button
 				type="button"
@@ -134,7 +134,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Code Block"
 				@click="applyFormat('```\n', '\n```', '// code block')"
 			>
-				<VaIcon name="integration_instructions" size="16px" />
+				<PixelIcon name="integration_instructions" :size="16" />
 			</button>
 			<span class="toolbar-divider"></span>
 			<button
@@ -143,7 +143,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Bullet List"
 				@click="insertLinePrefix('- ')"
 			>
-				<VaIcon name="format_list_bulleted" size="16px" />
+				<PixelIcon name="format_list_bulleted" :size="16" />
 			</button>
 			<button
 				type="button"
@@ -151,7 +151,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Numbered List"
 				@click="insertLinePrefix('1. ')"
 			>
-				<VaIcon name="format_list_numbered" size="16px" />
+				<PixelIcon name="format_list_numbered" :size="16" />
 			</button>
 		</div>
 

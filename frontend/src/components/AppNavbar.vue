@@ -2,221 +2,214 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useColors } from 'vuestic-ui'
+import PixelButton from '@/components/pixel/PixelButton.vue'
+import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
+import PixelSprite from '@/components/pixel/PixelSprite.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { applyPreset } = useColors()
 
-const isDark = ref<boolean>(false)
+const isDark = ref<boolean>(true)
 
 function toggleTheme(): void {
-	isDark.value = !isDark.value
-	const preset = isDark.value ? 'dark' : 'light'
-	applyPreset(preset)
-	if (isDark.value) {
-		document.documentElement.classList.add('dark')
-		localStorage.setItem('theme', 'dark')
-	} else {
-		document.documentElement.classList.remove('dark')
-		localStorage.setItem('theme', 'light')
-	}
+  isDark.value = !isDark.value
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+    localStorage.setItem('theme', 'dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+    localStorage.setItem('theme', 'light')
+  }
 }
 
 onMounted(() => {
-	const saved = localStorage.getItem('theme')
-	if (saved === 'dark' || (!saved && typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-		isDark.value = true
-		applyPreset('dark')
-		document.documentElement.classList.add('dark')
-	} else {
-		isDark.value = false
-		applyPreset('light')
-		document.documentElement.classList.remove('dark')
-	}
+  const saved = localStorage.getItem('theme')
+  if (saved === 'dark' || (!saved && typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDark.value = true
+    document.documentElement.classList.add('dark')
+  } else {
+    isDark.value = false
+    document.documentElement.classList.remove('dark')
+  }
 })
 
 function handleLogout(): void {
-	authStore.logout()
-	router.push('/login')
+  authStore.logout()
+  router.push('/login')
 }
 </script>
 
 <template>
-	<VaNavbar class="app-navbar" color="backgroundSecondary">
-		<template #left>
-			<VaNavbarItem class="brand-item" @click="router.push('/')">
-				<VaIcon name="code" size="large" color="primary" />
-				<span class="brand-title">zero1</span>
-			</VaNavbarItem>
-		</template>
+  <header class="app-navbar">
+    <div class="navbar-left">
+      <div class="brand-item" @click="router.push('/')">
+        <PixelSprite name="sword" :size="24" />
+        <span class="brand-title">ZERO1</span>
+      </div>
+    </div>
 
-		<template #center>
-			<VaNavbarItem v-if="authStore.isAuthenticated" class="nav-links">
-				<template v-if="authStore.userRole === 'student'">
-					<VaButton
-						preset="secondary"
-						size="small"
-						icon="event_available"
-						@click="router.push('/student')"
-					>
-						Daily Challenge
-					</VaButton>
-					<VaButton
-						preset="secondary"
-						size="small"
-						icon="emoji_events"
-						@click="router.push('/leaderboard')"
-					>
-						Leaderboard
-					</VaButton>
-					<VaButton
-						preset="secondary"
-						size="small"
-						icon="account_circle"
-						@click="router.push('/profile')"
-					>
-						Profile
-					</VaButton>
-				</template>
+    <div class="navbar-center">
+      <div v-if="authStore.isAuthenticated" class="nav-links">
+        <template v-if="authStore.userRole === 'student'">
+          <PixelButton
+            color="secondary"
+            size="small"
+            icon="calendar"
+            @click="router.push('/student')"
+          >
+            Daily Challenge
+          </PixelButton>
+          <PixelButton
+            color="secondary"
+            size="small"
+            icon="trophy"
+            @click="router.push('/leaderboard')"
+          >
+            Leaderboard
+          </PixelButton>
+          <PixelButton
+            color="secondary"
+            size="small"
+            icon="user"
+            @click="router.push('/profile')"
+          >
+            Profile
+          </PixelButton>
+        </template>
 
-				<template v-if="authStore.userRole === 'mentor'">
-					<VaButton
-						preset="secondary"
-						size="small"
-						icon="edit_note"
-						@click="router.push('/mentor')"
-					>
-						My Question Set
-					</VaButton>
-				</template>
+        <template v-if="authStore.userRole === 'mentor'">
+          <PixelButton
+            color="secondary"
+            size="small"
+            icon="edit"
+            @click="router.push('/mentor')"
+          >
+            Question Set
+          </PixelButton>
+        </template>
 
-				<template v-if="authStore.userRole === 'admin'">
-					<VaButton
-						preset="secondary"
-						size="small"
-						icon="tune"
-						@click="router.push('/admin')"
-					>
-						Admin Dashboard
-					</VaButton>
-					<VaButton
-						preset="secondary"
-						size="small"
-						icon="emoji_events"
-						@click="router.push('/leaderboard')"
-					>
-						Leaderboard
-					</VaButton>
-				</template>
-			</VaNavbarItem>
-		</template>
+        <template v-if="authStore.userRole === 'admin'">
+          <PixelButton
+            color="secondary"
+            size="small"
+            icon="settings"
+            @click="router.push('/admin')"
+          >
+            Admin Hub
+          </PixelButton>
+        </template>
+      </div>
+    </div>
 
-		<template #right>
-			<VaNavbarItem class="user-actions">
-				<!-- Student Gamification Badges -->
-				<template v-if="authStore.userRole === 'student' && authStore.user">
-					<VaBadge
-						:text="`${authStore.user.current_streak ?? 0}d`"
-						color="warning"
-						title="Current Daily Streak"
-					>
-						<template #prepend>
-							<VaIcon name="local_fire_department" size="small" />
-						</template>
-					</VaBadge>
-					<VaBadge
-						:text="`${authStore.user.total_points ?? 0} pts`"
-						color="primary"
-						title="Total Reward Points"
-					>
-						<template #prepend>
-							<VaIcon name="star" size="small" />
-						</template>
-					</VaBadge>
-				</template>
+    <div class="navbar-right">
+      <PixelButton
+        color="secondary"
+        size="small"
+        @click="toggleTheme"
+      >
+        <PixelIcon :name="isDark ? 'star' : 'heart'" :size="14" />
+      </PixelButton>
 
-				<!-- User Tag -->
-				<template v-if="authStore.isAuthenticated && authStore.user">
-					<div class="user-pill-clickable" @click="router.push('/profile')">
-						<span class="user-name">{{ authStore.user.name }}</span>
-						<VaBadge
-							:text="authStore.user.role.toUpperCase()"
-							:color="authStore.user.role === 'admin' ? 'danger' : authStore.user.role === 'mentor' ? 'warning' : 'info'"
-						/>
-					</div>
-				</template>
-
-				<!-- Dark / Light Theme Toggle -->
-				<VaButton
-					preset="secondary"
-					size="small"
-					:icon="isDark ? 'light_mode' : 'dark_mode'"
-					aria-label="Toggle theme"
-					@click="toggleTheme"
-				/>
-
-				<!-- Logout / Login -->
-				<VaButton
-					v-if="authStore.isAuthenticated"
-					preset="secondary"
-					size="small"
-					icon="logout"
-					title="Logout"
-					@click="handleLogout"
-				/>
-				<VaButton
-					v-else
-					size="small"
-					color="primary"
-					icon="login"
-					@click="router.push('/login')"
-				>
-					Login
-				</VaButton>
-			</VaNavbarItem>
-		</template>
-	</VaNavbar>
+      <div v-if="authStore.isAuthenticated && authStore.user" class="user-profile-menu">
+        <PixelAvatar size="small" color="primary">
+          {{ authStore.user.name.charAt(0).toUpperCase() }}
+        </PixelAvatar>
+        <span class="user-name">{{ authStore.user.name }}</span>
+        <PixelBadge
+          :text="authStore.user.role.toUpperCase()"
+          :color="authStore.user.role === 'admin' ? 'danger' : authStore.user.role === 'mentor' ? 'warning' : 'primary'"
+        />
+        <PixelButton
+          color="danger"
+          size="small"
+          icon="logout"
+          @click="handleLogout"
+        >
+          Logout
+        </PixelButton>
+      </div>
+      <div v-else class="auth-buttons">
+        <PixelButton
+          color="primary"
+          size="small"
+          icon="user"
+          @click="router.push('/login')"
+        >
+          Login
+        </PixelButton>
+      </div>
+    </div>
+  </header>
 </template>
 
 <style scoped>
 .app-navbar {
-	border-bottom: 1px solid var(--va-background-border);
-	position: sticky;
-	top: 0;
-	z-index: 1000;
-	padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 1.25rem;
+  background-color: var(--pixel-surface);
+  border-bottom: 2px solid var(--pixel-border);
+  box-shadow: 0 3px 0 0 var(--pixel-border-dark);
+  z-index: 50;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
 }
 
 .brand-item {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .brand-title {
-	font-weight: 700;
-	font-size: 1.25rem;
-	letter-spacing: -0.025em;
-	color: var(--va-text-primary);
+  font-family: var(--font-pixel);
+  font-size: 1.25rem;
+  color: var(--pixel-text);
+  margin: 0;
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
 }
 
 .nav-links {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.user-actions {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-profile-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .user-name {
-	font-size: 0.875rem;
-	font-weight: 500;
-	color: var(--va-text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pixel-text);
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

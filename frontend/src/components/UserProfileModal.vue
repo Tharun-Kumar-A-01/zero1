@@ -1,271 +1,284 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import XpStarBadge from '@/components/common/XpStarBadge.vue'
+import PixelModal from '@/components/pixel/PixelModal.vue'
+import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
+import PixelButton from '@/components/pixel/PixelButton.vue'
+import PixelCard from '@/components/pixel/PixelCard.vue'
+import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import PixelFlame from '@/components/pixel/PixelFlame.vue'
 
 const props = defineProps<{
-	modelValue: boolean
-	user: {
-		id?: number
-		name: string
-		email: string
-		role: string
-		current_streak?: number
-		total_points?: number
-		roll_number?: string | null
-		year_batch?: string | null
-		section?: string | null
-	} | null
+  modelValue: boolean
+  user: {
+    id?: number
+    name: string
+    email: string
+    role: string
+    current_streak?: number
+    total_points?: number
+    roll_number?: string | null
+    year_batch?: string | null
+    section?: string | null
+  } | null
 }>()
 
 const emit = defineEmits<{
-	(e: 'update:modelValue', val: boolean): void
+  (e: 'update:modelValue', val: boolean): void
 }>()
 
 const streakCount = computed<number>(() => props.user?.current_streak ?? 0)
 
 // Generate the 7 days of the current week (Sat, Sun, Mon, Tue, Wed, Thu, Fri)
 const weekDays = computed(() => {
-	const names = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-	const todayIndex = new Date().getDay() // 0 is Sun, 6 is Sat
-	// Map JS day (0=Sun, 1=Mon, ..., 6=Sat) to index in [Sat, Sun, Mon, Tue, Wed, Thu, Fri]
-	// Sat -> 0, Sun -> 1, Mon -> 2, Tue -> 3, Wed -> 4, Thu -> 5, Fri -> 6
-	const mapToIdx = (d: number) => (d === 6 ? 0 : d + 1)
-	const currentIdx = mapToIdx(todayIndex)
+  const names = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+  const todayIndex = new Date().getDay()
+  const mapToIdx = (d: number) => (d === 6 ? 0 : d + 1)
+  const currentIdx = mapToIdx(todayIndex)
 
-	return names.map((name, i) => {
-		const isWeekend = i === 0 || i === 1 // Sat, Sun
-		const isSolved = streakCount.value > 0 && i <= currentIdx && !isWeekend
-		const isCurrentDay = i === currentIdx
-		return {
-			name,
-			isWeekend,
-			isSolved,
-			isCurrentDay,
-		}
-	})
+  return names.map((name, i) => {
+    const isWeekend = i === 0 || i === 1
+    const isSolved = streakCount.value > 0 && i <= currentIdx && !isWeekend
+    const isCurrentDay = i === currentIdx
+    return {
+      name,
+      isWeekend,
+      isSolved,
+      isCurrentDay,
+    }
+  })
 })
 </script>
 
 <template>
-	<VaModal
-		:model-value="modelValue"
-		hide-default-actions
-		title="User Profile"
-		@update:model-value="emit('update:modelValue', $event)"
-	>
-		<div v-if="user" class="profile-container">
-			<!-- User Header Information -->
-			<div class="user-header-card">
-				<VaAvatar size="large" color="primary" class="profile-avatar">
-					{{ user.name.charAt(0).toUpperCase() }}
-				</VaAvatar>
-				<div class="profile-meta">
-					<h3 class="profile-name">{{ user.name }}</h3>
-					<span class="profile-email">{{ user.email }}</span>
-					<div class="profile-badges">
-						<VaBadge
-							:text="user.role === 'admin' ? 'SYSTEM ADMINISTRATOR' : user.role.toUpperCase()"
-							:color="user.role === 'admin' ? 'danger' : user.role === 'mentor' ? 'warning' : 'primary'"
-						/>
-						<VaBadge
-							v-if="user.roll_number"
-							:text="user.roll_number"
-							color="backgroundElement"
-						/>
-						<VaBadge
-							v-if="user.year_batch"
-							:text="`Batch ${user.year_batch}`"
-							color="backgroundElement"
-						/>
-						<XpStarBadge
-							v-if="user.total_points !== undefined"
-							:points="user.total_points ?? 0"
-							size="small"
-						/>
-					</div>
-				</div>
-			</div>
+  <PixelModal
+    :model-value="modelValue"
+    hide-default-actions
+    title="Adventurer Profile"
+    max-width="500px"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
+    <div v-if="user" class="profile-container">
+      <!-- User Header Information -->
+      <div class="user-header-card">
+        <PixelAvatar size="large" color="primary" class="profile-avatar">
+          {{ user.name.charAt(0).toUpperCase() }}
+        </PixelAvatar>
+        <div class="profile-meta">
+          <h3 class="profile-name">{{ user.name }}</h3>
+          <span class="profile-email">{{ user.email }}</span>
+          <div class="profile-badges">
+            <PixelBadge
+              :text="user.role === 'admin' ? 'ADMIN' : user.role.toUpperCase()"
+              :color="user.role === 'admin' ? 'danger' : user.role === 'mentor' ? 'warning' : 'primary'"
+            />
+            <PixelBadge
+              v-if="user.roll_number"
+              :text="user.roll_number"
+              color="secondary"
+            />
+            <PixelBadge
+              v-if="user.year_batch"
+              :text="`Batch ${user.year_batch}`"
+              color="secondary"
+            />
+            <XpStarBadge
+              v-if="user.total_points !== undefined"
+              :points="user.total_points ?? 0"
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
 
-			<!-- Streak Showcase Box matching user reference mockup -->
-			<VaCard class="streak-box-card" outlined>
-				<VaCardContent>
-					<div class="streak-top-row">
-						<span class="streak-number">{{ streakCount }}</span>
-						<div class="streak-flame-group">
-							<VaIcon name="local_fire_department" size="36px" color="warning" />
-							<span class="streak-label">Current streak</span>
-						</div>
-					</div>
+      <!-- Streak Showcase Box -->
+      <PixelCard class="streak-box-card">
+        <PixelCardContent>
+          <div class="streak-top-row">
+            <span class="streak-number">{{ streakCount }}</span>
+            <div class="streak-flame-group">
+              <PixelFlame :active="streakCount > 0" :size="36" />
+              <span class="streak-label">Current streak</span>
+            </div>
+          </div>
 
-					<VaDivider class="streak-divider" />
+          <div class="pixel-divider" />
 
-					<!-- 7 Days Circles Row -->
-					<div class="days-row">
-						<div
-							v-for="(day, idx) in weekDays"
-							:key="idx"
-							class="day-col"
-						>
-							<div
-								class="day-circle"
-								:class="{
-									'is-weekend': day.isWeekend,
-									'is-solved': day.isSolved,
-									'is-today': day.isCurrentDay,
-								}"
-							>
-								<VaIcon
-									v-if="day.isSolved"
-									name="check"
-									size="small"
-									color="textInverted"
-								/>
-							</div>
-							<span class="day-name" :class="{ 'highlight': day.isCurrentDay }">
-								{{ day.name }}
-							</span>
-						</div>
-					</div>
-				</VaCardContent>
-			</VaCard>
+          <!-- 7 Days Circles Row -->
+          <div class="days-row">
+            <div
+              v-for="(day, idx) in weekDays"
+              :key="idx"
+              class="day-col"
+            >
+              <div
+                class="day-circle"
+                :class="{
+                  'is-weekend': day.isWeekend,
+                  'is-solved': day.isSolved,
+                  'is-today': day.isCurrentDay,
+                }"
+              >
+                <PixelIcon
+                  v-if="day.isSolved"
+                  name="check"
+                  :size="12"
+                  color="#fff"
+                />
+              </div>
+              <span class="day-name" :class="{ 'highlight': day.isCurrentDay }">
+                {{ day.name }}
+              </span>
+            </div>
+          </div>
+        </PixelCardContent>
+      </PixelCard>
 
-			<div class="profile-actions">
-				<VaButton preset="secondary" @click="emit('update:modelValue', false)">
-					Close
-				</VaButton>
-			</div>
-		</div>
-	</VaModal>
+      <div class="profile-actions">
+        <PixelButton color="secondary" size="small" @click="emit('update:modelValue', false)">
+          Close
+        </PixelButton>
+      </div>
+    </div>
+  </PixelModal>
 </template>
 
 <style scoped>
 .profile-container {
-	display: flex;
-	flex-direction: column;
-	gap: 1.25rem;
-	padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .user-header-card {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .profile-avatar {
-	font-size: 1.5rem;
-	font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 700;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
 }
 
 .profile-meta {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
 }
 
 .profile-name {
-	font-size: 1.25rem;
-	font-weight: 700;
-	color: var(--va-text-primary);
-	margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 1.25rem;
+  font-weight: normal;
+  margin: 0;
+  color: var(--pixel-text);
 }
 
 .profile-email {
-	font-size: 0.875rem;
-	color: var(--va-secondary);
+  font-size: 0.85rem;
+  color: var(--pixel-text-muted);
 }
 
 .profile-badges {
-	display: flex;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-	margin-top: 0.25rem;
-}
-
-.streak-box-card {
-	background: var(--va-background-secondary);
-	border: 1px solid var(--va-background-border);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
 }
 
 .streak-top-row {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .streak-number {
-	font-size: 4rem;
-	font-weight: 800;
-	line-height: 1;
-	color: var(--va-text-primary);
+  font-family: var(--font-pixel);
+  font-size: 2.75rem;
+  font-weight: normal;
+  color: #fbbf24;
+  line-height: 1;
 }
 
 .streak-flame-group {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .streak-label {
-	font-size: 0.875rem;
-	font-weight: 600;
-	color: var(--va-text-primary);
-	line-height: 1.1;
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  color: var(--pixel-text);
 }
 
-.streak-divider {
-	margin: 1rem 0;
+.pixel-divider {
+  height: 2px;
+  background-color: var(--pixel-border);
+  margin: 0.85rem 0;
 }
 
 .days-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 0 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem;
 }
 
 .day-col {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .day-circle {
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border: 2px solid var(--va-secondary);
-	background: transparent;
-}
-
-.day-circle.is-weekend {
-	border-style: dotted;
-	border-color: var(--va-secondary);
-	opacity: 0.7;
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  border: 2px solid var(--pixel-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pixel-bg-alt);
+  box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
 }
 
 .day-circle.is-solved {
-	background: var(--va-text-primary);
-	border-color: var(--va-text-primary);
+  background: var(--pixel-btn-success-bg);
+  border-color: var(--pixel-btn-success-border);
+  box-shadow: 0 2px 0 0 var(--pixel-btn-success-shade);
+}
+
+.day-circle.is-today:not(.is-solved) {
+  border-color: var(--pixel-btn-primary-bg);
+}
+
+.day-circle.is-weekend {
+  opacity: 0.4;
 }
 
 .day-name {
-	font-size: 0.8125rem;
-	font-weight: 600;
-	color: var(--va-text-primary);
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  color: var(--pixel-text-dim);
 }
 
 .day-name.highlight {
-	color: var(--va-primary);
+  color: #fbbf24;
 }
 
 .profile-actions {
-	display: flex;
-	justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

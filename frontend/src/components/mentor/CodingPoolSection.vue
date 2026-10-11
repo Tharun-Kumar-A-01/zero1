@@ -5,7 +5,7 @@ import RichTextEditor from '@/components/common/RichTextEditor.vue'
 import MarkdownRenderer from '@/components/common/MarkdownRenderer.vue'
 import XpStarBadge from '@/components/common/XpStarBadge.vue'
 import api from '@/services/api'
-import { useToast } from 'vuestic-ui'
+import { usePixelToast } from '@/components/pixel/usePixelToast'
 import { generateBoilerplateTemplates } from '@/utils/boilerplate'
 
 const props = defineProps<{
@@ -45,7 +45,7 @@ const emit = defineEmits<{
 	(e: 'importCoding', file: File): void
 }>()
 
-const { init: notify } = useToast()
+const { init: notify } = usePixelToast()
 
 // Helpers for client-side entity decoding & default test suites
 function formatConstraints(str?: string): string {
@@ -428,36 +428,36 @@ function handleCommitImport(): void {
 		<div class="pool-header">
 			<h2 class="section-title">Coding Problems</h2>
 			<div v-if="!isPublished" class="header-action-group">
-				<VaButton
+				<PixelButton
 					size="small"
-					preset="secondary"
-					icon="upload_file"
+					color="secondary"
+					icon="upload"
 					@click="showImportDialog = true"
 				>
 					Import XLSX
-				</VaButton>
-				<VaButton
+				</PixelButton>
+				<PixelButton
 					size="small"
-					icon="add"
+					icon="plus"
 					@click="showAddDialog = true"
 				>
 					Add Problem
-				</VaButton>
+				</PixelButton>
 			</div>
 		</div>
 
 		<div v-if="codingQuestions.length > 0" class="cards-list">
-			<VaCard
+			<PixelCard
 				v-for="(codeQ, index) in codingQuestions"
 				:key="codeQ.id"
 				class="item-card"
 			>
-				<VaCardContent>
+				<PixelCardContent>
 					<div class="card-inner">
 						<div class="card-meta">
 							<div class="meta-left">
-								<VaBadge color="backgroundElement" :text="`P${index + 1}`" />
-								<VaBadge
+								<PixelBadge color="backgroundElement" :text="`P${index + 1}`" />
+								<PixelBadge
 									:color="codeQ.difficulty === 'hard' ? 'danger' : codeQ.difficulty === 'medium' ? 'warning' : 'success'"
 									:text="codeQ.difficulty.toUpperCase()"
 								/>
@@ -465,22 +465,21 @@ function handleCommitImport(): void {
 									:points="codeQ.difficulty === 'hard' ? 50 : codeQ.difficulty === 'medium' ? 30 : 15"
 									size="small"
 								/>
-								<span class="meta-tag"><VaIcon name="schedule" size="small" /> {{ codeQ.time_limit_ms }}ms</span>
-								<span class="meta-tag"><VaIcon name="storage" size="small" /> {{ Math.round(codeQ.memory_limit_kb / 1024) }}MB</span>
+								<span class="meta-tag"><PixelIcon name="schedule" size="small" /> {{ codeQ.time_limit_ms }}ms</span>
+								<span class="meta-tag"><PixelIcon name="storage" size="small" /> {{ Math.round(codeQ.memory_limit_kb / 1024) }}MB</span>
 							</div>
 
 							<div v-if="!isPublished" class="meta-actions">
-								<VaButton
-									preset="plain"
+								<PixelButton
+									color="secondary"
 									icon="edit"
 									size="small"
 									aria-label="Edit challenge"
 									@click="openEditDialog(codeQ)"
 								/>
-								<VaButton
-									preset="plain"
-									icon="delete"
+								<PixelButton
 									color="danger"
+									icon="trash"
 									size="small"
 									aria-label="Delete challenge"
 									@click="openDeleteDialog(codeQ)"
@@ -500,48 +499,48 @@ function handleCommitImport(): void {
 						</div>
 
 						<div class="card-action-bar">
-							<VaBadge
+							<PixelBadge
 								v-if="isTestCaseComplete(codeQ)"
 								color="success"
 								:text="`${getTestCaseCount(codeQ)} Verified Test Cases`"
 							>
 								<template #prepend>
-									<VaIcon name="check_circle" size="small" />
+									<PixelIcon name="check_circle" size="small" />
 								</template>
-							</VaBadge>
-							<VaBadge
+							</PixelBadge>
+							<PixelBadge
 								v-else
 								color="warning"
 								:text="`Incomplete Test Cases (${(codeQ.sample_test_cases?.length ?? 0)}/3 sample, ${(codeQ.hidden_test_cases?.length ?? 0)}/10 hidden)`"
 							>
 								<template #prepend>
-									<VaIcon name="warning" size="small" />
+									<PixelIcon name="warning" size="small" />
 								</template>
-							</VaBadge>
-							<VaButton
+							</PixelBadge>
+							<PixelButton
 								v-if="!isPublished"
 								size="small"
-								icon="auto_awesome"
+								icon="star"
 								@click="emit('openAiGen', codeQ)"
 							>
 								Generate AI Stress Cases
-							</VaButton>
+							</PixelButton>
 						</div>
 					</div>
-				</VaCardContent>
-			</VaCard>
+				</PixelCardContent>
+			</PixelCard>
 		</div>
 
-		<VaCard v-else class="empty-pool-card">
-			<VaCardContent class="empty-content">
-				<VaIcon name="code" size="48px" color="secondary" class="empty-pool-icon" />
+		<PixelCard v-else class="empty-pool-card">
+			<PixelCardContent class="empty-content">
+				<PixelIcon name="code" size="48px" color="secondary" class="empty-pool-icon" />
 				<h3>No Coding Problems added yet</h3>
 				<p>Author or bulk import at least 7 coding challenges with 13 test cases (3 sample + 10 hidden) each to complete the set.</p>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 
 		<!-- MODAL 1: CREATE CODING PROBLEM -->
-		<VaModal
+		<PixelModal
 			v-model="showAddDialog"
 			title="Create Algorithmic Coding Problem"
 			ok-text="Save Problem"
@@ -550,8 +549,8 @@ function handleCommitImport(): void {
 			size="large"
 			@ok="handleSaveAdd"
 		>
-			<VaForm class="dialog-form">
-				<VaInput
+			<form class="dialog-form">
+				<PixelInput
 					v-model="newTitle"
 					label="Problem Title"
 					placeholder="e.g. Subarray Sum Equals K"
@@ -567,7 +566,7 @@ function handleCommitImport(): void {
 					required
 				/>
 
-				<VaTextarea
+				<PixelTextarea
 					v-model="newConstraints"
 					label="Constraints"
 					placeholder="e.g. 1 <= N <= 10^5"
@@ -575,7 +574,7 @@ function handleCommitImport(): void {
 					:min-rows="2"
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="newDifficulty"
 					:options="difficultyOptions"
 					label="Difficulty Tier"
@@ -593,13 +592,13 @@ function handleCommitImport(): void {
 					</div>
 
 					<div class="fn-signature-row">
-						<VaInput
+						<PixelInput
 							v-model="newFunctionName"
 							label="Function Name"
 							placeholder="e.g. solve"
 							required
 						/>
-						<VaInput
+						<PixelInput
 							v-model="newReturnType"
 							label="Return Type"
 							placeholder="e.g. int, int[], string, void"
@@ -610,14 +609,14 @@ function handleCommitImport(): void {
 					<div class="fn-params-section">
 						<div class="fn-params-header">
 							<span class="group-title">Parameters</span>
-							<VaButton
-								preset="secondary"
+							<PixelButton
+								color="secondary"
 								size="small"
-								icon="add"
+								icon="plus"
 								@click="addParameterDef(false)"
 							>
 								Add Parameter
-							</VaButton>
+							</PixelButton>
 						</div>
 
 						<div class="fn-params-list">
@@ -626,19 +625,19 @@ function handleCommitImport(): void {
 								:key="'new-param-' + pIdx"
 								class="fn-param-row"
 							>
-								<VaInput
+								<PixelInput
 									v-model="param.name"
 									label="Param Name"
 									placeholder="e.g. nums"
 								/>
-								<VaInput
+								<PixelInput
 									v-model="param.type"
 									label="Param Type"
 									placeholder="e.g. int[], int, string"
 								/>
-								<VaButton
-									preset="danger"
-									icon="delete"
+								<PixelButton
+									color="danger"
+									icon="trash"
 									size="small"
 									:disabled="newParameterDefs.length <= 1"
 									@click="removeParameterDef(false, pIdx)"
@@ -654,15 +653,15 @@ function handleCommitImport(): void {
 							<h4 class="testcases-heading">Test Suite Configuration</h4>
 							<p class="testcases-subheading">Configure 3 sample test cases and 10 hidden evaluation cases</p>
 						</div>
-						<VaButton
-							preset="secondary"
+						<PixelButton
+							color="secondary"
 							size="small"
-							icon="auto_awesome"
+							icon="star"
 							:loading="isGeneratingInlineAi"
 							@click="handleGenerateInlineAiCases('add')"
 						>
 							Auto-Synthesize via AI
-						</VaButton>
+						</PixelButton>
 					</div>
 
 					<!-- SECTION 1: SAMPLE TEST CASES -->
@@ -670,52 +669,51 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Sample Test Cases</span>
-								<VaBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+								<PixelBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
 							</div>
-							<VaButton
-								preset="secondary"
+							<PixelButton
+								color="secondary"
 								size="small"
-								icon="add"
+								icon="plus"
 								@click="addSampleCase(false)"
 							>
 								Add Sample Case
-							</VaButton>
+							</PixelButton>
 						</div>
 						<div class="testcases-list">
-							<VaCard
+							<PixelCard
 								v-for="(tc, i) in newSampleCases"
 								:key="'new-sample-' + i"
 								color="backgroundPrimary"
 								class="tc-card"
 							>
-								<VaCardContent class="tc-content">
+								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag sample-tag">Sample Case {{ i + 1 }}</span>
-										<VaButton
-											preset="plain"
-											icon="delete"
+										<PixelButton
 											color="danger"
+											icon="trash"
 											size="small"
 											aria-label="Remove sample case"
 											@click="removeSampleCase(false, i)"
 										/>
 									</div>
 									<div class="tc-grid">
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.input"
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
 										/>
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
 										/>
 									</div>
-								</VaCardContent>
-							</VaCard>
+								</PixelCardContent>
+							</PixelCard>
 						</div>
 					</div>
 
@@ -724,63 +722,62 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Hidden Test Cases</span>
-								<VaBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+								<PixelBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
 							</div>
-							<VaButton
-								preset="secondary"
+							<PixelButton
+								color="secondary"
 								size="small"
-								icon="add"
+								icon="plus"
 								@click="addHiddenCase(false)"
 							>
 								Add Hidden Case
-							</VaButton>
+							</PixelButton>
 						</div>
 						<div v-if="newHiddenCases.length > 0" class="testcases-list">
-							<VaCard
+							<PixelCard
 								v-for="(tc, i) in newHiddenCases"
 								:key="'new-hidden-' + i"
 								color="backgroundPrimary"
 								class="tc-card"
 							>
-								<VaCardContent class="tc-content">
+								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag hidden-tag">Hidden Case {{ i + 1 }}</span>
-										<VaButton
-											preset="plain"
-											icon="delete"
+										<PixelButton
 											color="danger"
+											icon="trash"
 											size="small"
 											aria-label="Remove hidden case"
 											@click="removeHiddenCase(false, i)"
 										/>
 									</div>
 									<div class="tc-grid">
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.input"
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
 										/>
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
 										/>
 									</div>
-								</VaCardContent>
-							</VaCard>
+								</PixelCardContent>
+							</PixelCard>
 						</div>
 						<div v-else class="text-xs text-gray-500 italic p-2">
 							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize via AI".
 						</div>
 					</div>
 				</div>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- MODAL 2: EDIT CODING PROBLEM -->
-		<VaModal
+		<PixelModal
 			v-model="showEditDialog"
 			title="Edit Algorithmic Coding Problem"
 			ok-text="Update Problem"
@@ -789,8 +786,8 @@ function handleCommitImport(): void {
 			size="large"
 			@ok="handleSaveEdit"
 		>
-			<VaForm class="dialog-form">
-				<VaInput
+			<form class="dialog-form">
+				<PixelInput
 					v-model="editTitle"
 					label="Problem Title"
 					placeholder="e.g. Subarray Sum Equals K"
@@ -805,7 +802,7 @@ function handleCommitImport(): void {
 					required
 				/>
 
-				<VaTextarea
+				<PixelTextarea
 					v-model="editConstraints"
 					label="Constraints"
 					placeholder="e.g. 1 <= N <= 10^5"
@@ -813,7 +810,7 @@ function handleCommitImport(): void {
 					:min-rows="2"
 				/>
 
-				<VaSelect
+				<PixelSelect
 					v-model="editDifficulty"
 					:options="difficultyOptions"
 					label="Difficulty Tier"
@@ -831,13 +828,13 @@ function handleCommitImport(): void {
 					</div>
 
 					<div class="fn-signature-row">
-						<VaInput
+						<PixelInput
 							v-model="editFunctionName"
 							label="Function Name"
 							placeholder="e.g. solve"
 							required
 						/>
-						<VaInput
+						<PixelInput
 							v-model="editReturnType"
 							label="Return Type"
 							placeholder="e.g. int, int[], string, void"
@@ -848,14 +845,14 @@ function handleCommitImport(): void {
 					<div class="fn-params-section">
 						<div class="fn-params-header">
 							<span class="group-title">Parameters</span>
-							<VaButton
-								preset="secondary"
+							<PixelButton
+								color="secondary"
 								size="small"
-								icon="add"
+								icon="plus"
 								@click="addParameterDef(true)"
 							>
 								Add Parameter
-							</VaButton>
+							</PixelButton>
 						</div>
 
 						<div class="fn-params-list">
@@ -864,19 +861,19 @@ function handleCommitImport(): void {
 								:key="'edit-param-' + pIdx"
 								class="fn-param-row"
 							>
-								<VaInput
+								<PixelInput
 									v-model="param.name"
 									label="Param Name"
 									placeholder="e.g. nums"
 								/>
-								<VaInput
+								<PixelInput
 									v-model="param.type"
 									label="Param Type"
 									placeholder="e.g. int[], int, string"
 								/>
-								<VaButton
-									preset="danger"
-									icon="delete"
+								<PixelButton
+									color="danger"
+									icon="trash"
 									size="small"
 									:disabled="editParameterDefs.length <= 1"
 									@click="removeParameterDef(true, pIdx)"
@@ -892,15 +889,15 @@ function handleCommitImport(): void {
 							<h4 class="testcases-heading">Test Suite Configuration</h4>
 							<p class="testcases-subheading">Manage 3 sample test cases and 10 hidden evaluation cases</p>
 						</div>
-						<VaButton
-							preset="secondary"
+						<PixelButton
+							color="secondary"
 							size="small"
-							icon="auto_awesome"
+							icon="star"
 							:loading="isGeneratingInlineAi"
 							@click="handleGenerateInlineAiCases('edit')"
 						>
 							Auto-Synthesize via AI
-						</VaButton>
+						</PixelButton>
 					</div>
 
 					<!-- SECTION 1: SAMPLE TEST CASES -->
@@ -908,52 +905,51 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Sample Test Cases</span>
-								<VaBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+								<PixelBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
 							</div>
-							<VaButton
-								preset="secondary"
+							<PixelButton
+								color="secondary"
 								size="small"
-								icon="add"
+								icon="plus"
 								@click="addSampleCase(true)"
 							>
 								Add Sample Case
-							</VaButton>
+							</PixelButton>
 						</div>
 						<div class="testcases-list">
-							<VaCard
+							<PixelCard
 								v-for="(tc, i) in editSampleCases"
 								:key="'edit-sample-' + i"
 								color="backgroundPrimary"
 								class="tc-card"
 							>
-								<VaCardContent class="tc-content">
+								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag sample-tag">Sample Case {{ i + 1 }}</span>
-										<VaButton
-											preset="plain"
-											icon="delete"
+										<PixelButton
 											color="danger"
+											icon="trash"
 											size="small"
 											aria-label="Remove sample case"
 											@click="removeSampleCase(true, i)"
 										/>
 									</div>
 									<div class="tc-grid">
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.input"
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
 										/>
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
 										/>
 									</div>
-								</VaCardContent>
-							</VaCard>
+								</PixelCardContent>
+							</PixelCard>
 						</div>
 					</div>
 
@@ -962,63 +958,62 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Hidden Test Cases</span>
-								<VaBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+								<PixelBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
 							</div>
-							<VaButton
-								preset="secondary"
+							<PixelButton
+								color="secondary"
 								size="small"
-								icon="add"
+								icon="plus"
 								@click="addHiddenCase(true)"
 							>
 								Add Hidden Case
-							</VaButton>
+							</PixelButton>
 						</div>
 						<div v-if="editHiddenCases.length > 0" class="testcases-list">
-							<VaCard
+							<PixelCard
 								v-for="(tc, i) in editHiddenCases"
 								:key="'edit-hidden-' + i"
 								color="backgroundPrimary"
 								class="tc-card"
 							>
-								<VaCardContent class="tc-content">
+								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
 										<span class="tc-tag hidden-tag">Hidden Case {{ i + 1 }}</span>
-										<VaButton
-											preset="plain"
-											icon="delete"
+										<PixelButton
 											color="danger"
+											icon="trash"
 											size="small"
 											aria-label="Remove hidden case"
 											@click="removeHiddenCase(true, i)"
 										/>
 									</div>
 									<div class="tc-grid">
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.input"
 											label="Standard Input"
 											placeholder="Input stream"
 											:rows="2"
 										/>
-										<VaTextarea
+										<PixelTextarea
 											v-model="tc.expected_output"
 											label="Expected Output"
 											placeholder="Output stream"
 											:rows="2"
 										/>
 									</div>
-								</VaCardContent>
-							</VaCard>
+								</PixelCardContent>
+							</PixelCard>
 						</div>
 						<div v-else class="text-xs text-gray-500 italic p-2">
 							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize via AI".
 						</div>
 					</div>
 				</div>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- MODAL 3: DELETE CONFIRMATION -->
-		<VaModal
+		<PixelModal
 			v-model="showDeleteDialog"
 			title="Delete Coding Challenge"
 			ok-text="Delete"
@@ -1031,10 +1026,10 @@ function handleCommitImport(): void {
 				<br />
 				<strong>"{{ deleteTargetCoding.title }}"</strong>
 			</p>
-		</VaModal>
+		</PixelModal>
 
 		<!-- MODAL 4: BULK IMPORT XLSX -->
-		<VaModal
+		<PixelModal
 			v-model="showImportDialog"
 			title="Bulk Import Coding Problems from Spreadsheet"
 			hide-default-actions
@@ -1046,7 +1041,7 @@ function handleCommitImport(): void {
 					Any missing test cases will be <strong>automatically synthesized by AI</strong> to meet the mandatory 5 test cases standard.
 				</p>
 
-				<VaFileUpload
+				<PixelFileUpload
 					v-model="uploadedImportFiles"
 					dropzone
 					file-types=".xlsx,.csv"
@@ -1055,24 +1050,24 @@ function handleCommitImport(): void {
 				/>
 
 				<div class="modal-actions-row">
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
 						:disabled="isImporting"
 						@click="showImportDialog = false"
 					>
 						Cancel
-					</VaButton>
-					<VaButton
+					</PixelButton>
+					<PixelButton
 						:loading="isImporting"
 						:disabled="!selectedImportFile"
-						icon="auto_awesome"
+						icon="star"
 						@click="handleCommitImport"
 					>
 						Import & Generate AI Tests
-					</VaButton>
+					</PixelButton>
 				</div>
 			</div>
-		</VaModal>
+		</PixelModal>
 	</div>
 </template>
 

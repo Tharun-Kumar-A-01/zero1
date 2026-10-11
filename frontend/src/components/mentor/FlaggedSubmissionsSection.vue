@@ -1,174 +1,181 @@
 <script setup lang="ts">
 import type { FlaggedSubmission } from '@/types'
+import PixelCard from '@/components/pixel/PixelCard.vue'
+import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
+import PixelCardActions from '@/components/pixel/PixelCardActions.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
+import PixelButton from '@/components/pixel/PixelButton.vue'
+import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import PixelSprite from '@/components/pixel/PixelSprite.vue'
 
 defineProps<{
-	flaggedSubmissions: FlaggedSubmission[]
-	isSubmitting: boolean
+  flaggedSubmissions: FlaggedSubmission[]
+  isSubmitting: boolean
 }>()
 
 const emit = defineEmits<{
-	(e: 'resolve', payload: { submissionId: number; resolution: 'dismiss' | 'action' }): void
+  (e: 'resolve', payload: { submissionId: number; resolution: 'dismiss' | 'action' }): void
 }>()
 </script>
 
 <template>
-	<div class="pool-container">
-		<div class="pool-header">
-			<div>
-				<h2 class="section-title">Flagged Submissions Queue</h2>
-				<p class="section-desc">Review AST-detected security policy breaches and blocked system calls.</p>
-			</div>
-		</div>
+  <div class="pool-container">
+    <div class="pool-header">
+      <div>
+        <h2 class="section-title">Flagged Submissions Queue</h2>
+        <p class="section-desc">Review AST-detected security policy breaches and blocked system calls.</p>
+      </div>
+    </div>
 
-		<div v-if="flaggedSubmissions.length > 0" class="cards-list">
-			<VaCard
-				v-for="sub in flaggedSubmissions"
-				:key="sub.id"
-				class="item-card flagged-card"
-			>
-				<VaCardContent>
-					<div class="card-inner">
-						<div class="card-meta">
-							<VaBadge color="danger" text="SECURITY VIOLATION" />
-							<span class="meta-tag"><VaIcon name="person" size="small" /> Assignment #{{ sub.daily_assignment_id }}</span>
-							<span class="meta-tag"><VaIcon name="calendar_today" size="small" /> {{ new Date(sub.submitted_at || sub.created_at || Date.now()).toLocaleString() }}</span>
-						</div>
+    <div v-if="flaggedSubmissions.length > 0" class="cards-list">
+      <PixelCard
+        v-for="sub in flaggedSubmissions"
+        :key="sub.id"
+        class="item-card flagged-card"
+      >
+        <PixelCardContent>
+          <div class="card-inner">
+            <div class="card-meta">
+              <PixelBadge color="danger" text="SECURITY VIOLATION" />
+              <span class="meta-tag"><PixelIcon name="user" :size="12" /> Assignment #{{ sub.daily_assignment_id }}</span>
+              <span class="meta-tag"><PixelIcon name="calendar" :size="12" /> {{ new Date(sub.submitted_at || sub.created_at || Date.now()).toLocaleString() }}</span>
+            </div>
 
-						<VaCard color="backgroundElement" class="code-snippet-card">
-							<VaCardContent class="snippet-content">
-								<pre class="snippet-code">{{ sub.source_code }}</pre>
-							</VaCardContent>
-						</VaCard>
+            <div class="code-snippet-box">
+              <pre class="snippet-code">{{ sub.source_code }}</pre>
+            </div>
 
-						<VaCardActions class="review-actions">
-							<VaButton
-								color="danger"
-								size="small"
-								icon="delete"
-								@click="emit('resolve', { submissionId: sub.id, resolution: 'action' })"
-							>
-								Strike Student
-							</VaButton>
-							<VaButton
-								size="small"
-								color="success"
-								icon="check"
-								@click="emit('resolve', { submissionId: sub.id, resolution: 'dismiss' })"
-							>
-								Dismiss Flag
-							</VaButton>
-						</VaCardActions>
-					</div>
-				</VaCardContent>
-			</VaCard>
-		</div>
+            <PixelCardActions class="review-actions">
+              <PixelButton
+                color="danger"
+                size="small"
+                icon="trash"
+                @click="emit('resolve', { submissionId: sub.id, resolution: 'action' })"
+              >
+                Strike Student
+              </PixelButton>
+              <PixelButton
+                size="small"
+                color="success"
+                icon="check"
+                @click="emit('resolve', { submissionId: sub.id, resolution: 'dismiss' })"
+              >
+                Dismiss Flag
+              </PixelButton>
+            </PixelCardActions>
+          </div>
+        </PixelCardContent>
+      </PixelCard>
+    </div>
 
-		<VaCard v-else class="empty-pool-card">
-			<VaCardContent class="empty-content">
-				<VaIcon name="verified_user" size="48px" color="success" class="empty-pool-icon" />
-				<h3>No Flagged Submissions</h3>
-				<p>All student code submissions conform to AST sandbox policies.</p>
-			</VaCardContent>
-		</VaCard>
-	</div>
+    <PixelCard v-else class="empty-pool-card">
+      <PixelCardContent class="empty-content">
+        <PixelSprite name="shield" :size="48" class="empty-pool-icon" />
+        <h3 class="empty-title">No Flagged Submissions</h3>
+        <p>All student code submissions conform to AST sandbox policies.</p>
+      </PixelCardContent>
+    </PixelCard>
+  </div>
 </template>
 
 <style scoped>
 .pool-container {
-	display: flex;
-	flex-direction: column;
-	gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .pool-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .section-title {
-	margin: 0;
-	font-size: 1.2rem;
-	font-weight: 700;
-	color: var(--va-text-primary);
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 1.25rem;
+  color: var(--pixel-text);
 }
 
 .section-desc {
-	margin: 0.25rem 0 0;
-	font-size: 0.85rem;
-	color: var(--va-text-secondary);
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--pixel-text-muted);
 }
 
 .cards-list {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.item-card {
-	border: 1px solid var(--va-background-border);
-}
-
-.card-inner {
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-}
-
-.card-meta {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	flex-wrap: wrap;
-}
-
-.meta-tag {
-	font-size: 0.75rem;
-	color: var(--va-text-secondary);
-	display: inline-flex;
-	align-items: center;
-	gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .flagged-card {
-	border-left: 4px solid var(--va-danger);
+  border-left: 4px solid var(--pixel-btn-danger-bg);
 }
 
-.code-snippet-card {
-	border: 1px solid var(--va-background-border);
+.card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.snippet-content {
-	padding: 0.75rem;
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--pixel-text-dim);
+}
+
+.code-snippet-box {
+  background-color: var(--pixel-bg-alt);
+  border: 2px solid var(--pixel-border);
+  border-radius: 3px;
+  padding: 8px 12px;
 }
 
 .snippet-code {
-	color: var(--va-text-primary);
-	margin: 0;
-	font-family: monospace;
-	font-size: 0.85rem;
-	max-height: 200px;
-	overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--pixel-text);
 }
 
 .review-actions {
-	padding: 0;
-	display: flex;
-	gap: 0.5rem;
-	justify-content: flex-end;
+  padding: 0;
+  background: transparent;
+  border-top: none;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .empty-pool-card {
-	border: 2px dashed var(--va-background-border);
+  text-align: center;
 }
 
 .empty-content {
-	padding: 3rem 2rem;
-	text-align: center;
-	color: var(--va-text-secondary);
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--pixel-text-dim);
 }
 
-.empty-pool-icon {
-	margin-bottom: 0.75rem;
+.empty-title {
+  font-family: var(--font-pixel);
+  font-size: 1.2rem;
+  color: var(--pixel-text);
+  margin: 0;
 }
 </style>

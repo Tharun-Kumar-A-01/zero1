@@ -299,57 +299,57 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 <template>
 	<div class="schedule-section">
 		<!-- CALENDAR TOOLBAR -->
-		<VaCard class="calendar-toolbar-card">
-			<VaCardContent class="toolbar-content">
+		<PixelCard class="calendar-toolbar-card">
+			<PixelCardContent class="toolbar-content">
 				<div class="nav-controls">
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
 						size="small"
 						icon="chevron_left"
 						aria-label="Previous month"
 						@click="prevMonth"
 					/>
 					<h2 class="calendar-month-title">{{ currentMonthYearLabel }}</h2>
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
 						size="small"
 						icon="chevron_right"
 						aria-label="Next month"
 						@click="nextMonth"
 					/>
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
 						size="small"
 						icon="calendar_today"
 						@click="goToToday"
 					>
 						Today
-					</VaButton>
+					</PixelButton>
 				</div>
 
 				<div class="action-buttons">
-					<VaButton
+					<PixelButton
 						size="small"
 						color="primary"
 						icon="event"
 						@click="showScheduleDialog = true"
 					>
 						Assign Mentor
-					</VaButton>
-					<VaButton
+					</PixelButton>
+					<PixelButton
 						size="small"
 						color="danger"
 						icon="event_busy"
 						@click="showLeaveDialog = true"
 					>
 						Add Department Leave
-					</VaButton>
+					</PixelButton>
 				</div>
-			</VaCardContent>
-		</VaCard>
+			</PixelCardContent>
+		</PixelCard>
 
 		<!-- GOOGLE CALENDAR STYLE MONTH GRID -->
-		<VaCard class="calendar-grid-card">
+		<PixelCard class="calendar-grid-card">
 			<!-- Weekday Column Headers -->
 			<div class="calendar-header-row">
 				<div
@@ -403,7 +403,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 								@click="inspectLeave = leave"
 							>
 								<template v-if="isLeaveStart(leave, day)">
-									<VaIcon name="beach_access" size="13px" class="event-icon" />
+									<PixelIcon name="beach_access" size="13px" class="event-icon" />
 									<span class="event-label">{{ leave.title }}</span>
 								</template>
 								<span v-else class="event-continuation-dot"></span>
@@ -423,7 +423,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 								@click="inspectRotation = rot"
 							>
 								<template v-if="isRotationStart(rot, day)">
-									<VaIcon name="school" size="13px" class="event-icon" />
+									<PixelIcon name="school" size="13px" class="event-icon" />
 									<span class="event-label">{{ getMentorName(rot.user_id) }}</span>
 								</template>
 								<span v-else class="event-continuation-dot"></span>
@@ -432,17 +432,17 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					</div>
 				</div>
 			</div>
-		</VaCard>
+		</PixelCard>
 
 		<!-- BOTTOM SUMMARY SECTION: LIST OF LEAVES & ROTATIONS -->
 		<div class="summary-columns">
 			<!-- Department Leaves Card -->
-			<VaCard class="summary-card">
-				<VaCardTitle class="summary-title">
-					<VaIcon name="event_busy" color="danger" class="mr-2" />
+			<PixelCard class="summary-card">
+				<PixelCardTitle class="summary-title">
+					<PixelIcon name="event_busy" color="danger" class="mr-2" />
 					Department Leaves & Holidays ({{ leaves.length }})
-				</VaCardTitle>
-				<VaCardContent>
+				</PixelCardTitle>
+				<PixelCardContent>
 					<div v-if="leaves.length > 0" class="items-list">
 						<div
 							v-for="leave in leaves"
@@ -452,15 +452,14 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 							<div class="item-info">
 								<span class="item-title">{{ leave.title }}</span>
 								<span class="item-dates">
-									<VaIcon name="date_range" size="small" />
+									<PixelIcon name="date_range" size="small" />
 									{{ formatIndianDate(leave.start_date) }} – {{ formatIndianDate(leave.end_date) }}
 								</span>
 								<p v-if="leave.description" class="item-desc">{{ leave.description }}</p>
 							</div>
-							<VaButton
-								preset="plain"
-								icon="delete"
+							<PixelButton
 								color="danger"
+								icon="delete"
 								size="small"
 								aria-label="Remove leave"
 								@click="emit('deleteLeave', leave.id)"
@@ -470,16 +469,16 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					<div v-else class="empty-state-text">
 						No department leaves or holidays scheduled.
 					</div>
-				</VaCardContent>
-			</VaCard>
+				</PixelCardContent>
+			</PixelCard>
 
 			<!-- Active & Upcoming Rotations Card -->
-			<VaCard class="summary-card">
-				<VaCardTitle class="summary-title">
-					<VaIcon name="school" color="primary" class="mr-2" />
+			<PixelCard class="summary-card">
+				<PixelCardTitle class="summary-title">
+					<PixelIcon name="school" color="primary" class="mr-2" />
 					Mentor Rotations ({{ rotations.length }})
-				</VaCardTitle>
-				<VaCardContent>
+				</PixelCardTitle>
+				<PixelCardContent>
 					<div v-if="rotations.length > 0" class="items-list">
 						<div
 							v-for="rot in [...rotations].sort((a, b) => { const o = {active:0, upcoming:1, completed:2, cancelled:3}; const so = (o[a.status]??9)-(o[b.status]??9); return so !== 0 ? so : a.week_start_date.localeCompare(b.week_start_date) })"
@@ -493,13 +492,13 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 										:style="{ backgroundColor: rotationColor(rot.user_id) }"
 									/>
 									<span class="item-title">{{ getMentorName(rot.user_id) }}</span>
-									<VaBadge
+									<PixelBadge
 										:color="rot.status === 'active' ? 'success' : rot.status === 'upcoming' ? 'info' : 'secondary'"
 										:text="rot.status.toUpperCase()"
 									/>
 								</div>
 								<span class="item-dates">
-									<VaIcon name="calendar_today" size="small" />
+									<PixelIcon name="calendar_today" size="small" />
 									{{ formatIndianDate(rot.week_start_date) }} – {{ formatIndianDate(rot.week_end_date) }}
 								</span>
 							</div>
@@ -508,12 +507,12 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					<div v-else class="empty-state-text">
 						No mentor rotations scheduled yet.
 					</div>
-				</VaCardContent>
-			</VaCard>
+				</PixelCardContent>
+			</PixelCard>
 		</div>
 
 		<!-- MODAL 1: ASSIGN MENTOR -->
-		<VaModal
+		<PixelModal
 			v-model="showScheduleDialog"
 			title="Assign Mentor Rotation"
 			ok-text="Assign Schedule"
@@ -521,8 +520,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 			:loading="isScheduling"
 			@ok="handleSaveMentor"
 		>
-			<VaForm class="dialog-form">
-				<VaSelect
+			<form class="dialog-form">
+				<PixelSelect
 					v-model="selectedMentorId"
 					:options="mentorOptions"
 					label="Select Mentor"
@@ -531,7 +530,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					required
 				/>
 
-				<VaDateInput
+				<PixelDateInput
 					v-model="rotationStartDate"
 					label="Week Start Date (Monday recommended)"
 					placeholder="dd/mm/yyyy"
@@ -539,14 +538,14 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					required
 				/>
 				<p class="form-hint">
-					<VaIcon name="info" size="13px" />
+					<PixelIcon name="info" size="13px" />
 					End date auto-computed as start + 5 days (Mon – Sat). Sundays are skipped automatically.
 				</p>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- MODAL 2: ADD DEPARTMENT LEAVE -->
-		<VaModal
+		<PixelModal
 			v-model="showLeaveDialog"
 			title="Add Department Leave / Holiday"
 			ok-text="Schedule Leave"
@@ -554,15 +553,15 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 			:loading="isCreatingLeave"
 			@ok="handleSaveLeave"
 		>
-			<VaForm class="dialog-form">
-				<VaInput
+			<form class="dialog-form">
+				<PixelInput
 					v-model="leaveTitle"
 					label="Holiday / Leave Title"
 					placeholder="e.g. Diwali Vacation, Dussehra"
 					required
 				/>
 
-				<VaDateInput
+				<PixelDateInput
 					v-model="leaveStartDate"
 					label="Date (or Start Date)"
 					placeholder="dd/mm/yyyy"
@@ -570,24 +569,24 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					required
 				/>
 
-				<VaDateInput
+				<PixelDateInput
 					v-model="leaveEndDate"
 					label="End Date (optional — leave blank for single day)"
 					placeholder="dd/mm/yyyy"
 					clearable
 				/>
 
-				<VaTextarea
+				<PixelTextarea
 					v-model="leaveDescription"
 					label="Description (Optional)"
 					placeholder="Additional details regarding this leave"
 					:rows="2"
 				/>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 
 		<!-- MODAL 3: LEAVE DETAILS & DELETE -->
-		<VaModal
+		<PixelModal
 			v-if="inspectLeave"
 			:model-value="!!inspectLeave"
 			title="Department Leave Details"
@@ -611,25 +610,25 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				</div>
 
 				<div class="inspect-actions">
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
 						@click="inspectLeave = null"
 					>
 						Close
-					</VaButton>
-					<VaButton
+					</PixelButton>
+					<PixelButton
 						color="danger"
 						icon="delete"
 						@click="handleDeleteLeaveConfirmed(inspectLeave.id)"
 					>
 						Delete Leave
-					</VaButton>
+					</PixelButton>
 				</div>
 			</div>
-		</VaModal>
+		</PixelModal>
 
 		<!-- MODAL 4: ROTATION DETAILS -->
-		<VaModal
+		<PixelModal
 			v-if="inspectRotation"
 			:model-value="!!inspectRotation"
 			title="Mentor Rotation Details"
@@ -643,7 +642,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				</div>
 				<div class="inspect-field">
 					<span class="field-label">Status</span>
-					<VaBadge
+					<PixelBadge
 						:color="inspectRotation.status === 'active' ? 'success' : inspectRotation.status === 'upcoming' ? 'info' : 'secondary'"
 						:text="inspectRotation.status.toUpperCase()"
 					/>
@@ -656,40 +655,40 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				</div>
 
 				<div class="inspect-actions">
-					<VaButton
-						preset="secondary"
+					<PixelButton
+						color="secondary"
 						@click="inspectRotation = null"
 					>
 						Close
-					</VaButton>
-					<VaButton
-						preset="secondary"
+					</PixelButton>
+					<PixelButton
+						color="secondary"
 						icon="edit"
 						@click="openEditRotation(inspectRotation)"
 					>
 						Edit
-					</VaButton>
-					<VaButton
+					</PixelButton>
+					<PixelButton
 						color="danger"
 						icon="delete"
 						@click="handleDeleteRotationConfirmed(inspectRotation.id)"
 					>
 						Delete
-					</VaButton>
+					</PixelButton>
 				</div>
 			</div>
-		</VaModal>
+		</PixelModal>
 
 		<!-- MODAL 5: EDIT ROTATION -->
-		<VaModal
+		<PixelModal
 			v-model="showEditRotationDialog"
 			title="Edit Mentor Rotation"
 			ok-text="Save Changes"
 			cancel-text="Cancel"
 			@ok="handleSaveEditRotation"
 		>
-			<VaForm class="dialog-form">
-				<VaSelect
+			<form class="dialog-form">
+				<PixelSelect
 					v-model="editSelectedMentorId"
 					:options="mentorOptions"
 					label="Select Mentor"
@@ -697,7 +696,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					text-by="label"
 					required
 				/>
-				<VaDateInput
+				<PixelDateInput
 					v-model="editStartDate"
 					label="New Start Date"
 					placeholder="dd/mm/yyyy"
@@ -705,11 +704,11 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					required
 				/>
 				<p class="form-hint">
-					<VaIcon name="info" size="13px" />
+					<PixelIcon name="info" size="13px" />
 					End date auto-computed as 6 working days from start.
 				</p>
-			</VaForm>
-		</VaModal>
+			</form>
+		</PixelModal>
 	</div>
 </template>
 

@@ -82,7 +82,7 @@ defineExpose({
 					:class="{ active: activeMainTab === 'testcases' }"
 					@click="activeMainTab = 'testcases'"
 				>
-					<VaIcon name="data_object" size="small" />
+					<PixelIcon name="code" :size="14" />
 					<span>Testcase</span>
 				</button>
 
@@ -92,7 +92,7 @@ defineExpose({
 					:class="{ active: activeMainTab === 'result' }"
 					@click="activeMainTab = 'result'"
 				>
-					<VaIcon name="terminal" size="small" />
+					<PixelIcon name="terminal" :size="14" />
 					<span>Test Result</span>
 					<span
 						v-if="executionResult"
@@ -103,15 +103,15 @@ defineExpose({
 			</div>
 
 			<div class="header-actions">
-				<VaButton
-					preset="plain"
+				<PixelButton
+					color="secondary"
 					size="small"
-					:icon="isCollapsed ? 'expand_less' : 'expand_more'"
+					:icon="isCollapsed ? 'chevron-up' : 'chevron-down'"
 					:title="isCollapsed ? 'Expand console' : 'Collapse console'"
 					@click="toggleCollapse"
 				>
 					{{ isCollapsed ? 'Console' : '' }}
-				</VaButton>
+				</PixelButton>
 			</div>
 		</div>
 
@@ -153,7 +153,7 @@ defineExpose({
 			<div v-else class="result-panel">
 				<!-- Running / Submitting Spinner -->
 				<div v-if="isRunning || isSubmitting" class="executing-state">
-					<VaProgressCircle indeterminate size="medium" />
+					<PixelIcon name="refresh" class="spin" :size="24" />
 					<span class="executing-text">
 						{{ isSubmitting ? 'Evaluating solution against 3 sample & 10 hidden test cases...' : 'Executing sample test cases on sandbox...' }}
 					</span>
@@ -164,9 +164,9 @@ defineExpose({
 					<!-- Verdict Header Banner -->
 					<div class="verdict-banner" :class="executionResult.execution_status === 'passed' ? 'verdict-pass' : 'verdict-fail'">
 						<div class="verdict-title-row">
-							<VaIcon
-								:name="executionResult.execution_status === 'passed' ? 'check_circle' : 'cancel'"
-								size="medium"
+							<PixelIcon
+								:name="executionResult.execution_status === 'passed' ? 'check' : 'cross'"
+								:size="20"
 							/>
 							<span class="verdict-title">
 								{{ formatStatusName(executionResult.execution_status) }}
@@ -187,13 +187,13 @@ defineExpose({
 					</div>
 
 					<!-- Global Error Alert (when no detailed test cases or overall fatal error) -->
-					<VaAlert
+					<PixelAlert
 						v-if="executionResult.error_message && (!hasResultCases || !activeResultCase?.error_message)"
 						color="danger"
 						class="error-alert"
 					>
 						{{ executionResult.error_message }}
-					</VaAlert>
+					</PixelAlert>
 
 					<!-- Compiler Output -->
 					<div v-if="executionResult.compiler_output" class="io-group">
@@ -217,9 +217,9 @@ defineExpose({
 								}"
 								@click="selectedResultCaseIndex = idx"
 							>
-								<VaIcon
-									:name="tc.status === 'passed' ? 'check' : 'close'"
-									size="14px"
+								<PixelIcon
+									:name="tc.status === 'passed' ? 'check' : 'cross'"
+									:size="12"
 									class="pill-status-icon"
 								/>
 								<span>Case {{ tc.case_number || (idx + 1) }}</span>
@@ -271,29 +271,29 @@ defineExpose({
 					</div>
 
 					<!-- Hidden Testcase Notification for Submissions -->
-					<VaAlert
+					<PixelAlert
 						v-if="executionResult.phase === 'hidden' && executionResult.execution_status !== 'passed'"
 						color="warning"
 						outline
 						class="hidden-notice"
 					>
 						Passed all 3 sample test cases, but failed on hidden test cases ({{ executionResult.test_cases_passed }} / {{ executionResult.test_cases_total }} passed). Hidden test case inputs and expected outputs are confidential to prevent hardcoded solutions.
-					</VaAlert>
+					</PixelAlert>
 
 					<!-- Anti-Cheat Status Alert -->
-					<VaAlert
+					<PixelAlert
 						v-if="executionResult.ai_flagged"
 						color="danger"
 						icon="warning"
 						class="anticheat-alert"
 					>
 						<strong>AI Integrity Review:</strong> {{ executionResult.ai_review_notes }}
-					</VaAlert>
+					</PixelAlert>
 				</div>
 
 				<!-- No result yet -->
 				<div v-else class="empty-result">
-					<VaIcon name="play_arrow" size="32px" color="secondary" />
+					<PixelIcon name="play_arrow" size="32px" color="var(--pixel-text-dim)" />
 					<p>Run or Submit your solution to inspect test results.</p>
 				</div>
 			</div>

@@ -235,15 +235,15 @@ watch(
 			</div>
 
 			<div class="editor-right-tools">
-				<VaButton
-					preset="secondary"
+				<PixelButton
+					color="secondary"
 					size="small"
-					icon="restart_alt"
+					icon="refresh"
 					title="Reset to boilerplate template"
 					@click="handleReset"
 				>
 					Reset Code
-				</VaButton>
+				</PixelButton>
 			</div>
 		</div>
 
