@@ -40,4 +40,3 @@ export function formatDateRange(value: unknown): string {
 	}
 	return ''
 }
-

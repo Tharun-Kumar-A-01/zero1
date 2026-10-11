@@ -13,10 +13,10 @@ describe('boilerplate generation (dynamic and generic)', () => {
 	it('converts titles to camelCase function names', () => {
 		expect(titleToFunctionName('Two Sum')).toBe('twoSum')
 		expect(titleToFunctionName('Longest Substring Without Repeating Characters')).toBe(
-			'longestSubstringWithoutRepeatingCharacters'
+			'longestSubstringWithoutRepeatingCharacters',
 		)
 		expect(titleToFunctionName('Find Kth Largest Element in Array')).toBe(
-			'findKthLargestElementInArray'
+			'findKthLargestElementInArray',
 		)
 		expect(titleToFunctionName('')).toBe('solve')
 	})
@@ -54,26 +54,26 @@ describe('boilerplate generation (dynamic and generic)', () => {
 				{ name: 'query', type: 'string' },
 				{ name: 'threshold', type: 'float' },
 			],
-			'bool'
+			'bool',
 		)
 
 		// Python
 		expect(templates.python).toContain('class Solution:')
 		expect(templates.python).toContain(
-			'def customSearch(self, grid: list[list[int]], query: str, threshold: float) -> bool:'
+			'def customSearch(self, grid: list[list[int]], query: str, threshold: float) -> bool:',
 		)
 
 		// C++
 		expect(templates.cpp).toContain('class Solution {')
 		expect(templates.cpp).toContain(
-			'bool customSearch(vector<vector<int>>& grid, string query, float threshold)'
+			'bool customSearch(vector<vector<int>>& grid, string query, float threshold)',
 		)
 		expect(templates.cpp).toContain('return false;')
 
 		// Java
 		expect(templates.java).toContain('public class Solution {')
 		expect(templates.java).toContain(
-			'public boolean customSearch(int[][] grid, String query, float threshold)'
+			'public boolean customSearch(int[][] grid, String query, float threshold)',
 		)
 		expect(templates.java).toContain('return false;')
 
@@ -91,7 +91,7 @@ describe('boilerplate generation (dynamic and generic)', () => {
 			[],
 			'',
 			[{ input_data: 'hello world', expected_output: 'true' }],
-			'Given a string s, return true if condition holds.'
+			'Given a string s, return true if condition holds.',
 		)
 
 		expect(sig.functionName).toBe('checkSubstringPresence')

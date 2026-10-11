@@ -13,10 +13,19 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	(e: 'schedule', payload: { user_id: number; week_start_date: string; week_end_date: string }): void
-	(e: 'editRotation', payload: { id: number; user_id: number; week_start_date: string; week_end_date: string }): void
+	(
+		e: 'schedule',
+		payload: { user_id: number; week_start_date: string; week_end_date: string },
+	): void
+	(
+		e: 'editRotation',
+		payload: { id: number; user_id: number; week_start_date: string; week_end_date: string },
+	): void
 	(e: 'deleteRotation', rotationId: number): void
-	(e: 'createLeave', payload: { title: string; start_date: string; end_date: string; description?: string }): void
+	(
+		e: 'createLeave',
+		payload: { title: string; start_date: string; end_date: string; description?: string },
+	): void
 	(e: 'deleteLeave', leaveId: number): void
 }>()
 
@@ -97,7 +106,6 @@ function getMentorName(userId: number): string {
 	const user = getMentorUser(userId)
 	return user ? user.name : `Mentor ID #${userId}`
 }
-
 
 // Compute the end date so the mentor gets exactly 6 working days (Sundays skipped)
 function computeWorkingEnd(start: Date): Date {
@@ -219,7 +227,11 @@ const calendarWeeks = computed<CalendarDay[][]>(() => {
 	const allDays: CalendarDay[] = []
 
 	for (let i = 0; i < totalDaysToRender; i++) {
-		const d = new Date(gridStartDate.getFullYear(), gridStartDate.getMonth(), gridStartDate.getDate() + i)
+		const d = new Date(
+			gridStartDate.getFullYear(),
+			gridStartDate.getMonth(),
+			gridStartDate.getDate() + i,
+		)
 		const dateStr = formatISODate(d)
 		const isCurrentMonth = d.getMonth() === month
 		const isToday = dateStr === todayStr
@@ -328,18 +340,10 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				</div>
 
 				<div class="action-buttons">
-					<PixelButton
-						color="primary"
-						icon="event"
-						@click="showScheduleDialog = true"
-					>
+					<PixelButton color="primary" icon="event" @click="showScheduleDialog = true">
 						Assign Mentor
 					</PixelButton>
-					<PixelButton
-						color="danger"
-						icon="event_busy"
-						@click="showLeaveDialog = true"
-					>
+					<PixelButton color="danger" icon="event_busy" @click="showLeaveDialog = true">
 						Add Department Leave
 					</PixelButton>
 				</div>
@@ -350,22 +354,14 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 		<PixelCard class="calendar-grid-card">
 			<!-- Weekday Column Headers -->
 			<div class="calendar-header-row">
-				<div
-					v-for="dayName in weekDaysHeader"
-					:key="dayName"
-					class="calendar-header-cell"
-				>
+				<div v-for="dayName in weekDaysHeader" :key="dayName" class="calendar-header-cell">
 					{{ dayName }}
 				</div>
 			</div>
 
 			<!-- Weeks Grid -->
 			<div class="calendar-month-body">
-				<div
-					v-for="(week, wIdx) in calendarWeeks"
-					:key="wIdx"
-					class="calendar-week-row"
-				>
+				<div v-for="(week, wIdx) in calendarWeeks" :key="wIdx" class="calendar-week-row">
 					<div
 						v-for="day in week"
 						:key="day.dateStr"
@@ -378,10 +374,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					>
 						<!-- Day Header -->
 						<div class="day-number-wrapper">
-							<span
-								class="day-number"
-								:class="{ 'today-badge': day.isToday }"
-							>
+							<span class="day-number" :class="{ 'today-badge': day.isToday }">
 								{{ day.dayNumber }}
 							</span>
 						</div>
@@ -422,7 +415,9 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 							>
 								<template v-if="isRotationStart(rot, day)">
 									<PixelIcon name="school" size="13px" class="event-icon" />
-									<span class="event-label">{{ getMentorName(rot.user_id) }}</span>
+									<span class="event-label">{{
+										getMentorName(rot.user_id)
+									}}</span>
 								</template>
 								<span v-else class="event-continuation-dot"></span>
 							</div>
@@ -442,18 +437,17 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				</PixelCardTitle>
 				<PixelCardContent>
 					<div v-if="leaves.length > 0" class="items-list">
-						<div
-							v-for="leave in leaves"
-							:key="leave.id"
-							class="list-item-row"
-						>
+						<div v-for="leave in leaves" :key="leave.id" class="list-item-row">
 							<div class="item-info">
 								<span class="item-title">{{ leave.title }}</span>
 								<span class="item-dates">
 									<PixelIcon name="date_range" :size="14" />
-									{{ formatIndianDate(leave.start_date) }} – {{ formatIndianDate(leave.end_date) }}
+									{{ formatIndianDate(leave.start_date) }} –
+									{{ formatIndianDate(leave.end_date) }}
 								</span>
-								<p v-if="leave.description" class="item-desc">{{ leave.description }}</p>
+								<p v-if="leave.description" class="item-desc">
+									{{ leave.description }}
+								</p>
 							</div>
 							<PixelButton
 								color="danger"
@@ -479,7 +473,13 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				<PixelCardContent>
 					<div v-if="rotations.length > 0" class="items-list">
 						<div
-							v-for="rot in [...rotations].sort((a, b) => { const o = {active:0, upcoming:1, completed:2, cancelled:3}; const so = (o[a.status]??9)-(o[b.status]??9); return so !== 0 ? so : a.week_start_date.localeCompare(b.week_start_date) })"
+							v-for="rot in [...rotations].sort((a, b) => {
+								const o = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
+								const so = (o[a.status] ?? 9) - (o[b.status] ?? 9)
+								return so !== 0
+									? so
+									: a.week_start_date.localeCompare(b.week_start_date)
+							})"
 							:key="rot.id"
 							class="list-item-row"
 						>
@@ -491,20 +491,25 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 									/>
 									<span class="item-title">{{ getMentorName(rot.user_id) }}</span>
 									<PixelBadge
-										:color="rot.status === 'active' ? 'success' : rot.status === 'upcoming' ? 'info' : 'secondary'"
+										:color="
+											rot.status === 'active'
+												? 'success'
+												: rot.status === 'upcoming'
+													? 'info'
+													: 'secondary'
+										"
 										:text="rot.status.toUpperCase()"
 									/>
 								</div>
 								<span class="item-dates">
 									<PixelIcon name="calendar_today" :size="14" />
-									{{ formatIndianDate(rot.week_start_date) }} – {{ formatIndianDate(rot.week_end_date) }}
+									{{ formatIndianDate(rot.week_start_date) }} –
+									{{ formatIndianDate(rot.week_end_date) }}
 								</span>
 							</div>
 						</div>
 					</div>
-					<div v-else class="empty-state-text">
-						No mentor rotations scheduled yet.
-					</div>
+					<div v-else class="empty-state-text">No mentor rotations scheduled yet.</div>
 				</PixelCardContent>
 			</PixelCard>
 		</div>
@@ -537,7 +542,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				/>
 				<p class="form-hint">
 					<PixelIcon name="info" size="13px" />
-					End date auto-computed as start + 5 days (Mon – Sat). Sundays are skipped automatically.
+					End date auto-computed as start + 5 days (Mon – Sat). Sundays are skipped
+					automatically.
 				</p>
 			</form>
 		</PixelModal>
@@ -599,7 +605,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				<div class="inspect-field">
 					<span class="field-label">Date Range</span>
 					<span class="field-value">
-						{{ formatIndianDate(inspectLeave.start_date) }} – {{ formatIndianDate(inspectLeave.end_date) }}
+						{{ formatIndianDate(inspectLeave.start_date) }} –
+						{{ formatIndianDate(inspectLeave.end_date) }}
 					</span>
 				</div>
 				<div v-if="inspectLeave.description" class="inspect-field">
@@ -608,10 +615,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				</div>
 
 				<div class="inspect-actions">
-					<PixelButton
-						color="secondary"
-						@click="inspectLeave = null"
-					>
+					<PixelButton color="secondary" @click="inspectLeave = null">
 						Close
 					</PixelButton>
 					<PixelButton
@@ -641,22 +645,26 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				<div class="inspect-field">
 					<span class="field-label">Status</span>
 					<PixelBadge
-						:color="inspectRotation.status === 'active' ? 'success' : inspectRotation.status === 'upcoming' ? 'info' : 'secondary'"
+						:color="
+							inspectRotation.status === 'active'
+								? 'success'
+								: inspectRotation.status === 'upcoming'
+									? 'info'
+									: 'secondary'
+						"
 						:text="inspectRotation.status.toUpperCase()"
 					/>
 				</div>
 				<div class="inspect-field">
 					<span class="field-label">Rotation Week</span>
 					<span class="field-value">
-						{{ formatIndianDate(inspectRotation.week_start_date) }} – {{ formatIndianDate(inspectRotation.week_end_date) }}
+						{{ formatIndianDate(inspectRotation.week_start_date) }} –
+						{{ formatIndianDate(inspectRotation.week_end_date) }}
 					</span>
 				</div>
 
 				<div class="inspect-actions">
-					<PixelButton
-						color="secondary"
-						@click="inspectRotation = null"
-					>
+					<PixelButton color="secondary" @click="inspectRotation = null">
 						Close
 					</PixelButton>
 					<PixelButton
@@ -898,7 +906,9 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	border: 1px solid rgba(0, 0, 0, 0.5);
 	box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.45);
 	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
-	transition: filter 0.1s ease, transform 0.08s ease;
+	transition:
+		filter 0.1s ease,
+		transform 0.08s ease;
 }
 
 .event-bar:hover {

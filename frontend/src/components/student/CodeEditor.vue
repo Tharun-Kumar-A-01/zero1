@@ -182,7 +182,7 @@ watch(
 	() => props.modelValue,
 	() => {
 		handleScroll()
-	}
+	},
 )
 </script>
 
@@ -202,16 +202,21 @@ watch(
 						@click="toggleDropdown"
 					>
 						<span class="lang-selected-label">{{ currentLanguageLabel }}</span>
-						<svg class="dropdown-chevron" :class="{ rotated: isDropdownOpen }" viewBox="0 0 20 20" fill="currentColor">
-							<path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+						<svg
+							class="dropdown-chevron"
+							:class="{ rotated: isDropdownOpen }"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
+								clip-rule="evenodd"
+							/>
 						</svg>
 					</button>
 
-					<div
-						v-if="isDropdownOpen"
-						class="lang-dropdown-menu"
-						role="listbox"
-					>
+					<div v-if="isDropdownOpen" class="lang-dropdown-menu" role="listbox">
 						<button
 							v-for="opt in filteredLanguageOptions"
 							:key="opt.value"
@@ -224,8 +229,17 @@ watch(
 							@click="selectOption(opt.value)"
 						>
 							<span class="option-name">{{ opt.label }}</span>
-							<svg v-if="opt.value === language" class="check-icon" viewBox="0 0 20 20" fill="currentColor">
-								<path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+							<svg
+								v-if="opt.value === language"
+								class="check-icon"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+									clip-rule="evenodd"
+								/>
 							</svg>
 						</button>
 					</div>
@@ -251,11 +265,7 @@ watch(
 		<div class="editor-body">
 			<!-- Line Numbers Gutter -->
 			<div ref="gutterRef" class="line-gutter">
-				<div
-					v-for="n in lineCount"
-					:key="n"
-					class="line-num"
-				>
+				<div v-for="n in lineCount" :key="n" class="line-num">
 					{{ n }}
 				</div>
 			</div>
@@ -338,7 +348,11 @@ watch(
 	letter-spacing: 0.04em;
 	cursor: pointer !important;
 	user-select: none;
-	transition: background 0.1s, border-color 0.1s, transform 0.08s, box-shadow 0.08s;
+	transition:
+		background 0.1s,
+		border-color 0.1s,
+		transform 0.08s,
+		box-shadow 0.08s;
 }
 
 .lang-dropdown-trigger:hover {
@@ -397,7 +411,9 @@ watch(
 	text-align: left;
 	cursor: pointer !important;
 	user-select: none;
-	transition: background 0.1s, color 0.1s;
+	transition:
+		background 0.1s,
+		color 0.1s;
 }
 
 .lang-dropdown-item:hover {
@@ -488,7 +504,10 @@ watch(
 	letter-spacing: 0 !important;
 	font-variant-ligatures: none !important;
 	-webkit-font-variant-ligatures: none !important;
-	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
+	font-feature-settings:
+		'liga' 0,
+		'calt' 0,
+		'dlig' 0 !important;
 	white-space: pre !important;
 	word-wrap: normal !important;
 	tab-size: 4 !important;

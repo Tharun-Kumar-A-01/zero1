@@ -37,7 +37,9 @@ const isImportingCoding = ref<boolean>(false)
 const showAiTestGenDialog = ref<boolean>(false)
 const selectedCodingForAi = ref<CodingQuestionItem | null>(null)
 const isGeneratingAiTests = ref<boolean>(false)
-const generatedAiCases = ref<Array<{ input: string; expected_output: string; rationale?: string }>>([])
+const generatedAiCases = ref<Array<{ input: string; expected_output: string; rationale?: string }>>(
+	[],
+)
 
 const mcqPoolCount = computed<number>(() => questionSet.value?.mcqs.length ?? 0)
 const codingPoolCount = computed<number>(() => questionSet.value?.coding_questions.length ?? 0)
@@ -69,12 +71,20 @@ async function handlePublish(): Promise<void> {
 	if (!questionSet.value) return
 	isPublishing.value = true
 	try {
-		const res = await api.post<QuestionSetData>(`/mentor/question-set/${questionSet.value.id}/publish`)
+		const res = await api.post<QuestionSetData>(
+			`/mentor/question-set/${questionSet.value.id}/publish`,
+		)
 		if (res.success && res.data) {
 			questionSet.value = res.data
-			notify({ color: 'success', message: 'Question set successfully published and locked for rotation!' })
+			notify({
+				color: 'success',
+				message: 'Question set successfully published and locked for rotation!',
+			})
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Failed to publish question set.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Failed to publish question set.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Network error' })
@@ -109,13 +119,16 @@ async function handleAddMcq(payload: {
 	}
 }
 
-async function handleUpdateMcq(mcqId: number, payload: {
-	prompt_text: string
-	options: string[]
-	correct_option_index: number
-	explanation?: string
-	difficulty: string
-}): Promise<void> {
+async function handleUpdateMcq(
+	mcqId: number,
+	payload: {
+		prompt_text: string
+		options: string[]
+		correct_option_index: number
+		explanation?: string
+		difficulty: string
+	},
+): Promise<void> {
 	try {
 		const res = await api.put<QuestionSetData>(`/mentor/questions/mcq/${mcqId}`, payload)
 		if (res.success && res.data) {
@@ -152,10 +165,16 @@ async function handleImportMcqs(file: File): Promise<void> {
 			formData.append('question_set_id', questionSet.value.id.toString())
 		}
 
-		const res = await api.upload<QuestionSetData>('/mentor/questions/import-mcq-sheet', formData)
+		const res = await api.upload<QuestionSetData>(
+			'/mentor/questions/import-mcq-sheet',
+			formData,
+		)
 		if (res.success && res.data) {
 			questionSet.value = res.data
-			notify({ color: 'success', message: res.message || 'MCQs successfully imported via AI!' })
+			notify({
+				color: 'success',
+				message: res.message || 'MCQs successfully imported via AI!',
+			})
 		} else {
 			notify({ color: 'danger', message: res.error?.message || 'Failed to import MCQs.' })
 		}
@@ -186,9 +205,15 @@ async function handleAddCoding(payload: {
 		})
 		if (res.success && res.data) {
 			questionSet.value = res.data
-			notify({ color: 'success', message: 'Coding challenge added with 3 sample and 10 hidden test cases.' })
+			notify({
+				color: 'success',
+				message: 'Coding challenge added with 3 sample and 10 hidden test cases.',
+			})
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Failed to add coding question.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Failed to add coding question.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Network error' })
@@ -197,25 +222,31 @@ async function handleAddCoding(payload: {
 	}
 }
 
-async function handleUpdateCoding(codingId: number, payload: {
-	title: string
-	word_problem_text: string
-	constraints_text: string
-	difficulty: string
-	sample_test_cases: Array<{ input: string; expected_output: string }>
-	hidden_test_cases: Array<{ input: string; expected_output: string }>
-	function_name?: string
-	parameter_definitions?: Array<{ name: string; type: string }>
-	return_type?: string
-	starter_templates?: Record<string, string>
-}): Promise<void> {
+async function handleUpdateCoding(
+	codingId: number,
+	payload: {
+		title: string
+		word_problem_text: string
+		constraints_text: string
+		difficulty: string
+		sample_test_cases: Array<{ input: string; expected_output: string }>
+		hidden_test_cases: Array<{ input: string; expected_output: string }>
+		function_name?: string
+		parameter_definitions?: Array<{ name: string; type: string }>
+		return_type?: string
+		starter_templates?: Record<string, string>
+	},
+): Promise<void> {
 	try {
 		const res = await api.put<QuestionSetData>(`/mentor/questions/coding/${codingId}`, payload)
 		if (res.success && res.data) {
 			questionSet.value = res.data
 			notify({ color: 'success', message: 'Coding challenge updated successfully.' })
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Failed to update coding challenge.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Failed to update coding challenge.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Update error' })
@@ -229,7 +260,10 @@ async function handleDeleteCoding(codingId: number): Promise<void> {
 			questionSet.value = res.data
 			notify({ color: 'success', message: 'Coding challenge removed from pool.' })
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Failed to delete coding challenge.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Failed to delete coding challenge.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Delete error' })
@@ -245,12 +279,21 @@ async function handleImportCoding(file: File): Promise<void> {
 			formData.append('question_set_id', questionSet.value.id.toString())
 		}
 
-		const res = await api.upload<QuestionSetData>('/mentor/questions/import-coding-sheet', formData)
+		const res = await api.upload<QuestionSetData>(
+			'/mentor/questions/import-coding-sheet',
+			formData,
+		)
 		if (res.success && res.data) {
 			questionSet.value = res.data
-			notify({ color: 'success', message: res.message || 'Coding challenges and AI test cases imported!' })
+			notify({
+				color: 'success',
+				message: res.message || 'Coding challenges and AI test cases imported!',
+			})
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Failed to import coding challenges.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Failed to import coding challenges.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Import error' })
@@ -269,48 +312,70 @@ async function triggerAiGeneration(): Promise<void> {
 	if (!selectedCodingForAi.value) return
 	isGeneratingAiTests.value = true
 	try {
-		const res = await api.post<{ test_cases: Array<{ input: string; expected_output: string; rationale?: string }> }>(
-			`/mentor/coding/${selectedCodingForAi.value.id}/generate-ai-tests`
-		)
+		const res = await api.post<{
+			test_cases: Array<{ input: string; expected_output: string; rationale?: string }>
+		}>(`/mentor/coding/${selectedCodingForAi.value.id}/generate-ai-tests`)
 		if (res.success && res.data) {
 			generatedAiCases.value = res.data.test_cases
-			notify({ color: 'success', message: `Synthesized ${res.data.test_cases.length} AI edge cases.` })
+			notify({
+				color: 'success',
+				message: `Synthesized ${res.data.test_cases.length} AI edge cases.`,
+			})
 		} else {
 			notify({ color: 'danger', message: res.error?.message || 'AI test generation failed.' })
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Generation network error' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'Generation network error',
+		})
 	} finally {
 		isGeneratingAiTests.value = false
 	}
 }
 
-async function handleAcceptAiCases(cases: Array<{ input: string; expected_output: string }>): Promise<void> {
+async function handleAcceptAiCases(
+	cases: Array<{ input: string; expected_output: string }>,
+): Promise<void> {
 	if (!selectedCodingForAi.value) return
 	try {
 		const res = await api.post<QuestionSetData>(
 			`/mentor/coding/${selectedCodingForAi.value.id}/append-test-cases`,
-			{ test_cases: cases }
+			{ test_cases: cases },
 		)
 		if (res.success && res.data) {
 			questionSet.value = res.data
 			showAiTestGenDialog.value = false
-			notify({ color: 'success', message: `Appended ${cases.length} AI cases to test suite.` })
+			notify({
+				color: 'success',
+				message: `Appended ${cases.length} AI cases to test suite.`,
+			})
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Failed to save test cases' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'Failed to save test cases',
+		})
 	}
 }
 
-async function handleResolveSubmission(payload: { submissionId: number; resolution: 'dismiss' | 'action' }): Promise<void> {
+async function handleResolveSubmission(payload: {
+	submissionId: number
+	resolution: 'dismiss' | 'action'
+}): Promise<void> {
 	try {
 		const res = await api.post<{ message: string }>(
 			`/mentor/flagged-submissions/${payload.submissionId}/resolve`,
-			{ resolution: payload.resolution }
+			{ resolution: payload.resolution },
 		)
 		if (res.success) {
-			flaggedSubmissions.value = flaggedSubmissions.value.filter((s: FlaggedSubmission) => s.id !== payload.submissionId)
-			notify({ color: 'success', message: res.data?.message || 'Resolved flagged submission.' })
+			flaggedSubmissions.value = flaggedSubmissions.value.filter(
+				(s: FlaggedSubmission) => s.id !== payload.submissionId,
+			)
+			notify({
+				color: 'success',
+				message: res.data?.message || 'Resolved flagged submission.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Action failed' })
@@ -409,7 +474,10 @@ onMounted(async (): Promise<void> => {
 			<PixelCardContent>
 				<div class="notice-row">
 					<PixelIcon name="info" :size="16" />
-					<span>Question management is available to mentors only. Your rotation overview is shown above.</span>
+					<span
+						>Question management is available to mentors only. Your rotation overview is
+						shown above.</span
+					>
 				</div>
 			</PixelCardContent>
 		</PixelCard>

@@ -242,4 +242,3 @@ export interface MilestoneItem {
 	is_active: boolean
 	earned_count: number
 }
-

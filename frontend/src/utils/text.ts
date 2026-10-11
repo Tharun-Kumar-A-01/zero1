@@ -41,9 +41,11 @@ export function formatDurationHuman(totalSeconds: number | null | undefined): st
 }
 
 export function getDifficultyColor(
-	difficulty: string | null | undefined
+	difficulty: string | null | undefined,
 ): 'success' | 'warning' | 'danger' | 'secondary' {
-	const d = String(difficulty || '').toLowerCase().trim()
+	const d = String(difficulty || '')
+		.toLowerCase()
+		.trim()
 	if (d === 'easy') return 'success'
 	if (d === 'medium') return 'warning'
 	if (d === 'hard') return 'danger'

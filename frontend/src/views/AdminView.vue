@@ -36,7 +36,11 @@ const isDeletingLeave = ref<boolean>(false)
 const isUploadingSheet = ref<boolean>(false)
 const isCommittingImport = ref<boolean>(false)
 const currentImportJob = ref<ImportJobResponse | null>(null)
-const importSummary = ref<{ imported_count: number; skipped_count: number; errors: string[] } | null>(null)
+const importSummary = ref<{
+	imported_count: number
+	skipped_count: number
+	errors: string[]
+} | null>(null)
 
 // Any student or mentor can be assigned as mentor
 const mentorUsers = computed<UserItem[]>(() => users.value)
@@ -78,7 +82,6 @@ async function fetchLeaves(): Promise<void> {
 	}
 }
 
-
 async function handleUploadSheet(file: File, targetYear: string): Promise<void> {
 	isUploadingSheet.value = true
 	currentImportJob.value = null
@@ -94,7 +97,10 @@ async function handleUploadSheet(file: File, targetYear: string): Promise<void> 
 			currentImportJob.value = res.data
 			notify({ color: 'success', message: 'Spreadsheet analyzed. Columns mapped with AI.' })
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Failed to upload spreadsheet.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Failed to upload spreadsheet.',
+			})
 		}
 	} catch (err: unknown) {
 		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Upload error' })
@@ -108,17 +114,21 @@ async function handleCommitImport(mapping: Record<string, number>): Promise<void
 	isCommittingImport.value = true
 
 	try {
-		const res = await api.post<{ imported_count: number; skipped_count: number; errors: string[] }>(
-			'/admin/students/import-commit',
-			{
-				job_id: currentImportJob.value.job_id,
-				column_mapping: mapping,
-			}
-		)
+		const res = await api.post<{
+			imported_count: number
+			skipped_count: number
+			errors: string[]
+		}>('/admin/students/import-commit', {
+			job_id: currentImportJob.value.job_id,
+			column_mapping: mapping,
+		})
 
 		if (res.success && res.data) {
 			importSummary.value = res.data
-			notify({ color: 'success', message: `Successfully committed ${res.data.imported_count} students!` })
+			notify({
+				color: 'success',
+				message: `Successfully committed ${res.data.imported_count} students!`,
+			})
 			await fetchUsers()
 		} else {
 			notify({ color: 'danger', message: res.error?.message || 'Import commit failed.' })
@@ -130,7 +140,11 @@ async function handleCommitImport(mapping: Record<string, number>): Promise<void
 	}
 }
 
-async function handleScheduleMentor(payload: { user_id: number; week_start_date: string; week_end_date: string }): Promise<void> {
+async function handleScheduleMentor(payload: {
+	user_id: number
+	week_start_date: string
+	week_end_date: string
+}): Promise<void> {
 	isScheduling.value = true
 	try {
 		const res = await api.post<RotationItem>('/admin/mentors/rotation', payload)
@@ -141,13 +155,21 @@ async function handleScheduleMentor(payload: { user_id: number; week_start_date:
 			notify({ color: 'danger', message: res.error?.message || 'Could not schedule mentor.' })
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Scheduling error' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'Scheduling error',
+		})
 	} finally {
 		isScheduling.value = false
 	}
 }
 
-async function handleEditRotation(payload: { id: number; user_id: number; week_start_date: string; week_end_date: string }): Promise<void> {
+async function handleEditRotation(payload: {
+	id: number
+	user_id: number
+	week_start_date: string
+	week_end_date: string
+}): Promise<void> {
 	try {
 		const res = await api.put<RotationItem>(`/admin/mentors/rotation/${payload.id}`, {
 			user_id: payload.user_id,
@@ -180,13 +202,21 @@ async function handleDeleteRotation(rotationId: number): Promise<void> {
 	}
 }
 
-async function handleCreateUser(payload: { name: string; email: string; role: 'student' | 'mentor' | 'admin'; password: string }): Promise<void> {
+async function handleCreateUser(payload: {
+	name: string
+	email: string
+	role: 'student' | 'mentor' | 'admin'
+	password: string
+}): Promise<void> {
 	isCreatingUser.value = true
 	try {
 		const res = await api.post<UserItem>('/admin/users', payload)
 		if (res.success && res.data) {
 			users.value.unshift(res.data)
-			notify({ color: 'success', message: `Account for ${res.data.name} created successfully.` })
+			notify({
+				color: 'success',
+				message: `Account for ${res.data.name} created successfully.`,
+			})
 		} else {
 			notify({ color: 'danger', message: res.error?.message || 'Failed to create user.' })
 		}
@@ -197,7 +227,15 @@ async function handleCreateUser(payload: { name: string; email: string; role: 's
 	}
 }
 
-async function handleUpdateUser(userId: number, payload: { name: string; email: string; role: 'student' | 'mentor' | 'admin'; password?: string }): Promise<void> {
+async function handleUpdateUser(
+	userId: number,
+	payload: {
+		name: string
+		email: string
+		role: 'student' | 'mentor' | 'admin'
+		password?: string
+	},
+): Promise<void> {
 	isUpdatingUser.value = true
 	try {
 		const res = await api.put<UserItem>(`/admin/users/${userId}`, payload)
@@ -230,13 +268,21 @@ async function handleDeleteUser(userId: number): Promise<void> {
 			notify({ color: 'danger', message: res.error?.message || 'Failed to delete user.' })
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Error deleting user.' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'Error deleting user.',
+		})
 	} finally {
 		isDeletingUser.value = false
 	}
 }
 
-async function handleCreateLeave(payload: { title: string; start_date: string; end_date: string; description?: string }): Promise<void> {
+async function handleCreateLeave(payload: {
+	title: string
+	start_date: string
+	end_date: string
+	description?: string
+}): Promise<void> {
 	isCreatingLeave.value = true
 	try {
 		const res = await api.post<CustomLeaveItem>('/admin/leaves', payload)
@@ -248,7 +294,10 @@ async function handleCreateLeave(payload: { title: string; start_date: string; e
 			notify({ color: 'danger', message: res.error?.message || 'Failed to create leave.' })
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Error creating leave.' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'Error creating leave.',
+		})
 	} finally {
 		isCreatingLeave.value = false
 	}
@@ -265,7 +314,10 @@ async function handleDeleteLeave(leaveId: number): Promise<void> {
 			notify({ color: 'danger', message: res.error?.message || 'Failed to remove leave.' })
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Error deleting leave.' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'Error deleting leave.',
+		})
 	} finally {
 		isDeletingLeave.value = false
 	}
@@ -340,14 +392,10 @@ onMounted(async (): Promise<void> => {
 		/>
 
 		<!-- SECTION 3: PROBLEM POOL MANAGEMENT (PUBLISHED / DRAFTS / MCQS / CODING) -->
-		<ProblemPoolAdminSection
-			v-if="activeTab === 'problems'"
-		/>
+		<ProblemPoolAdminSection v-if="activeTab === 'problems'" />
 
 		<!-- SECTION 4: ACHIEVEMENTS & MILESTONE BADGES -->
-		<AchievementsAdminSection
-			v-if="activeTab === 'achievements'"
-		/>
+		<AchievementsAdminSection v-if="activeTab === 'achievements'" />
 	</div>
 </template>
 

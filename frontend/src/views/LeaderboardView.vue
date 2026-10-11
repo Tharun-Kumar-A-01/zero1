@@ -29,11 +29,16 @@ const myEntry = computed<LeaderboardEntry | null>(() => {
 async function fetchLeaderboard(): Promise<void> {
 	isLoading.value = true
 	try {
-		const endpoint = selectedBatch.value ? `/student/leaderboard?year_batch=${selectedBatch.value}` : '/student/leaderboard'
+		const endpoint = selectedBatch.value
+			? `/student/leaderboard?year_batch=${selectedBatch.value}`
+			: '/student/leaderboard'
 		const res = await api.get<LeaderboardEntry[]>(endpoint)
 		if (res.success && res.data) {
 			entries.value = [...res.data]
-				.sort((a, b) => b.total_points - a.total_points || b.current_streak - a.current_streak)
+				.sort(
+					(a, b) =>
+						b.total_points - a.total_points || b.current_streak - a.current_streak,
+				)
 				.map((item, idx) => ({ ...item, rank: idx + 1 }))
 		}
 	} catch {
@@ -63,16 +68,10 @@ onMounted(async (): Promise<void> => {
 		<PodiumSection :entries="entries" class="podium-desktop-only" />
 
 		<!-- Ranked Peer List -->
-		<RankingsList
-			:entries="entries"
-			:currentUserId="authStore.user?.id"
-		/>
+		<RankingsList :entries="entries" :currentUserId="authStore.user?.id" />
 
 		<!-- Sticky Bottom "Your Position" Ribbon -->
-		<MyPositionDock
-			v-if="myEntry && authStore.userRole === 'student'"
-			:entry="myEntry"
-		/>
+		<MyPositionDock v-if="myEntry && authStore.userRole === 'student'" :entry="myEntry" />
 	</div>
 </template>
 

@@ -22,7 +22,7 @@ onMounted(async (): Promise<void> => {
 		class="app-layout"
 		:class="{
 			'with-sidebar': authStore.isAuthenticated,
-			'in-workspace': isWorkspaceRoute
+			'in-workspace': isWorkspaceRoute,
 		}"
 	>
 		<AppSidebar v-if="authStore.isAuthenticated" />

@@ -35,7 +35,7 @@ const renderedHtml = computed(() => {
 				// End code block
 				const escapedCode = escapeHtml(codeBuffer.join('\n'))
 				output.push(
-					`<pre class="rendered-code-block"><code class="language-${codeBlockLang}">${escapedCode}</code></pre>`
+					`<pre class="rendered-code-block"><code class="language-${codeBlockLang}">${escapedCode}</code></pre>`,
 				)
 				codeBuffer = []
 				inCodeBlock = false

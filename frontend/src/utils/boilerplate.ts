@@ -155,7 +155,9 @@ export function mapCType(typeStr: string, paramName: string, isParam: boolean): 
 	if (t === 'char') return isParam ? `char ${paramName}` : 'char'
 	if (t === 'void') return 'void'
 	if (t.endsWith('[][]')) {
-		return isParam ? `int** ${paramName}, int ${paramName}Size, int* ${paramName}ColSize` : 'int**'
+		return isParam
+			? `int** ${paramName}, int ${paramName}Size, int* ${paramName}ColSize`
+			: 'int**'
 	}
 	if (t.endsWith('[]')) {
 		const inner = t.slice(0, -2) === 'string' ? 'char*' : t.slice(0, -2)
@@ -186,7 +188,7 @@ export function resolveProblemSignature(
 	parameters?: ParameterDef[],
 	returnType?: string,
 	sampleCases?: Array<{ input_data?: string; expected_output?: string }>,
-	problemText?: string
+	problemText?: string,
 ): ProblemSignature {
 	const cleanTitle = (title || '').trim()
 	const cleanProblem = (problemText || '').toLowerCase()
@@ -227,19 +229,39 @@ export function resolveProblemSignature(
 			inferredReturn = 'int'
 		} else if (/[a-zA-Z]/.test(sampleOutput) && !sampleOutput.includes('\n')) {
 			inferredReturn = 'string'
-		} else if (cleanProblem.includes('return true') || cleanProblem.includes('return false') || cleanProblem.includes('boolean')) {
+		} else if (
+			cleanProblem.includes('return true') ||
+			cleanProblem.includes('return false') ||
+			cleanProblem.includes('boolean')
+		) {
 			inferredReturn = 'bool'
-		} else if (cleanProblem.includes('return an array') || cleanProblem.includes('return indices') || cleanProblem.includes('return all overlapping')) {
-			inferredReturn = cleanProblem.includes('interval') || cleanProblem.includes('matrix') ? 'int[][]' : 'int[]'
-		} else if (cleanProblem.includes('return a string') || cleanProblem.includes('reverse the order of')) {
+		} else if (
+			cleanProblem.includes('return an array') ||
+			cleanProblem.includes('return indices') ||
+			cleanProblem.includes('return all overlapping')
+		) {
+			inferredReturn =
+				cleanProblem.includes('interval') || cleanProblem.includes('matrix')
+					? 'int[][]'
+					: 'int[]'
+		} else if (
+			cleanProblem.includes('return a string') ||
+			cleanProblem.includes('reverse the order of')
+		) {
 			inferredReturn = 'string'
 		}
 	}
 
 	// Dynamic parameter inference from problem text and input format
 	const hasTarget = cleanProblem.includes('target') || sampleInput.split('\n').length === 3
-	const mentionsArray = cleanProblem.includes('array') || cleanProblem.includes('subarray') || cleanProblem.includes('integers')
-	const mentionsString = cleanProblem.includes('string') || cleanProblem.includes('palindrome') || cleanProblem.includes('substring')
+	const mentionsArray =
+		cleanProblem.includes('array') ||
+		cleanProblem.includes('subarray') ||
+		cleanProblem.includes('integers')
+	const mentionsString =
+		cleanProblem.includes('string') ||
+		cleanProblem.includes('palindrome') ||
+		cleanProblem.includes('substring')
 	const mentionsIntervals = cleanProblem.includes('interval') || cleanProblem.includes('matrix')
 
 	if (mentionsIntervals) {
@@ -282,7 +304,7 @@ export function resolveProblemSignature(
 export function generateBoilerplateTemplates(
 	functionName: string,
 	parameters: ParameterDef[],
-	returnType: string
+	returnType: string,
 ): Record<string, string> {
 	const fn = functionName.trim() || 'solve'
 	const ret = returnType.trim() || 'int'
@@ -376,14 +398,14 @@ export function getProblemStarterTemplates(
 	returnType?: string,
 	sampleCases?: Array<{ input_data?: string; expected_output?: string }>,
 	existingTemplates?: Record<string, string>,
-	problemText?: string
+	problemText?: string,
 ): Record<string, string> {
 	// If existingTemplates has custom user-written code or templates that are NOT the dummy static boilerplate, preserve them
 	if (existingTemplates && Object.keys(existingTemplates).length > 0) {
 		const isStatic = Object.values(existingTemplates).some(
 			(t) =>
 				t.includes('def solve(self, *args):') ||
-				t.includes('int solve() {\n        return 0;\n    }')
+				t.includes('int solve() {\n        return 0;\n    }'),
 		)
 		if (!isStatic) {
 			return existingTemplates
@@ -396,7 +418,7 @@ export function getProblemStarterTemplates(
 		parameters,
 		returnType,
 		sampleCases,
-		problemText
+		problemText,
 	)
 	return generateBoilerplateTemplates(sig.functionName, sig.parameters, sig.returnType)
 }

@@ -25,7 +25,11 @@ export const useAuthStore = defineStore('auth', () => {
 	const userRole = computed(() => user.value?.role || null)
 
 	async function login(email: string, password: string): Promise<boolean> {
-		const res = await api.post<{ access_token: string; refresh_token: string; user: UserProfile }>('/auth/login', {
+		const res = await api.post<{
+			access_token: string
+			refresh_token: string
+			user: UserProfile
+		}>('/auth/login', {
 			email,
 			password,
 		})

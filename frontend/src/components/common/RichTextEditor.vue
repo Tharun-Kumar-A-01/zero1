@@ -15,7 +15,7 @@ const props = withDefaults(
 		placeholder: 'Write the problem description using markdown...',
 		rows: 6,
 		required: false,
-	}
+	},
 )
 
 const emit = defineEmits<{
@@ -170,10 +170,7 @@ function insertLinePrefix(prefix: string): void {
 
 			<!-- Live Markdown Preview -->
 			<div v-show="activeTab === 'preview'" class="editor-preview-box">
-				<MarkdownRenderer
-					v-if="modelValue.trim()"
-					:content="modelValue"
-				/>
+				<MarkdownRenderer v-if="modelValue.trim()" :content="modelValue" />
 				<div v-else class="preview-empty-hint">
 					Nothing to preview yet. Switch to Write mode to author content.
 				</div>

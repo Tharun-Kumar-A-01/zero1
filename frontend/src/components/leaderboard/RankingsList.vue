@@ -8,159 +8,175 @@ import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 
 defineProps<{
-  entries: LeaderboardEntry[]
-  currentUserId?: number
+	entries: LeaderboardEntry[]
+	currentUserId?: number
 }>()
 
 const columns = [
-  { key: 'rank', label: 'Rank', width: '80px' },
-  { key: 'name', label: 'Adventurer' },
-  { key: 'roll_number', label: 'Roll Number' },
-  { key: 'year_batch', label: 'Cohort' },
-  { key: 'current_streak', label: 'Streak' },
-  { key: 'total_points', label: 'Score' },
+	{ key: 'rank', label: 'Rank', width: '80px' },
+	{ key: 'name', label: 'Adventurer' },
+	{ key: 'roll_number', label: 'Roll Number' },
+	{ key: 'year_batch', label: 'Cohort' },
+	{ key: 'current_streak', label: 'Streak' },
+	{ key: 'total_points', label: 'Score' },
 ]
 </script>
 
 <template>
-  <div class="rankings-container">
-        <PixelDataTable
-          :items="entries"
-          :columns="columns"
-          striped
-          hoverable
-          v-if="entries.length > 0"
-        >
-          <template #cell(rank)="{ value }">
-            <div class="rank-cell">
-              <PixelSprite v-if="Number(value) === 1" name="star_gold" :size="20" />
-              <PixelSprite v-else-if="Number(value) === 2" name="star_silver" :size="20" />
-              <PixelSprite v-else-if="Number(value) === 3" name="star_bronze" :size="20" />
-              <span v-else class="rank-number">#{{ value }}</span>
-            </div>
-          </template>
+	<div class="rankings-container">
+		<PixelDataTable
+			:items="entries"
+			:columns="columns"
+			striped
+			hoverable
+			v-if="entries.length > 0"
+		>
+			<template #cell(rank)="{ value }">
+				<div class="rank-cell">
+					<PixelSprite v-if="Number(value) === 1" name="star_gold" :size="20" />
+					<PixelSprite v-else-if="Number(value) === 2" name="star_silver" :size="20" />
+					<PixelSprite v-else-if="Number(value) === 3" name="star_bronze" :size="20" />
+					<span v-else class="rank-number">#{{ value }}</span>
+				</div>
+			</template>
 
-          <template #cell(name)="{ rowData }">
-            <div class="student-cell">
-              <PixelAvatar size="small" color="primary" :avatar="(rowData as LeaderboardEntry).avatar">
-                {{ (rowData as LeaderboardEntry).name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() }}
-              </PixelAvatar>
-              <div class="student-name-group">
-                <span class="student-fullname">{{ (rowData as LeaderboardEntry).name }}</span>
-                <PixelBadge
-                  v-if="(rowData as LeaderboardEntry).student_id === currentUserId"
-                  text="YOU"
-                  color="primary"
-                />
-              </div>
-            </div>
-          </template>
+			<template #cell(name)="{ rowData }">
+				<div class="student-cell">
+					<PixelAvatar
+						size="small"
+						color="primary"
+						:avatar="(rowData as LeaderboardEntry).avatar"
+					>
+						{{
+							(rowData as LeaderboardEntry).name
+								.split(' ')
+								.map((n) => n[0])
+								.join('')
+								.substring(0, 2)
+								.toUpperCase()
+						}}
+					</PixelAvatar>
+					<div class="student-name-group">
+						<span class="student-fullname">{{
+							(rowData as LeaderboardEntry).name
+						}}</span>
+						<PixelBadge
+							v-if="(rowData as LeaderboardEntry).student_id === currentUserId"
+							text="YOU"
+							color="primary"
+						/>
+					</div>
+				</div>
+			</template>
 
-          <template #cell(roll_number)="{ value }">
-            <span class="font-mono-val">{{ value || '—' }}</span>
-          </template>
+			<template #cell(roll_number)="{ value }">
+				<span class="font-mono-val">{{ value || '—' }}</span>
+			</template>
 
-          <template #cell(year_batch)="{ value }">
-            <span>{{ value ? `Batch ${value}` : '—' }}</span>
-          </template>
+			<template #cell(year_batch)="{ value }">
+				<span>{{ value ? `Batch ${value}` : '—' }}</span>
+			</template>
 
-          <template #cell(current_streak)="{ value }">
-            <div class="streak-pill">
-              <PixelSprite name="flame" :size="14" />
-              <span>{{ value }}</span>
-            </div>
-          </template>
+			<template #cell(current_streak)="{ value }">
+				<div class="streak-pill">
+					<PixelSprite name="flame" :size="14" />
+					<span>{{ value }}</span>
+				</div>
+			</template>
 
-          <template #cell(total_points)="{ value }">
-            <PixelBadge :text="`${value} XP`" color="primary" />
-          </template>
-        </PixelDataTable>
+			<template #cell(total_points)="{ value }">
+				<PixelBadge :text="`${value} XP`" color="primary" />
+			</template>
+		</PixelDataTable>
 
-    <PixelCard v-else class="empty-leaderboard-card">
-      <PixelCardContent class="empty-state">
-        <PixelSprite name="crown" :size="48" class="empty-icon" />
-        <h3 class="empty-title">No rankings recorded yet</h3>
-        <p>Be the first student in this batch to solve today's challenge and top the leaderboard!</p>
-      </PixelCardContent>
-    </PixelCard>
-  </div>
+		<PixelCard v-else class="empty-leaderboard-card">
+			<PixelCardContent class="empty-state">
+				<PixelSprite name="crown" :size="48" class="empty-icon" />
+				<h3 class="empty-title">No rankings recorded yet</h3>
+				<p>
+					Be the first student in this batch to solve today's challenge and top the
+					leaderboard!
+				</p>
+			</PixelCardContent>
+		</PixelCard>
+	</div>
 </template>
 
 <style scoped>
 .rankings-container {
-  width: 100%;
+	width: 100%;
 }
 
 .rank-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
 }
 
 .rank-number {
-  font-family: var(--font-pixel);
-  font-size: 12px;
-  color: var(--pixel-text-dim);
+	font-family: var(--font-pixel);
+	font-size: 12px;
+	color: var(--pixel-text-dim);
 }
 
 .student-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
 }
 
 .student-name-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .student-fullname {
-  font-family: var(--font-body);
-  font-weight: 600;
-  color: var(--pixel-text);
+	font-family: var(--font-body);
+	font-weight: 600;
+	color: var(--pixel-text);
 }
 
 .font-mono-val {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--pixel-text-muted);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--pixel-text-muted);
 }
 
 .streak-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: #2b1704;
-  border: 1px solid #7e4507;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: var(--font-pixel);
-  font-size: 11px;
-  color: #fbbf24;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background-color: #2b1704;
+	border: 1px solid #7e4507;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-family: var(--font-pixel);
+	font-size: 11px;
+	color: #fbbf24;
 }
 
 .points-val {
-  font-family: var(--font-pixel);
-  font-size: 12px;
-  color: #fbbf24;
+	font-family: var(--font-pixel);
+	font-size: 12px;
+	color: #fbbf24;
 }
 
 .empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--pixel-text-muted);
+	text-align: center;
+	padding: 3rem 1.5rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+	color: var(--pixel-text-muted);
 }
 
 .empty-title {
-  font-family: var(--font-pixel);
-  font-size: 1.25rem;
-  color: var(--pixel-text);
-  margin: 0;
+	font-family: var(--font-pixel);
+	font-size: 1.25rem;
+	color: var(--pixel-text);
+	margin: 0;
 }
 </style>

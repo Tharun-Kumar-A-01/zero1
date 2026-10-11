@@ -33,31 +33,36 @@ describe('api service (native fetch wrapper)', () => {
 		localStorage.setItem('refresh_token', 'valid-refresh-token')
 
 		let callCount = 0
-		const mockFetch = vi.fn<typeof fetch>().mockImplementation(async (input: RequestInfo | URL) => {
-			const url = typeof input === 'string' ? input : input.toString()
-			if (url.includes('/auth/refresh')) {
+		const mockFetch = vi
+			.fn<typeof fetch>()
+			.mockImplementation(async (input: RequestInfo | URL) => {
+				const url = typeof input === 'string' ? input : input.toString()
+				if (url.includes('/auth/refresh')) {
+					return {
+						status: 200,
+						json: async () => ({
+							success: true,
+							data: { access_token: 'new-refreshed-token' },
+						}),
+					} as Response
+				}
+
+				callCount++
+				if (callCount === 1) {
+					return {
+						status: 401,
+						json: async () => ({
+							success: false,
+							error: { code: 'TOKEN_EXPIRED', message: 'Expired' },
+						}),
+					} as Response
+				}
+
 				return {
 					status: 200,
-					json: async () => ({
-						success: true,
-						data: { access_token: 'new-refreshed-token' },
-					}),
+					json: async () => ({ success: true, data: { refreshedSuccess: true } }),
 				} as Response
-			}
-
-			callCount++
-			if (callCount === 1) {
-				return {
-					status: 401,
-					json: async () => ({ success: false, error: { code: 'TOKEN_EXPIRED', message: 'Expired' } }),
-				} as Response
-			}
-
-			return {
-				status: 200,
-				json: async () => ({ success: true, data: { refreshedSuccess: true } }),
-			} as Response
-		})
+			})
 		global.fetch = mockFetch
 
 		const result = await apiFetch<{ refreshedSuccess: boolean }>('/test-endpoint')

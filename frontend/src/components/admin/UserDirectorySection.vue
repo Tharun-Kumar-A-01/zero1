@@ -15,8 +15,25 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	(e: 'createUser', payload: { name: string; email: string; role: 'student' | 'mentor' | 'admin'; password: string }): void
-	(e: 'updateUser', userId: number, payload: { name: string; email: string; role: 'student' | 'mentor' | 'admin'; password?: string }): void
+	(
+		e: 'createUser',
+		payload: {
+			name: string
+			email: string
+			role: 'student' | 'mentor' | 'admin'
+			password: string
+		},
+	): void
+	(
+		e: 'updateUser',
+		userId: number,
+		payload: {
+			name: string
+			email: string
+			role: 'student' | 'mentor' | 'admin'
+			password?: string
+		},
+	): void
 	(e: 'deleteUser', userId: number): void
 	(e: 'uploadRoster', file: File, year: string): void
 	(e: 'commitRoster', mapping: Record<string, number>): void
@@ -82,13 +99,16 @@ watch(
 			customColumnMapping.value = { ...newJob.inferred_mapping.column_mapping }
 		}
 	},
-	{ immediate: true }
+	{ immediate: true },
 )
 
 const columnDropdownOptions = computed<Array<{ label: string; value: number }>>(() => {
 	const firstRow = props.importJob?.sample_grid?.[0]
 	if (!firstRow) return []
-	return firstRow.map((h, i) => ({ label: `Col ${i + 1}: ${h || 'Column ' + (i + 1)}`, value: i }))
+	return firstRow.map((h, i) => ({
+		label: `Col ${i + 1}: ${h || 'Column ' + (i + 1)}`,
+		value: i,
+	}))
 })
 
 const sampleTableColumns = computed(() => {
@@ -103,7 +123,10 @@ const sampleTableColumns = computed(() => {
 const sampleTableItems = computed(() => {
 	if (!props.importJob) return []
 	const { sample_grid, inferred_mapping } = props.importJob
-	const rows = sample_grid.slice(inferred_mapping.data_row_start_index, inferred_mapping.data_row_start_index + 6)
+	const rows = sample_grid.slice(
+		inferred_mapping.data_row_start_index,
+		inferred_mapping.data_row_start_index + 6,
+	)
 	return rows.map((row) => {
 		const rowObj: Record<string, string> = {}
 		row.forEach((val, idx) => {
@@ -139,7 +162,12 @@ const filteredUsers = computed<UserItem[]>(() => {
 	}
 	if (searchQuery.value.trim()) {
 		const q = searchQuery.value.toLowerCase()
-		list = list.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.roll_number && u.roll_number.toLowerCase().includes(q)))
+		list = list.filter(
+			(u) =>
+				u.name.toLowerCase().includes(q) ||
+				u.email.toLowerCase().includes(q) ||
+				(u.roll_number && u.roll_number.toLowerCase().includes(q)),
+		)
 	}
 	return list
 })
@@ -197,18 +225,22 @@ function handleCommit(): void {
 
 const roleFilterOptions = computed(() => [
 	{ label: `All Roles (${props.users.length})`, value: 'all' },
-	{ label: `Students (${props.users.filter((u) => u.role === 'student').length})`, value: 'student' },
-	{ label: `Mentors (${props.users.filter((u) => u.role === 'mentor').length})`, value: 'mentor' },
+	{
+		label: `Students (${props.users.filter((u) => u.role === 'student').length})`,
+		value: 'student',
+	},
+	{
+		label: `Mentors (${props.users.filter((u) => u.role === 'mentor').length})`,
+		value: 'mentor',
+	},
 	{ label: `Admins (${props.users.filter((u) => u.role === 'admin').length})`, value: 'admin' },
 ])
 
 const batchFilterOptions = computed(() => {
 	const batches = Array.from(
 		new Set(
-			props.users
-				.map((u) => u.year_batch)
-				.filter((b): b is string => Boolean(b && b.trim()))
-		)
+			props.users.map((u) => u.year_batch).filter((b): b is string => Boolean(b && b.trim())),
+		),
 	).sort((a, b) => b.localeCompare(a))
 
 	return [
@@ -248,11 +280,7 @@ function handleConfirmDeleteUser(): void {
 				>
 					Import Roster
 				</PixelButton>
-				<PixelButton
-					size="small"
-					icon="plus"
-					@click="showCreateDialog = true"
-				>
+				<PixelButton size="small" icon="plus" @click="showCreateDialog = true">
 					Add User
 				</PixelButton>
 			</div>
@@ -294,80 +322,93 @@ function handleConfirmDeleteUser(): void {
 		</div>
 
 		<!-- User Data Table -->
-				<PixelDataTable
-					:items="filteredUsers"
-					:columns="columns"
-					:per-page="perPage"
-					:current-page="currentPage"
-					striped
-					hoverable 
-					v-if="filteredUsers.length > 0"
+		<PixelDataTable
+			:items="filteredUsers"
+			:columns="columns"
+			:per-page="perPage"
+			:current-page="currentPage"
+			striped
+			hoverable
+			v-if="filteredUsers.length > 0"
+		>
+			<template #cell(name)="{ rowData }">
+				<div
+					class="user-cell clickable-user"
+					@click="openProfileModal(rowData as UserItem)"
 				>
-					<template #cell(name)="{ rowData }">
-						<div class="user-cell clickable-user" @click="openProfileModal(rowData as UserItem)">
-							<PixelAvatar size="small" color="primary" :avatar="(rowData as UserItem).avatar">
-								{{ (rowData as UserItem).name.charAt(0).toUpperCase() }}
-							</PixelAvatar>
-							<div class="user-details">
-								<span class="user-name">{{ (rowData as UserItem).name }}</span>
-								<span class="user-email">{{ (rowData as UserItem).email }}</span>
-							</div>
-						</div>
-					</template>
+					<PixelAvatar
+						size="small"
+						color="primary"
+						:avatar="(rowData as UserItem).avatar"
+					>
+						{{ (rowData as UserItem).name.charAt(0).toUpperCase() }}
+					</PixelAvatar>
+					<div class="user-details">
+						<span class="user-name">{{ (rowData as UserItem).name }}</span>
+						<span class="user-email">{{ (rowData as UserItem).email }}</span>
+					</div>
+				</div>
+			</template>
 
-					<template #cell(role)="{ rowData }">
-						<PixelBadge
-							:text="(rowData as UserItem).role.toUpperCase()"
-							:color="(rowData as UserItem).role === 'admin' ? 'danger' : (rowData as UserItem).role === 'mentor' ? 'warning' : 'primary'"
-						/>
-					</template>
+			<template #cell(role)="{ rowData }">
+				<PixelBadge
+					:text="(rowData as UserItem).role.toUpperCase()"
+					:color="
+						(rowData as UserItem).role === 'admin'
+							? 'danger'
+							: (rowData as UserItem).role === 'mentor'
+								? 'warning'
+								: 'primary'
+					"
+				/>
+			</template>
 
-					<template #cell(roll_number)="{ rowData }">
-						<span>{{ (rowData as UserItem).roll_number || '—' }}</span>
-					</template>
+			<template #cell(roll_number)="{ rowData }">
+				<span>{{ (rowData as UserItem).roll_number || '—' }}</span>
+			</template>
 
-					<template #cell(year_batch)="{ rowData }">
-						<span>{{ (rowData as UserItem).year_batch ? `Batch ${(rowData as UserItem).year_batch}` : '—' }}</span>
-					</template>
+			<template #cell(year_batch)="{ rowData }">
+				<span>{{
+					(rowData as UserItem).year_batch
+						? `Batch ${(rowData as UserItem).year_batch}`
+						: '—'
+				}}</span>
+			</template>
 
-					<template #cell(section)="{ rowData }">
-						<span>{{ (rowData as UserItem).section || '—' }}</span>
-					</template>
+			<template #cell(section)="{ rowData }">
+				<span>{{ (rowData as UserItem).section || '—' }}</span>
+			</template>
 
-					<template #cell(is_active)="{ rowData }">
-						<PixelBadge
-							:text="(rowData as UserItem).is_active ? 'ACTIVE' : 'INACTIVE'"
-							:color="(rowData as UserItem).is_active ? 'success' : 'secondary'"
-						/>
-					</template>
+			<template #cell(is_active)="{ rowData }">
+				<PixelBadge
+					:text="(rowData as UserItem).is_active ? 'ACTIVE' : 'INACTIVE'"
+					:color="(rowData as UserItem).is_active ? 'success' : 'secondary'"
+				/>
+			</template>
 
-					<template #cell(actions)="{ rowData }">
-						<div class="row-actions">
-							<PixelButton
-								size="small"
-								color="secondary"
-								icon="edit"
-								title="Edit User"
-								@click="openEditModal(rowData as UserItem)"
-							/>
-							<PixelButton
-								size="small"
-								color="danger"
-								icon="trash"
-								title="Delete User"
-								@click="openDeleteModal(rowData as UserItem)"
-							/>
-						</div>
-					</template>
-				</PixelDataTable>
-
-				<div v-if="filteredUsers.length > 0 && totalPages > 1" class="table-pagination">
-					<PixelPagination
-						v-model="currentPage"
-						:pages="totalPages"
-						:visible-pages="5"
+			<template #cell(actions)="{ rowData }">
+				<div class="row-actions">
+					<PixelButton
+						size="small"
+						color="secondary"
+						icon="edit"
+						title="Edit User"
+						@click="openEditModal(rowData as UserItem)"
+					/>
+					<PixelButton
+						size="small"
+						color="danger"
+						icon="trash"
+						title="Delete User"
+						@click="openDeleteModal(rowData as UserItem)"
 					/>
 				</div>
+			</template>
+		</PixelDataTable>
+
+		<div v-if="filteredUsers.length > 0 && totalPages > 1" class="table-pagination">
+			<PixelPagination v-model="currentPage" :pages="totalPages" :visible-pages="5" />
+		</div>
 
 		<PixelCard v-if="filteredUsers.length <= 0" class="empty-state-card">
 			<PixelCardContent class="empty-content">
@@ -387,12 +428,7 @@ function handleConfirmDeleteUser(): void {
 			@ok="handleCreate"
 		>
 			<form class="dialog-form">
-				<PixelInput
-					v-model="newName"
-					label="Full Name"
-					placeholder="John Doe"
-					required
-				/>
+				<PixelInput v-model="newName" label="Full Name" placeholder="John Doe" required />
 
 				<PixelInput
 					v-model="newEmail"
@@ -430,18 +466,9 @@ function handleConfirmDeleteUser(): void {
 			@ok="handleUpdate"
 		>
 			<form class="dialog-form">
-				<PixelInput
-					v-model="editName"
-					label="Full Name"
-					required
-				/>
+				<PixelInput v-model="editName" label="Full Name" required />
 
-				<PixelInput
-					v-model="editEmail"
-					type="email"
-					label="Email Address"
-					required
-				/>
+				<PixelInput v-model="editEmail" type="email" label="Email Address" required />
 
 				<PixelSelect
 					v-model="editRole"
@@ -477,7 +504,8 @@ function handleConfirmDeleteUser(): void {
 					<strong>{{ userToDelete.name }}</strong> ({{ userToDelete.email }})?
 				</p>
 				<p class="delete-warning-text">
-					All associated records, assignments, streaks, and submissions will be permanently deleted. This action cannot be undone.
+					All associated records, assignments, streaks, and submissions will be
+					permanently deleted. This action cannot be undone.
 				</p>
 			</div>
 		</PixelModal>
@@ -597,11 +625,17 @@ function handleConfirmDeleteUser(): void {
 						/>
 					</div>
 
-					<PixelAlert v-if="importSummary.errors.length > 0" color="danger" class="errors-alert">
+					<PixelAlert
+						v-if="importSummary.errors.length > 0"
+						color="danger"
+						class="errors-alert"
+					>
 						<div class="errors-box">
 							<strong class="errors-title">Skipped Entries Log:</strong>
 							<ul class="errors-list">
-								<li v-for="(err, eIdx) in importSummary.errors" :key="eIdx">{{ err }}</li>
+								<li v-for="(err, eIdx) in importSummary.errors" :key="eIdx">
+									{{ err }}
+								</li>
 							</ul>
 						</div>
 					</PixelAlert>
@@ -616,10 +650,7 @@ function handleConfirmDeleteUser(): void {
 		</PixelModal>
 
 		<!-- USER PROFILE MODAL -->
-		<UserProfileModal
-			v-model="showProfileDialog"
-			:user="selectedProfileUser"
-		/>
+		<UserProfileModal v-model="showProfileDialog" :user="selectedProfileUser" />
 	</div>
 </template>
 

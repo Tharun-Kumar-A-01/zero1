@@ -21,20 +21,27 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	(e: 'addMcq', payload: {
-		prompt_text: string
-		options: string[]
-		correct_option_index: number
-		explanation?: string
-		difficulty: string
-	}): void
-	(e: 'updateMcq', mcqId: number, payload: {
-		prompt_text: string
-		options: string[]
-		correct_option_index: number
-		explanation?: string
-		difficulty: string
-	}): void
+	(
+		e: 'addMcq',
+		payload: {
+			prompt_text: string
+			options: string[]
+			correct_option_index: number
+			explanation?: string
+			difficulty: string
+		},
+	): void
+	(
+		e: 'updateMcq',
+		mcqId: number,
+		payload: {
+			prompt_text: string
+			options: string[]
+			correct_option_index: number
+			explanation?: string
+			difficulty: string
+		},
+	): void
 	(e: 'deleteMcq', mcqId: number): void
 	(e: 'importMcqs', file: File): void
 }>()
@@ -84,7 +91,7 @@ watch(
 			showImportDialog.value = false
 			uploadedImportFiles.value = undefined
 		}
-	}
+	},
 )
 
 const difficultyOptions = [
@@ -186,30 +193,27 @@ function handleCommitImport(): void {
 				>
 					Import XLSX
 				</PixelButton>
-				<PixelButton
-					size="small"
-					color="primary"
-					icon="plus"
-					@click="showAddDialog = true"
-				>
+				<PixelButton size="small" color="primary" icon="plus" @click="showAddDialog = true">
 					Add MCQ
 				</PixelButton>
 			</div>
 		</div>
 
 		<div v-if="mcqs.length > 0" class="cards-list">
-			<PixelCard
-				v-for="(mcq, index) in mcqs"
-				:key="mcq.id"
-				class="item-card"
-			>
+			<PixelCard v-for="(mcq, index) in mcqs" :key="mcq.id" class="item-card">
 				<PixelCardContent>
 					<div class="card-inner">
 						<div class="card-meta">
 							<div class="meta-left">
 								<span class="question-index-text">Q{{ index + 1 }}</span>
 								<PixelBadge
-									:color="mcq.difficulty === 'hard' ? 'danger' : mcq.difficulty === 'medium' ? 'warning' : 'success'"
+									:color="
+										mcq.difficulty === 'hard'
+											? 'danger'
+											: mcq.difficulty === 'medium'
+												? 'warning'
+												: 'success'
+									"
 									:text="mcq.difficulty.toUpperCase()"
 								/>
 								<PixelBadge
@@ -244,7 +248,9 @@ function handleCommitImport(): void {
 								class="option-item"
 								:class="{ correct: oIdx === mcq.correct_option_index }"
 							>
-								<span class="option-prefix">{{ String.fromCharCode(65 + oIdx) }}.</span>
+								<span class="option-prefix"
+									>{{ String.fromCharCode(65 + oIdx) }}.</span
+								>
 
 								<div class="option-content">
 									{{ formatEntities(opt) }}
@@ -268,7 +274,10 @@ function handleCommitImport(): void {
 			<PixelCardContent class="empty-content">
 				<PixelIcon name="edit" :size="48" class="empty-pool-icon" />
 				<h3>No MCQs added yet</h3>
-				<p>Author or bulk import at least 7 aptitude questions to fulfill the weekly set quota.</p>
+				<p>
+					Author or bulk import at least 7 aptitude questions to fulfill the weekly set
+					quota.
+				</p>
 			</PixelCardContent>
 		</PixelCard>
 
@@ -402,7 +411,9 @@ function handleCommitImport(): void {
 		>
 			<div class="import-modal-content">
 				<p class="import-instruction">
-					Upload an <code>.xlsx</code> or <code>.csv</code> spreadsheet containing MCQs. AI will automatically parse the questions, options, correct answers, and explanations.
+					Upload an <code>.xlsx</code> or <code>.csv</code> spreadsheet containing MCQs.
+					AI will automatically parse the questions, options, correct answers, and
+					explanations.
 				</p>
 
 				<PixelFileUpload

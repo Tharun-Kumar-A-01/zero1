@@ -16,30 +16,37 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	(e: 'addCoding', payload: {
-		title: string
-		word_problem_text: string
-		constraints_text: string
-		difficulty: string
-		function_name?: string
-		parameter_definitions?: Array<{ name: string; type: string }>
-		return_type?: string
-		starter_templates?: Record<string, string>
-		sample_test_cases: Array<{ input: string; expected_output: string }>
-		hidden_test_cases: Array<{ input: string; expected_output: string }>
-	}): void
-	(e: 'updateCoding', codingId: number, payload: {
-		title: string
-		word_problem_text: string
-		constraints_text: string
-		difficulty: string
-		function_name?: string
-		parameter_definitions?: Array<{ name: string; type: string }>
-		return_type?: string
-		starter_templates?: Record<string, string>
-		sample_test_cases: Array<{ input: string; expected_output: string }>
-		hidden_test_cases: Array<{ input: string; expected_output: string }>
-	}): void
+	(
+		e: 'addCoding',
+		payload: {
+			title: string
+			word_problem_text: string
+			constraints_text: string
+			difficulty: string
+			function_name?: string
+			parameter_definitions?: Array<{ name: string; type: string }>
+			return_type?: string
+			starter_templates?: Record<string, string>
+			sample_test_cases: Array<{ input: string; expected_output: string }>
+			hidden_test_cases: Array<{ input: string; expected_output: string }>
+		},
+	): void
+	(
+		e: 'updateCoding',
+		codingId: number,
+		payload: {
+			title: string
+			word_problem_text: string
+			constraints_text: string
+			difficulty: string
+			function_name?: string
+			parameter_definitions?: Array<{ name: string; type: string }>
+			return_type?: string
+			starter_templates?: Record<string, string>
+			sample_test_cases: Array<{ input: string; expected_output: string }>
+			hidden_test_cases: Array<{ input: string; expected_output: string }>
+		},
+	): void
 	(e: 'deleteCoding', codingId: number): void
 	(e: 'openAiGen', question: CodingQuestionItem): void
 	(e: 'importCoding', file: File): void
@@ -80,7 +87,9 @@ function isTestCaseComplete(codeQ: CodingQuestionItem): boolean {
 const showAddDialog = ref<boolean>(false)
 const newTitle = ref<string>('')
 const newProblem = ref<string>('')
-const newConstraints = ref<string>('1 <= N <= 10^5\nAll values are within 32-bit signed integer limits.')
+const newConstraints = ref<string>(
+	'1 <= N <= 10^5\nAll values are within 32-bit signed integer limits.',
+)
 const newDifficulty = ref<string>('medium')
 const newFunctionName = ref<string>('solve')
 const newParameterDefs = ref<Array<{ name: string; type: string }>>([
@@ -169,7 +178,7 @@ watch(
 			showImportDialog.value = false
 			uploadedImportFiles.value = undefined
 		}
-	}
+	},
 )
 
 const difficultyOptions = [
@@ -196,9 +205,15 @@ function resetAddForm(): void {
 
 function addParameterDef(isEdit: boolean): void {
 	if (isEdit) {
-		editParameterDefs.value.push({ name: `arg${editParameterDefs.value.length + 1}`, type: 'int' })
+		editParameterDefs.value.push({
+			name: `arg${editParameterDefs.value.length + 1}`,
+			type: 'int',
+		})
 	} else {
-		newParameterDefs.value.push({ name: `arg${newParameterDefs.value.length + 1}`, type: 'int' })
+		newParameterDefs.value.push({
+			name: `arg${newParameterDefs.value.length + 1}`,
+			type: 'int',
+		})
 	}
 }
 
@@ -221,23 +236,29 @@ function handleSaveAdd(): void {
 	}
 
 	const validSamples = newSampleCases.value.filter(
-		(tc) => tc.input.trim() || tc.expected_output.trim()
+		(tc) => tc.input.trim() || tc.expected_output.trim(),
 	)
 	for (let i = 0; i < validSamples.length; i++) {
 		const tc = validSamples[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Sample Case ${i + 1} requires both input and expected output.` })
+			notify({
+				color: 'danger',
+				message: `Sample Case ${i + 1} requires both input and expected output.`,
+			})
 			return
 		}
 	}
 
 	const validHiddens = newHiddenCases.value.filter(
-		(tc) => tc.input.trim() || tc.expected_output.trim()
+		(tc) => tc.input.trim() || tc.expected_output.trim(),
 	)
 	for (let i = 0; i < validHiddens.length; i++) {
 		const tc = validHiddens[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Hidden Case ${i + 1} requires both input and expected output.` })
+			notify({
+				color: 'danger',
+				message: `Hidden Case ${i + 1} requires both input and expected output.`,
+			})
 			return
 		}
 	}
@@ -245,7 +266,7 @@ function handleSaveAdd(): void {
 	const templates = generateBoilerplateTemplates(
 		newFunctionName.value,
 		newParameterDefs.value,
-		newReturnType.value
+		newReturnType.value,
 	)
 
 	emit('addCoding', {
@@ -305,23 +326,29 @@ function handleSaveEdit(): void {
 	}
 
 	const validSamples = editSampleCases.value.filter(
-		(tc) => tc.input.trim() || tc.expected_output.trim()
+		(tc) => tc.input.trim() || tc.expected_output.trim(),
 	)
 	for (let i = 0; i < validSamples.length; i++) {
 		const tc = validSamples[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Sample Case ${i + 1} requires both input and expected output.` })
+			notify({
+				color: 'danger',
+				message: `Sample Case ${i + 1} requires both input and expected output.`,
+			})
 			return
 		}
 	}
 
 	const validHiddens = editHiddenCases.value.filter(
-		(tc) => tc.input.trim() || tc.expected_output.trim()
+		(tc) => tc.input.trim() || tc.expected_output.trim(),
 	)
 	for (let i = 0; i < validHiddens.length; i++) {
 		const tc = validHiddens[i]!
 		if (!tc.input.trim() || !tc.expected_output.trim()) {
-			notify({ color: 'danger', message: `Hidden Case ${i + 1} requires both input and expected output.` })
+			notify({
+				color: 'danger',
+				message: `Hidden Case ${i + 1} requires both input and expected output.`,
+			})
 			return
 		}
 	}
@@ -329,7 +356,7 @@ function handleSaveEdit(): void {
 	const templates = generateBoilerplateTemplates(
 		editFunctionName.value,
 		editParameterDefs.value,
-		editReturnType.value
+		editReturnType.value,
 	)
 
 	emit('updateCoding', editCodingId.value, {
@@ -374,7 +401,10 @@ async function handleGenerateInlineAiCases(target: 'add' | 'edit'): Promise<void
 	const constraints = target === 'add' ? newConstraints.value : editConstraints.value
 
 	if (!title.trim() || !problem.trim()) {
-		notify({ color: 'warning', message: 'Enter problem title and description before generating AI cases.' })
+		notify({
+			color: 'warning',
+			message: 'Enter problem title and description before generating AI cases.',
+		})
 		return
 	}
 
@@ -383,14 +413,11 @@ async function handleGenerateInlineAiCases(target: 'add' | 'edit'): Promise<void
 		const res = await api.post<{
 			sample_test_cases: Array<{ input: string; expected_output: string }>
 			hidden_test_cases: Array<{ input: string; expected_output: string }>
-		}>(
-			'/mentor/questions/coding/ai-generate-tests',
-			{
-				title,
-				word_problem_text: problem,
-				constraints_text: constraints,
-			}
-		)
+		}>('/mentor/questions/coding/ai-generate-tests', {
+			title,
+			word_problem_text: problem,
+			constraints_text: constraints,
+		})
 		if (res.success && res.data) {
 			const samples = res.data.sample_test_cases || []
 			const hiddens = res.data.hidden_test_cases || []
@@ -407,10 +434,16 @@ async function handleGenerateInlineAiCases(target: 'add' | 'edit'): Promise<void
 				message: `Generated ${samples.length} sample cases and ${hiddens.length} hidden test cases via AI.`,
 			})
 		} else {
-			notify({ color: 'danger', message: res.error?.message || 'Could not generate AI cases.' })
+			notify({
+				color: 'danger',
+				message: res.error?.message || 'Could not generate AI cases.',
+			})
 		}
 	} catch (err: unknown) {
-		notify({ color: 'danger', message: err instanceof Error ? err.message : 'AI generation error' })
+		notify({
+			color: 'danger',
+			message: err instanceof Error ? err.message : 'AI generation error',
+		})
 	} finally {
 		isGeneratingInlineAi.value = false
 	}
@@ -436,37 +469,41 @@ function handleCommitImport(): void {
 				>
 					Import XLSX
 				</PixelButton>
-				<PixelButton
-					size="small"
-					icon="plus"
-					@click="showAddDialog = true"
-				>
+				<PixelButton size="small" icon="plus" @click="showAddDialog = true">
 					Add Problem
 				</PixelButton>
 			</div>
 		</div>
 
 		<div v-if="codingQuestions.length > 0" class="cards-list">
-			<PixelCard
-				v-for="(codeQ, index) in codingQuestions"
-				:key="codeQ.id"
-				class="item-card"
-			>
+			<PixelCard v-for="(codeQ, index) in codingQuestions" :key="codeQ.id" class="item-card">
 				<PixelCardContent>
 					<div class="card-inner">
 						<div class="card-meta">
 							<div class="meta-left">
 								<span class="question-index-text">P{{ index + 1 }}</span>
 								<PixelBadge
-									:color="codeQ.difficulty === 'hard' ? 'danger' : codeQ.difficulty === 'medium' ? 'warning' : 'success'"
+									:color="
+										codeQ.difficulty === 'hard'
+											? 'danger'
+											: codeQ.difficulty === 'medium'
+												? 'warning'
+												: 'success'
+									"
 									:text="codeQ.difficulty.toUpperCase()"
 								/>
 								<PixelBadge
 									:text="`+${codeQ.difficulty === 'hard' ? 50 : codeQ.difficulty === 'medium' ? 30 : 15} XP`"
 									color="primary"
 								/>
-								<span class="meta-tag"><PixelIcon name="schedule" size="small" /> {{ codeQ.time_limit_ms }}ms</span>
-								<span class="meta-tag"><PixelIcon name="storage" size="small" /> {{ Math.round(codeQ.memory_limit_kb / 1024) }}MB</span>
+								<span class="meta-tag"
+									><PixelIcon name="schedule" size="small" />
+									{{ codeQ.time_limit_ms }}ms</span
+								>
+								<span class="meta-tag"
+									><PixelIcon name="storage" size="small" />
+									{{ Math.round(codeQ.memory_limit_kb / 1024) }}MB</span
+								>
 							</div>
 
 							<div v-if="!isPublished || allowAdminEdit" class="meta-actions">
@@ -495,7 +532,8 @@ function handleCommitImport(): void {
 						</div>
 
 						<div v-if="codeQ.constraints_text" class="constraints-snippet">
-							<strong>Constraints:</strong> {{ formatConstraints(codeQ.constraints_text) }}
+							<strong>Constraints:</strong>
+							{{ formatConstraints(codeQ.constraints_text) }}
 						</div>
 
 						<div class="card-action-bar">
@@ -511,7 +549,7 @@ function handleCommitImport(): void {
 							<PixelBadge
 								v-else
 								color="warning"
-								:text="`Incomplete Test Cases (${(codeQ.sample_test_cases?.length ?? 0)}/3 sample, ${(codeQ.hidden_test_cases?.length ?? 0)}/10 hidden)`"
+								:text="`Incomplete Test Cases (${codeQ.sample_test_cases?.length ?? 0}/3 sample, ${codeQ.hidden_test_cases?.length ?? 0}/10 hidden)`"
 							>
 								<template #prepend>
 									<PixelIcon name="warning" size="small" />
@@ -535,7 +573,10 @@ function handleCommitImport(): void {
 			<PixelCardContent class="empty-content">
 				<PixelIcon name="code" size="48px" color="secondary" class="empty-pool-icon" />
 				<h3>No Coding Problems added yet</h3>
-				<p>Author or bulk import at least 7 coding challenges with 13 test cases (3 sample + 10 hidden) each to complete the set.</p>
+				<p>
+					Author or bulk import at least 7 coding challenges with 13 test cases (3 sample
+					+ 10 hidden) each to complete the set.
+				</p>
 			</PixelCardContent>
 		</PixelCard>
 
@@ -586,8 +627,12 @@ function handleCommitImport(): void {
 				<div class="fn-signature-card">
 					<div class="fn-signature-header">
 						<div>
-							<h4 class="testcases-heading">Function Signature & Template Configuration</h4>
-							<p class="testcases-subheading">Defines the boilerplate harness method and starter code</p>
+							<h4 class="testcases-heading">
+								Function Signature & Template Configuration
+							</h4>
+							<p class="testcases-subheading">
+								Defines the boilerplate harness method and starter code
+							</p>
 						</div>
 					</div>
 
@@ -650,7 +695,9 @@ function handleCommitImport(): void {
 					<div class="testcases-header">
 						<div>
 							<h4 class="testcases-heading">Test Suite Configuration</h4>
-							<p class="testcases-subheading">Configure 3 sample test cases and 10 hidden evaluation cases</p>
+							<p class="testcases-subheading">
+								Configure 3 sample test cases and 10 hidden evaluation cases
+							</p>
 						</div>
 						<PixelButton
 							color="secondary"
@@ -667,7 +714,11 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Sample Test Cases</span>
-								<PixelBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+								<PixelBadge
+									text="3 Required — Visible to Students"
+									color="primary"
+									class="group-badge"
+								/>
 							</div>
 							<PixelButton
 								color="secondary"
@@ -686,7 +737,9 @@ function handleCommitImport(): void {
 							>
 								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
-										<span class="tc-tag sample-tag">Sample Case {{ i + 1 }}</span>
+										<span class="tc-tag sample-tag"
+											>Sample Case {{ i + 1 }}</span
+										>
 										<PixelButton
 											color="danger"
 											icon="trash"
@@ -719,7 +772,11 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Hidden Test Cases</span>
-								<PixelBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+								<PixelBadge
+									text="10 Required — Standard Validation"
+									color="warning"
+									class="group-badge"
+								/>
 							</div>
 							<PixelButton
 								color="secondary"
@@ -738,7 +795,9 @@ function handleCommitImport(): void {
 							>
 								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
-										<span class="tc-tag hidden-tag">Hidden Case {{ i + 1 }}</span>
+										<span class="tc-tag hidden-tag"
+											>Hidden Case {{ i + 1 }}</span
+										>
 										<PixelButton
 											color="danger"
 											icon="trash"
@@ -765,7 +824,8 @@ function handleCommitImport(): void {
 							</PixelCard>
 						</div>
 						<div v-else class="text-xs text-gray-500 italic p-2">
-							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize via AI".
+							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize
+							via AI".
 						</div>
 					</div>
 				</div>
@@ -818,8 +878,12 @@ function handleCommitImport(): void {
 				<div class="fn-signature-card">
 					<div class="fn-signature-header">
 						<div>
-							<h4 class="testcases-heading">Function Signature & Template Configuration</h4>
-							<p class="testcases-subheading">Defines the boilerplate harness method and starter code</p>
+							<h4 class="testcases-heading">
+								Function Signature & Template Configuration
+							</h4>
+							<p class="testcases-subheading">
+								Defines the boilerplate harness method and starter code
+							</p>
 						</div>
 					</div>
 
@@ -882,7 +946,9 @@ function handleCommitImport(): void {
 					<div class="testcases-header">
 						<div>
 							<h4 class="testcases-heading">Test Suite Configuration</h4>
-							<p class="testcases-subheading">Manage 3 sample test cases and 10 hidden evaluation cases</p>
+							<p class="testcases-subheading">
+								Manage 3 sample test cases and 10 hidden evaluation cases
+							</p>
 						</div>
 						<PixelButton
 							color="secondary"
@@ -899,13 +965,13 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Sample Test Cases</span>
-								<PixelBadge text="3 Required — Visible to Students" color="primary" class="group-badge" />
+								<PixelBadge
+									text="3 Required — Visible to Students"
+									color="primary"
+									class="group-badge"
+								/>
 							</div>
-							<PixelButton
-								color="secondary"
-								icon="plus"
-								@click="addSampleCase(true)"
-							>
+							<PixelButton color="secondary" icon="plus" @click="addSampleCase(true)">
 								Add Sample Case
 							</PixelButton>
 						</div>
@@ -918,7 +984,9 @@ function handleCommitImport(): void {
 							>
 								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
-										<span class="tc-tag sample-tag">Sample Case {{ i + 1 }}</span>
+										<span class="tc-tag sample-tag"
+											>Sample Case {{ i + 1 }}</span
+										>
 										<PixelButton
 											color="danger"
 											icon="trash"
@@ -951,13 +1019,13 @@ function handleCommitImport(): void {
 						<div class="group-header">
 							<div class="flex items-center gap-2">
 								<span class="group-title">Hidden Test Cases</span>
-								<PixelBadge text="10 Required — Standard Validation" color="warning" class="group-badge" />
+								<PixelBadge
+									text="10 Required — Standard Validation"
+									color="warning"
+									class="group-badge"
+								/>
 							</div>
-							<PixelButton
-								color="secondary"
-								icon="plus"
-								@click="addHiddenCase(true)"
-							>
+							<PixelButton color="secondary" icon="plus" @click="addHiddenCase(true)">
 								Add Hidden Case
 							</PixelButton>
 						</div>
@@ -970,7 +1038,9 @@ function handleCommitImport(): void {
 							>
 								<PixelCardContent class="tc-content">
 									<div class="tc-card-header">
-										<span class="tc-tag hidden-tag">Hidden Case {{ i + 1 }}</span>
+										<span class="tc-tag hidden-tag"
+											>Hidden Case {{ i + 1 }}</span
+										>
 										<PixelButton
 											color="danger"
 											icon="trash"
@@ -997,7 +1067,8 @@ function handleCommitImport(): void {
 							</PixelCard>
 						</div>
 						<div v-else class="text-xs text-gray-500 italic p-2">
-							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize via AI".
+							No hidden test cases yet. Click "Add Hidden Case" or "Auto-Synthesize
+							via AI".
 						</div>
 					</div>
 				</div>
@@ -1028,9 +1099,11 @@ function handleCommitImport(): void {
 		>
 			<div class="import-modal-content">
 				<p class="import-instruction">
-					Upload an <code>.xlsx</code> or <code>.csv</code> spreadsheet containing coding challenges.
-					Columns can include Title, Description, Constraints, and sample inputs/outputs.
-					Any missing test cases will be <strong>automatically synthesized by AI</strong> to meet the mandatory 5 test cases standard.
+					Upload an <code>.xlsx</code> or <code>.csv</code> spreadsheet containing coding
+					challenges. Columns can include Title, Description, Constraints, and sample
+					inputs/outputs. Any missing test cases will be
+					<strong>automatically synthesized by AI</strong> to meet the mandatory 5 test
+					cases standard.
 				</p>
 
 				<PixelFileUpload

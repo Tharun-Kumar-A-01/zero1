@@ -25,7 +25,10 @@ const activeSampleCase = computed<SampleTestCase | null>(() => {
 })
 
 const hasResultCases = computed<boolean>(() => {
-	return Boolean(props.executionResult?.test_case_results && props.executionResult.test_case_results.length > 0)
+	return Boolean(
+		props.executionResult?.test_case_results &&
+		props.executionResult.test_case_results.length > 0,
+	)
 })
 
 const activeResultCase = computed<TestCaseResultItem | null>(() => {
@@ -55,7 +58,7 @@ watch(
 			selectedResultCaseIndex.value = 0
 		}
 	},
-	{ immediate: true }
+	{ immediate: true },
 )
 
 function toggleCollapse(): void {
@@ -97,7 +100,11 @@ defineExpose({
 					<span
 						v-if="executionResult"
 						class="status-indicator-dot"
-						:class="executionResult.execution_status === 'passed' ? 'dot-success' : 'dot-danger'"
+						:class="
+							executionResult.execution_status === 'passed'
+								? 'dot-success'
+								: 'dot-danger'
+						"
 					/>
 				</button>
 			</div>
@@ -135,12 +142,16 @@ defineExpose({
 				<div v-if="activeSampleCase" class="case-details">
 					<div class="io-group">
 						<span class="io-label">Input</span>
-						<pre class="io-pre">{{ decodeHtmlEntities(activeSampleCase.input_data) }}</pre>
+						<pre class="io-pre">{{
+							decodeHtmlEntities(activeSampleCase.input_data)
+						}}</pre>
 					</div>
 
 					<div class="io-group">
 						<span class="io-label">Expected Output</span>
-						<pre class="io-pre">{{ decodeHtmlEntities(activeSampleCase.expected_output) }}</pre>
+						<pre class="io-pre">{{
+							decodeHtmlEntities(activeSampleCase.expected_output)
+						}}</pre>
 					</div>
 				</div>
 
@@ -155,17 +166,32 @@ defineExpose({
 				<div v-if="isRunning || isSubmitting" class="executing-state">
 					<PixelIcon name="refresh" class="spin" :size="24" />
 					<span class="executing-text">
-						{{ isSubmitting ? 'Evaluating solution against 3 sample & 10 hidden test cases...' : 'Executing sample test cases on sandbox...' }}
+						{{
+							isSubmitting
+								? 'Evaluating solution against 3 sample & 10 hidden test cases...'
+								: 'Executing sample test cases on sandbox...'
+						}}
 					</span>
 				</div>
 
 				<!-- Execution Result Present -->
 				<div v-else-if="executionResult" class="result-details">
 					<!-- Verdict Header Banner -->
-					<div class="verdict-banner" :class="executionResult.execution_status === 'passed' ? 'verdict-pass' : 'verdict-fail'">
+					<div
+						class="verdict-banner"
+						:class="
+							executionResult.execution_status === 'passed'
+								? 'verdict-pass'
+								: 'verdict-fail'
+						"
+					>
 						<div class="verdict-title-row">
 							<PixelIcon
-								:name="executionResult.execution_status === 'passed' ? 'check' : 'cross'"
+								:name="
+									executionResult.execution_status === 'passed'
+										? 'check'
+										: 'cross'
+								"
 								:size="20"
 							/>
 							<span class="verdict-title">
@@ -174,21 +200,40 @@ defineExpose({
 						</div>
 
 						<div class="verdict-stats-row">
-							<span v-if="executionResult.runtime_ms !== undefined && executionResult.runtime_ms !== null" class="stat-badge">
+							<span
+								v-if="
+									executionResult.runtime_ms !== undefined &&
+									executionResult.runtime_ms !== null
+								"
+								class="stat-badge"
+							>
 								Runtime: <strong>{{ executionResult.runtime_ms }} ms</strong>
 							</span>
-							<span v-if="executionResult.memory_kb !== undefined && executionResult.memory_kb !== null" class="stat-badge">
+							<span
+								v-if="
+									executionResult.memory_kb !== undefined &&
+									executionResult.memory_kb !== null
+								"
+								class="stat-badge"
+							>
 								Memory: <strong>{{ executionResult.memory_kb }} KB</strong>
 							</span>
 							<span class="stat-badge">
-								Passed: <strong>{{ executionResult.test_cases_passed }} / {{ executionResult.test_cases_total }}</strong>
+								Passed:
+								<strong
+									>{{ executionResult.test_cases_passed }} /
+									{{ executionResult.test_cases_total }}</strong
+								>
 							</span>
 						</div>
 					</div>
 
 					<!-- Global Error Alert (when no detailed test cases or overall fatal error) -->
 					<PixelAlert
-						v-if="executionResult.error_message && (!hasResultCases || !activeResultCase?.error_message)"
+						v-if="
+							executionResult.error_message &&
+							(!hasResultCases || !activeResultCase?.error_message)
+						"
 						color="danger"
 						class="error-alert"
 					>
@@ -202,7 +247,10 @@ defineExpose({
 					</div>
 
 					<!-- Detailed Test Case Breakdown (Case 1, Case 2, Case 3) -->
-					<div v-if="hasResultCases && executionResult.test_case_results" class="result-breakdown-section">
+					<div
+						v-if="hasResultCases && executionResult.test_case_results"
+						class="result-breakdown-section"
+					>
 						<!-- Result Case Selector Pills -->
 						<div class="case-selector-pills result-pills-row">
 							<button
@@ -213,7 +261,7 @@ defineExpose({
 								:class="{
 									active: selectedResultCaseIndex === idx,
 									'pill-passed': tc.status === 'passed',
-									'pill-failed': tc.status !== 'passed'
+									'pill-failed': tc.status !== 'passed',
 								}"
 								@click="selectedResultCaseIndex = idx"
 							>
@@ -222,7 +270,7 @@ defineExpose({
 									:size="12"
 									class="pill-status-icon"
 								/>
-								<span>Case {{ tc.case_number || (idx + 1) }}</span>
+								<span>Case {{ tc.case_number || idx + 1 }}</span>
 							</button>
 						</div>
 
@@ -232,11 +280,21 @@ defineExpose({
 							<div class="result-status-tag-row">
 								<span
 									class="case-status-tag"
-									:class="activeResultCase.status === 'passed' ? 'tag-passed' : 'tag-failed'"
+									:class="
+										activeResultCase.status === 'passed'
+											? 'tag-passed'
+											: 'tag-failed'
+									"
 								>
 									{{ formatStatusName(activeResultCase.status) }}
 								</span>
-								<span v-if="activeResultCase.runtime_ms !== undefined && activeResultCase.runtime_ms !== null" class="case-meta-tag">
+								<span
+									v-if="
+										activeResultCase.runtime_ms !== undefined &&
+										activeResultCase.runtime_ms !== null
+									"
+									class="case-meta-tag"
+								>
 									{{ activeResultCase.runtime_ms }} ms
 								</span>
 							</div>
@@ -244,19 +302,25 @@ defineExpose({
 							<!-- Case Error / Traceback if any -->
 							<div v-if="activeResultCase.error_message" class="io-group">
 								<span class="io-label error-label">Error / Traceback</span>
-								<pre class="io-pre error-pre">{{ activeResultCase.error_message }}</pre>
+								<pre class="io-pre error-pre">{{
+									activeResultCase.error_message
+								}}</pre>
 							</div>
 
 							<!-- Case Input -->
 							<div class="io-group">
 								<span class="io-label">Input</span>
-								<pre class="io-pre">{{ decodeHtmlEntities(activeResultCase.input) || '(empty input)' }}</pre>
+								<pre class="io-pre">{{
+									decodeHtmlEntities(activeResultCase.input) || '(empty input)'
+								}}</pre>
 							</div>
 
 							<!-- Case Expected Output -->
 							<div class="io-group">
 								<span class="io-label">Expected Output</span>
-								<pre class="io-pre expected-pre">{{ decodeHtmlEntities(activeResultCase.expected_output) }}</pre>
+								<pre class="io-pre expected-pre">{{
+									decodeHtmlEntities(activeResultCase.expected_output)
+								}}</pre>
 							</div>
 
 							<!-- Case Actual Output -->
@@ -264,20 +328,34 @@ defineExpose({
 								<span class="io-label">Your Output (Actual)</span>
 								<pre
 									class="io-pre"
-									:class="activeResultCase.status === 'passed' ? 'match-pre' : 'mismatch-pre'"
-								>{{ decodeHtmlEntities(activeResultCase.actual_output) || '(no output produced)' }}</pre>
+									:class="
+										activeResultCase.status === 'passed'
+											? 'match-pre'
+											: 'mismatch-pre'
+									"
+									>{{
+										decodeHtmlEntities(activeResultCase.actual_output) ||
+										'(no output produced)'
+									}}</pre>
 							</div>
 						</div>
 					</div>
 
 					<!-- Hidden Testcase Notification for Submissions -->
 					<PixelAlert
-						v-if="executionResult.phase === 'hidden' && executionResult.execution_status !== 'passed'"
+						v-if="
+							executionResult.phase === 'hidden' &&
+							executionResult.execution_status !== 'passed'
+						"
 						color="warning"
 						outline
 						class="hidden-notice"
 					>
-						Passed all 3 sample test cases, but failed on hidden test cases ({{ executionResult.test_cases_passed }} / {{ executionResult.test_cases_total }} passed). Hidden test case inputs and expected outputs are confidential to prevent hardcoded solutions.
+						Passed all 3 sample test cases, but failed on hidden test cases ({{
+							executionResult.test_cases_passed
+						}}
+						/ {{ executionResult.test_cases_total }} passed). Hidden test case inputs
+						and expected outputs are confidential to prevent hardcoded solutions.
 					</PixelAlert>
 
 					<!-- Anti-Cheat Status Alert -->
@@ -354,7 +432,9 @@ defineExpose({
 	cursor: pointer;
 	position: relative;
 	margin-bottom: -2px;
-	transition: color 0.1s ease, background-color 0.1s ease;
+	transition:
+		color 0.1s ease,
+		background-color 0.1s ease;
 	z-index: 1;
 }
 
@@ -425,7 +505,10 @@ defineExpose({
 	box-shadow: 0 3px 0 0 var(--pixel-border-dark);
 	cursor: pointer;
 	user-select: none;
-	transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
+	transition:
+		transform 0.08s ease,
+		box-shadow 0.08s ease,
+		background-color 0.1s ease;
 }
 
 .pill-btn:hover:not(:active) {
@@ -567,7 +650,10 @@ defineExpose({
 	font-family: var(--font-mono) !important;
 	font-variant-ligatures: none !important;
 	-webkit-font-variant-ligatures: none !important;
-	font-feature-settings: 'liga' 0, 'calt' 0, 'dlig' 0 !important;
+	font-feature-settings:
+		'liga' 0,
+		'calt' 0,
+		'dlig' 0 !important;
 	font-size: 12px;
 	line-height: 1.5;
 	white-space: pre-wrap;
