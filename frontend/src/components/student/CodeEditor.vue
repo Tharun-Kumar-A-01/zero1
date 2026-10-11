@@ -291,9 +291,9 @@ watch(
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	background: #181818;
+	background: var(--pixel-bg);
 	overflow: hidden;
-	font-family: 'JetBrains Mono', monospace !important;
+	font-family: var(--font-mono) !important;
 }
 
 .editor-header-bar {
@@ -303,8 +303,8 @@ watch(
 	align-items: center;
 	justify-content: space-between;
 	padding: 0.5rem 0.85rem;
-	background: #1f1f1f;
-	border-bottom: 1px solid #282828;
+	background: var(--pixel-surface);
+	border-bottom: 2px solid var(--pixel-border);
 	flex-shrink: 0;
 }
 
@@ -327,33 +327,36 @@ watch(
 	min-width: 130px;
 	height: 32px;
 	padding: 0 0.75rem;
-	background: #2a2a2a;
-	color: #e0e0e0;
-	border: 1px solid #3d3d3d;
-	border-radius: 4px;
-	font-family: 'JetBrains Mono', monospace !important;
-	font-size: 0.8125rem;
-	font-weight: 500;
+	background: var(--pixel-surface-alt);
+	color: var(--pixel-text);
+	border: 2px solid var(--pixel-border);
+	border-radius: 2px;
+	box-shadow: 0 3px 0 0 var(--pixel-border-dark);
+	font-family: var(--font-pixel);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 	cursor: pointer !important;
 	user-select: none;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background 0.1s, border-color 0.1s, transform 0.08s, box-shadow 0.08s;
 }
 
 .lang-dropdown-trigger:hover {
-	background: #333333;
-	border-color: #505050;
+	background: var(--pixel-surface-raised);
+	border-color: var(--pixel-border-bright);
 }
 
 .lang-dropdown-trigger.open {
-	border-color: #2563eb;
-	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+	border-color: var(--pixel-btn-primary-bg);
+	transform: translateY(2px);
+	box-shadow: 0 1px 0 0 var(--pixel-border-dark);
 }
 
 .dropdown-chevron {
-	width: 16px;
-	height: 16px;
-	color: #999;
-	transition: transform 0.2s;
+	width: 14px;
+	height: 14px;
+	color: var(--pixel-text-dim);
+	transition: transform 0.15s;
 	flex-shrink: 0;
 }
 
@@ -367,14 +370,14 @@ watch(
 	left: 0;
 	z-index: 100;
 	min-width: 140px;
-	background: #242424;
-	border: 1px solid #383838;
-	border-radius: 6px;
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+	background: var(--pixel-surface);
+	border: 2px solid var(--pixel-border);
+	border-radius: 2px;
+	box-shadow: 0 4px 0 0 var(--pixel-border-dark);
 	padding: 4px;
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 3px;
 }
 
 .lang-dropdown-item {
@@ -385,37 +388,41 @@ watch(
 	padding: 0.45rem 0.65rem;
 	background: transparent;
 	border: none;
-	border-radius: 4px;
-	color: #d0d0d0;
-	font-family: 'JetBrains Mono', monospace !important;
-	font-size: 0.8125rem;
+	border-radius: 2px;
+	color: var(--pixel-text);
+	font-family: var(--font-pixel);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 	text-align: left;
 	cursor: pointer !important;
 	user-select: none;
-	transition: background 0.15s, color 0.15s;
+	transition: background 0.1s, color 0.1s;
 }
 
 .lang-dropdown-item:hover {
-	background: #333333;
+	background: var(--pixel-surface-raised);
 	color: #ffffff;
 }
 
 .lang-dropdown-item.active {
-	background: #1e3a5f;
-	color: #60a5fa;
-	font-weight: 600;
+	background: var(--pixel-btn-primary-bg);
+	color: #ffffff;
 }
 
 .check-icon {
 	width: 14px;
 	height: 14px;
-	color: #60a5fa;
+	color: #ffffff;
 	flex-shrink: 0;
 }
 
 .tab-note {
-	font-size: 0.75rem;
-	color: #b8b8b8;
+	font-family: var(--font-pixel);
+	font-size: 10px;
+	text-transform: uppercase;
+	color: var(--pixel-text-dim);
+	letter-spacing: 0.04em;
 }
 
 .editor-right-tools {
@@ -430,28 +437,28 @@ watch(
 	height: calc(100% - 46px);
 	position: relative;
 	overflow: hidden;
-	font-family: 'JetBrains Mono', monospace !important;
-	background: #181818;
+	font-family: var(--font-mono) !important;
+	background: var(--pixel-bg);
 }
 
 .line-gutter {
-	width: 46px;
+	width: 48px;
 	padding: 0.85rem 0.5rem 0.85rem 0;
-	background: #181818;
-	border-right: 1px solid #282828;
+	background: var(--pixel-bg-alt);
+	border-right: 2px solid var(--pixel-border);
 	text-align: right;
 	user-select: none;
 	overflow: hidden;
 	flex-shrink: 0;
-	font-family: 'JetBrains Mono', monospace !important;
+	font-family: var(--font-mono) !important;
 	font-size: 0.875rem !important;
 	line-height: 1.6rem !important;
-	color: #585858;
+	color: var(--pixel-text-dim);
 }
 
 .line-num {
 	height: 1.6rem;
-	font-family: 'JetBrains Mono', monospace !important;
+	font-family: var(--font-mono) !important;
 	line-height: 1.6rem;
 }
 
@@ -460,8 +467,8 @@ watch(
 	flex-grow: 1;
 	height: 100%;
 	overflow: hidden;
-	background: #181818;
-	font-family: 'JetBrains Mono', monospace !important;
+	background: var(--pixel-bg);
+	font-family: var(--font-mono) !important;
 }
 
 .syntax-overlay,
@@ -475,7 +482,7 @@ watch(
 	padding: 0.85rem 1rem;
 	width: 100%;
 	height: 100%;
-	font-family: 'JetBrains Mono', monospace !important;
+	font-family: var(--font-mono) !important;
 	font-size: 0.875rem !important;
 	line-height: 1.6rem !important;
 	letter-spacing: 0 !important;
@@ -494,20 +501,20 @@ watch(
 	z-index: 1;
 	pointer-events: none;
 	overflow: hidden;
-	color: #d8d8d8;
-	background: #181818;
+	color: var(--pixel-text);
+	background: var(--pixel-bg);
 	border: none;
 }
 
 .syntax-overlay * {
-	font-family: 'JetBrains Mono', monospace !important;
+	font-family: var(--font-mono) !important;
 }
 
 .code-input {
 	z-index: 2;
 	background: transparent;
 	color: transparent;
-	caret-color: #f8f8f8;
+	caret-color: #fbbf24;
 	border: none;
 	outline: none;
 	resize: none;
@@ -515,7 +522,25 @@ watch(
 }
 
 .code-input::selection {
-	background: #383838 !important;
-	color: #f8f8f8 !important;
+	background: rgba(90, 50, 163, 0.45) !important;
+	color: #ffffff !important;
+}
+
+@media (max-width: 640px) {
+	.tab-note {
+		display: none;
+	}
+
+	.line-gutter {
+		width: 38px;
+		padding-right: 0.35rem;
+		font-size: 0.8rem !important;
+	}
+
+	.syntax-overlay,
+	.code-input {
+		padding: 0.85rem 0.65rem;
+		font-size: 0.85rem !important;
+	}
 }
 </style>

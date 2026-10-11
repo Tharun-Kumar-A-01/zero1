@@ -11,27 +11,9 @@ import PixelIcon from '@/components/pixel/PixelIcon.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const isDark = ref<boolean>(true)
-
-function toggleTheme(): void {
-  isDark.value = !isDark.value
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
-  }
-}
-
 onMounted(() => {
-  const saved = localStorage.getItem('theme')
-  if (saved === 'dark' || (!saved && typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    isDark.value = true
+  if (typeof document !== 'undefined') {
     document.documentElement.classList.add('dark')
-  } else {
-    isDark.value = false
-    document.documentElement.classList.remove('dark')
   }
 })
 
@@ -104,14 +86,6 @@ function handleLogout(): void {
     </div>
 
     <div class="navbar-right">
-      <PixelButton
-        color="secondary"
-        size="small"
-        @click="toggleTheme"
-      >
-        <PixelIcon :name="isDark ? 'star' : 'heart'" :size="14" />
-      </PixelButton>
-
       <div v-if="authStore.isAuthenticated && authStore.user" class="user-profile-menu">
         <PixelAvatar size="small" color="primary">
           {{ authStore.user.name.charAt(0).toUpperCase() }}

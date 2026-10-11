@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserProfileModal from '@/components/UserProfileModal.vue'
@@ -13,28 +13,24 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-const isDark = ref<boolean>(true)
+const isDesktopCollapsed = ref<boolean>(false)
 const showProfileModal = ref<boolean>(false)
 
-function toggleTheme(): void {
-  isDark.value = !isDark.value
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
-  }
+const isWorkspaceRoute = computed<boolean>(() => route.path.startsWith('/workspace'))
+
+function toggleCollapse(): void {
+  isDesktopCollapsed.value = !isDesktopCollapsed.value
+  localStorage.setItem('sidebar_collapsed', isDesktopCollapsed.value ? 'true' : 'false')
 }
 
 onMounted(() => {
-  const saved = localStorage.getItem('theme')
-  if (saved === 'dark' || (!saved && typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    isDark.value = true
+  if (typeof document !== 'undefined') {
     document.documentElement.classList.add('dark')
-  } else {
-    isDark.value = false
-    document.documentElement.classList.remove('dark')
+  }
+
+  const savedCollapsed = localStorage.getItem('sidebar_collapsed')
+  if (savedCollapsed === 'true') {
+    isDesktopCollapsed.value = true
   }
 })
 
@@ -49,13 +45,32 @@ function navigateTo(path: string): void {
 </script>
 
 <template>
-  <aside class="app-sidebar">
-    <!-- Brand Logo -->
-    <div class="sidebar-brand" @click="navigateTo('/')">
-      <div class="brand-icon-box">
-        <PixelSprite name="sword" :size="24" />
+  <aside
+    :class="[
+      'app-sidebar',
+      {
+        'is-collapsed': isDesktopCollapsed,
+        'sidebar--hidden-mobile': isWorkspaceRoute
+      }
+    ]"
+  >
+    <!-- Brand Logo & Collapse Toggle (Desktop Header) -->
+    <div class="sidebar-header">
+      <div class="sidebar-brand" @click="navigateTo('/')" title="ZERO1 Home">
+        <div class="brand-icon-box">
+          <PixelSprite name="sword" :size="24" />
+        </div>
+        <span v-if="!isDesktopCollapsed" class="brand-title">ZERO1</span>
       </div>
-      <span class="brand-title">ZERO1</span>
+
+      <button
+        type="button"
+        class="sidebar-collapse-btn"
+        :title="isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="toggleCollapse"
+      >
+        <PixelIcon :name="isDesktopCollapsed ? 'chevron-right' : 'chevron-left'" :size="14" />
+      </button>
     </div>
 
     <div class="pixel-divider" />
@@ -67,19 +82,34 @@ function navigateTo(path: string): void {
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/admin' }]"
+          title="Admin Dashboard"
           @click="navigateTo('/admin')"
         >
-          <PixelIcon name="settings" :size="16" />
-          <span class="nav-label">Admin Dashboard</span>
+          <PixelIcon name="settings" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Admin Dashboard</span>
+          <span class="mobile-nav-label">Admin</span>
         </button>
 
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/leaderboard' }]"
+          title="Leaderboard"
           @click="navigateTo('/leaderboard')"
         >
-          <PixelIcon name="trophy" :size="16" />
-          <span class="nav-label">Leaderboard</span>
+          <PixelIcon name="trophy" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Leaderboard</span>
+          <span class="mobile-nav-label">Ranks</span>
+        </button>
+
+        <button
+          type="button"
+          :class="['nav-item', { 'nav-item--active': route.path === '/profile' }]"
+          title="Profile"
+          @click="navigateTo('/profile')"
+        >
+          <PixelIcon name="user" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Profile</span>
+          <span class="mobile-nav-label">Profile</span>
         </button>
       </template>
 
@@ -88,19 +118,34 @@ function navigateTo(path: string): void {
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/mentor' }]"
+          title="Question Set"
           @click="navigateTo('/mentor')"
         >
-          <PixelIcon name="edit" :size="16" />
-          <span class="nav-label">Question Set</span>
+          <PixelIcon name="edit" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Question Set</span>
+          <span class="mobile-nav-label">Questions</span>
         </button>
 
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/leaderboard' }]"
+          title="Leaderboard"
           @click="navigateTo('/leaderboard')"
         >
-          <PixelIcon name="trophy" :size="16" />
-          <span class="nav-label">Leaderboard</span>
+          <PixelIcon name="trophy" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Leaderboard</span>
+          <span class="mobile-nav-label">Ranks</span>
+        </button>
+
+        <button
+          type="button"
+          :class="['nav-item', { 'nav-item--active': route.path === '/profile' }]"
+          title="Profile"
+          @click="navigateTo('/profile')"
+        >
+          <PixelIcon name="user" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Profile</span>
+          <span class="mobile-nav-label">Profile</span>
         </button>
       </template>
 
@@ -109,28 +154,34 @@ function navigateTo(path: string): void {
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/student' }]"
+          title="Daily Practice"
           @click="navigateTo('/student')"
         >
-          <PixelIcon name="calendar" :size="16" />
-          <span class="nav-label">Daily Practice</span>
+          <PixelIcon name="calendar" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Daily Practice</span>
+          <span class="mobile-nav-label">Practice</span>
         </button>
 
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/leaderboard' }]"
+          title="Leaderboard"
           @click="navigateTo('/leaderboard')"
         >
-          <PixelIcon name="trophy" :size="16" />
-          <span class="nav-label">Leaderboard</span>
+          <PixelIcon name="trophy" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">Leaderboard</span>
+          <span class="mobile-nav-label">Ranks</span>
         </button>
 
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/profile' }]"
+          title="My Profile"
           @click="navigateTo('/profile')"
         >
-          <PixelIcon name="user" :size="16" />
-          <span class="nav-label">My Profile</span>
+          <PixelIcon name="user" :size="18" />
+          <span v-if="!isDesktopCollapsed" class="nav-label">My Profile</span>
+          <span class="mobile-nav-label">Profile</span>
         </button>
       </template>
     </nav>
@@ -140,13 +191,13 @@ function navigateTo(path: string): void {
 
     <div class="pixel-divider" />
 
-    <!-- Sidebar Bottom / User Profile & Controls -->
+    <!-- Sidebar Bottom / User Profile & Controls (Desktop Only) -->
     <div v-if="authStore.isAuthenticated && authStore.user" class="sidebar-user-block">
-      <div class="user-row clickable-user" @click="navigateTo('/profile')">
+      <div class="user-row clickable-user" :title="authStore.user.name" @click="navigateTo('/profile')">
         <PixelAvatar size="small" color="primary">
           {{ authStore.user.name.charAt(0).toUpperCase() }}
         </PixelAvatar>
-        <div class="user-info">
+        <div v-if="!isDesktopCollapsed" class="user-info">
           <span class="user-display-name">{{ authStore.user.name }}</span>
           <div class="role-badge-row">
             <PixelBadge
@@ -158,7 +209,7 @@ function navigateTo(path: string): void {
       </div>
 
       <!-- Student XP & Streak Stats -->
-      <div v-if="authStore.userRole === 'student'" class="student-stats-row">
+      <div v-if="authStore.userRole === 'student' && !isDesktopCollapsed" class="student-stats-row">
         <div class="streak-badge" title="Current Daily Streak">
           <PixelSprite name="flame" :size="16" />
           <span class="streak-text">{{ authStore.user.current_streak ?? 0 }}d</span>
@@ -166,26 +217,17 @@ function navigateTo(path: string): void {
         <PixelBadge :text="`${authStore.user.total_points ?? 0} XP`" color="primary" />
       </div>
 
-      <!-- Controls: Theme Switch and Logout -->
+      <!-- Controls: Logout -->
       <div class="sidebar-actions">
-        <PixelButton
-          color="secondary"
-          size="small"
-          block
-          @click="toggleTheme"
-        >
-          <PixelIcon :name="isDark ? 'star' : 'heart'" :size="14" />
-          {{ isDark ? 'Tavern Dark' : 'Daylight' }}
-        </PixelButton>
-
         <PixelButton
           color="danger"
           size="small"
           block
           icon="logout"
+          title="Logout"
           @click="handleLogout"
         >
-          Logout
+          <span v-if="!isDesktopCollapsed">Logout</span>
         </PixelButton>
       </div>
     </div>
@@ -213,20 +255,42 @@ function navigateTo(path: string): void {
   user-select: none;
   flex-shrink: 0;
   z-index: 100;
+  transition: width 0.15s ease, padding 0.15s ease;
+}
+
+.app-sidebar.is-collapsed {
+  width: 72px;
+  padding: 1.25rem 0.5rem;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.2rem 0.25rem;
+}
+
+.app-sidebar.is-collapsed .sidebar-header {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0;
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.4rem 0.6rem;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .brand-icon-box {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .brand-title {
@@ -236,6 +300,29 @@ function navigateTo(path: string): void {
   letter-spacing: 0.04em;
   color: var(--pixel-text);
   text-shadow: 0 2px 0 var(--pixel-border-dark);
+  white-space: nowrap;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--pixel-surface-alt);
+  border: 2px solid var(--pixel-border);
+  border-radius: 2px;
+  color: var(--pixel-text-dim);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--pixel-surface-raised);
+  color: var(--pixel-text);
+  border-color: var(--pixel-border-bright);
 }
 
 .pixel-divider {
@@ -269,6 +356,12 @@ function navigateTo(path: string): void {
   text-align: left;
 }
 
+.app-sidebar.is-collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+  gap: 0;
+}
+
 .nav-item:hover {
   background-color: var(--pixel-surface-alt);
   color: var(--pixel-text);
@@ -285,6 +378,13 @@ function navigateTo(path: string): void {
 
 .nav-label {
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-nav-label {
+  display: none;
 }
 
 .sidebar-spacer {
@@ -298,10 +398,20 @@ function navigateTo(path: string): void {
   padding: 0.4rem 0.2rem;
 }
 
+.app-sidebar.is-collapsed .sidebar-user-block {
+  padding: 0.4rem 0;
+  align-items: center;
+}
+
 .user-row {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+}
+
+.app-sidebar.is-collapsed .user-row {
+  justify-content: center;
+  padding: 0;
 }
 
 .clickable-user {
@@ -365,5 +475,100 @@ function navigateTo(path: string): void {
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.25rem;
+}
+
+.app-sidebar.is-collapsed .sidebar-actions {
+  align-items: center;
+  width: 100%;
+}
+
+/* =========================================================
+   SPOTIFY-STYLE MOBILE BOTTOM NAVIGATION BAR
+   ========================================================= */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100% !important;
+    height: 56px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 0.5rem;
+    border-right: none;
+    border-top: 3px solid var(--pixel-border);
+    box-shadow: 0 -3px 0 0 var(--pixel-border-dark);
+    background-color: var(--pixel-surface);
+    z-index: 1000;
+  }
+
+  .sidebar-header,
+  .pixel-divider,
+  .sidebar-spacer,
+  .sidebar-user-block,
+  .sidebar-collapse-btn {
+    display: none !important;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    flex: 1;
+    padding: 4px 6px;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    color: var(--pixel-text-muted);
+    transform: none !important;
+  }
+
+  .nav-item:hover {
+    background: transparent;
+    color: var(--pixel-text);
+    border: none;
+  }
+
+  .nav-item--active {
+    background: transparent;
+    box-shadow: none;
+    color: #fbbf24;
+    border: none;
+    border-top: 2px solid #fbbf24;
+  }
+
+  .nav-label {
+    display: none !important;
+  }
+
+  .mobile-nav-label {
+    display: block !important;
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .sidebar--hidden-mobile {
+    display: none !important;
+  }
 }
 </style>

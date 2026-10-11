@@ -278,4 +278,20 @@ onMounted(async (): Promise<void> => {
   align-items: center;
   gap: 0.5rem;
 }
+
+@media (max-width: 640px) {
+  .student-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .coding-action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .solve-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>

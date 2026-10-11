@@ -25,9 +25,20 @@ const challenge = ref<DailyChallengeData | null>(null)
 const codingQuestion = computed<CodingQuestionData | null>(() => challenge.value?.coding_question || null)
 
 // Resizable splitter model values (percentages)
+// Resizable splitter model values (percentages)
 const horizontalSplit = ref<number>(40)
 const verticalSplit = ref<number>(60)
 const isConsoleCollapsed = ref<boolean>(false)
+
+// Mobile view state
+const isMobile = ref<boolean>(false)
+const mobileViewTab = ref<'problem' | 'editor' | 'console'>('problem')
+
+function checkMobile(): void {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth <= 768
+  }
+}
 
 // Editor state with per-language code cache
 const selectedLanguage = ref<string>('python')
@@ -166,6 +177,9 @@ async function handleRun(): Promise<void> {
 
   isRunning.value = true
   isConsoleCollapsed.value = false
+  if (isMobile.value) {
+    mobileViewTab.value = 'console'
+  }
   testcaseConsoleRef.value?.switchToResultTab()
 
   try {
@@ -200,6 +214,9 @@ async function handleSubmit(): Promise<void> {
 
   isSubmitting.value = true
   isConsoleCollapsed.value = false
+  if (isMobile.value) {
+    mobileViewTab.value = 'console'
+  }
   testcaseConsoleRef.value?.switchToResultTab()
 
   try {
@@ -239,11 +256,18 @@ async function handleSubmit(): Promise<void> {
 }
 
 onMounted(() => {
+  checkMobile()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', checkMobile)
+  }
   loadAssignmentAndStartSession()
 })
 
 onUnmounted(() => {
   stopTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', checkMobile)
+  }
 })
 </script>
 
@@ -259,7 +283,8 @@ onUnmounted(() => {
           class="back-btn"
           @click="router.push('/student')"
         >
-          Daily Challenge
+          <span class="desktop-text">Daily Challenge</span>
+          <span class="mobile-text">Back</span>
         </PixelButton>
         <PixelBadge
           v-if="challenge?.coding_status === 'solved'"
@@ -278,7 +303,8 @@ onUnmounted(() => {
         <!-- Submission Attempts -->
         <div class="attempts-badge" title="Submission Attempts">
           <PixelIcon name="refresh" :size="14" />
-          <span>Attempts: {{ submissionAttempts }}</span>
+          <span class="desktop-text">Attempts: {{ submissionAttempts }}</span>
+          <span class="mobile-text">#{{ submissionAttempts }}</span>
         </div>
       </div>
 
@@ -292,7 +318,8 @@ onUnmounted(() => {
           class="run-action-btn"
           @click="handleRun"
         >
-          Run (Sample Cases)
+          <span class="desktop-text">Run (Sample Cases)</span>
+          <span class="mobile-text">Run</span>
         </PixelButton>
 
         <PixelButton
@@ -304,14 +331,55 @@ onUnmounted(() => {
           class="submit-action-btn"
           @click="handleSubmit"
         >
-          Submit Solution
+          <span class="desktop-text">Submit Solution</span>
+          <span class="mobile-text">Submit</span>
         </PixelButton>
       </div>
     </header>
 
-    <!-- Main Resizable Workspace (Left: Problem Specs, Right: Editor + Console) -->
+    <!-- Mobile Segmented Navigation Tabs (Only displayed on <= 768px screens) -->
+    <nav v-if="isMobile" class="mobile-segmented-tabs">
+      <button
+        type="button"
+        class="mobile-tab-btn"
+        :class="{ active: mobileViewTab === 'problem' }"
+        @click="mobileViewTab = 'problem'"
+      >
+        <PixelIcon name="info" :size="14" />
+        <span>Problem</span>
+      </button>
+
+      <button
+        type="button"
+        class="mobile-tab-btn"
+        :class="{ active: mobileViewTab === 'editor' }"
+        @click="mobileViewTab = 'editor'"
+      >
+        <PixelIcon name="code" :size="14" />
+        <span>Code</span>
+      </button>
+
+      <button
+        type="button"
+        class="mobile-tab-btn"
+        :class="{ active: mobileViewTab === 'console' }"
+        @click="mobileViewTab = 'console'"
+      >
+        <PixelIcon name="terminal" :size="14" />
+        <span>Testcases</span>
+        <span
+          v-if="executionResult"
+          class="mobile-status-dot"
+          :class="executionResult.execution_status === 'passed' ? 'dot-pass' : 'dot-fail'"
+        />
+      </button>
+    </nav>
+
+    <!-- Main Resizable Workspace (Desktop Split vs Mobile Full Pane) -->
     <main class="workspace-viewport">
+      <!-- Desktop Layout: PixelSplit Horizontal & Vertical -->
       <PixelSplit
+        v-if="!isMobile"
         v-model="horizontalSplit"
         :limits="[20, 20]"
         class="horizontal-split-container"
@@ -394,6 +462,69 @@ onUnmounted(() => {
           </div>
         </template>
       </PixelSplit>
+
+      <!-- Mobile Layout: Full Screen Single Active Tab (Problem, Editor, or Console) -->
+      <div v-else class="mobile-viewport-container">
+        <!-- Tab 1: Problem Specs -->
+        <div v-show="mobileViewTab === 'problem'" class="problem-pane mobile-full-pane">
+          <div class="pane-content-scroll">
+            <div class="problem-header-section">
+              <h1 class="pane-problem-title">{{ codingQuestion?.title }}</h1>
+              <div class="pane-tags-row">
+                <PixelBadge
+                  v-if="codingQuestion?.difficulty"
+                  :text="codingQuestion.difficulty.toUpperCase()"
+                  :color="getDifficultyColor(codingQuestion.difficulty)"
+                />
+                <PixelBadge text="+30 XP" color="primary" />
+                <PixelBadge :text="`${codingQuestion?.time_limit_ms ?? 2000} ms`" color="secondary" />
+                <PixelBadge :text="`${Math.round((codingQuestion?.memory_limit_kb ?? 128000) / 1024)} MB`" color="secondary" />
+              </div>
+            </div>
+
+            <div class="pane-divider" />
+
+            <!-- Problem Statement -->
+            <div class="problem-statement-section">
+              <h3 class="section-heading">Description</h3>
+              <MarkdownRenderer
+                v-if="codingQuestion?.word_problem_text"
+                :content="decodeHtmlEntities(codingQuestion.word_problem_text)"
+              />
+            </div>
+
+            <!-- Constraints -->
+            <div v-if="codingQuestion?.constraints_text" class="constraints-section">
+              <h3 class="section-heading">Constraints</h3>
+              <pre class="constraints-box">{{ decodeHtmlEntities(codingQuestion.constraints_text) }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Code Editor -->
+        <div v-show="mobileViewTab === 'editor'" class="editor-subpane mobile-full-pane">
+          <CodeEditor
+            v-model="sourceCode"
+            :language="selectedLanguage"
+            :allowed-languages="codingQuestion?.allowed_languages"
+            :starter-templates="activeStarterTemplates"
+            @update:language="handleLanguageChange"
+            @reset-code="handleResetCode"
+          />
+        </div>
+
+        <!-- Tab 3: Testcase Console & Execution Results -->
+        <div v-show="mobileViewTab === 'console'" class="console-subpane mobile-full-pane">
+          <TestcaseConsole
+            ref="testcaseConsoleRef"
+            :is-collapsed="false"
+            :sample-test-cases="codingQuestion?.sample_test_cases || []"
+            :execution-result="executionResult"
+            :is-running="isRunning"
+            :is-submitting="isSubmitting"
+          />
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -433,6 +564,14 @@ onUnmounted(() => {
   font-family: var(--font-pixel);
 }
 
+.desktop-text {
+  display: inline;
+}
+
+.mobile-text {
+  display: none;
+}
+
 .topbar-center {
   display: flex;
   align-items: center;
@@ -464,6 +603,58 @@ onUnmounted(() => {
   gap: 0.65rem;
 }
 
+/* Mobile Segmented Navigation Tabs */
+.mobile-segmented-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 40px;
+  background: var(--pixel-surface-alt);
+  border-bottom: 2px solid var(--pixel-border);
+  box-shadow: 0 2px 0 0 var(--pixel-border-dark);
+  flex-shrink: 0;
+  z-index: 9;
+}
+
+.mobile-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--pixel-text-dim);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.mobile-tab-btn.active {
+  background: var(--pixel-surface);
+  color: #fbbf24;
+  border-bottom-color: #fbbf24;
+}
+
+.mobile-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot-pass {
+  background-color: #10b981;
+}
+
+.dot-fail {
+  background-color: #ef4444;
+}
+
 .workspace-viewport {
   flex: 1;
   min-height: 0;
@@ -475,6 +666,18 @@ onUnmounted(() => {
 .horizontal-split-container {
   height: 100%;
   width: 100%;
+}
+
+.mobile-viewport-container {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mobile-full-pane {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
 }
 
 .problem-pane {
@@ -556,5 +759,45 @@ onUnmounted(() => {
 .console-subpane {
   height: 100%;
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .workspace-viewport {
+    height: calc(100vh - 92px);
+  }
+
+  .pane-content-scroll {
+    padding: 1rem;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .desktop-text {
+    display: none !important;
+  }
+
+  .mobile-text {
+    display: inline !important;
+  }
+
+  .workspace-topbar {
+    padding: 0 0.5rem;
+    gap: 0.4rem;
+  }
+
+  .topbar-center {
+    gap: 0.4rem;
+  }
+
+  .timer-badge,
+  .attempts-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: 10px;
+  }
+
+  .topbar-right {
+    gap: 0.4rem;
+  }
 }
 </style>

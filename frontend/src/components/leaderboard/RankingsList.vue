@@ -24,13 +24,12 @@ const columns = [
 
 <template>
   <div class="rankings-container">
-    <PixelCard v-if="entries.length > 0">
-      <PixelCardContent>
         <PixelDataTable
           :items="entries"
           :columns="columns"
           striped
           hoverable
+          v-if="entries.length > 0"
         >
           <template #cell(rank)="{ value }">
             <div class="rank-cell">
@@ -76,8 +75,6 @@ const columns = [
             <PixelBadge :text="`${value} XP`" color="primary" />
           </template>
         </PixelDataTable>
-      </PixelCardContent>
-    </PixelCard>
 
     <PixelCard v-else class="empty-leaderboard-card">
       <PixelCardContent class="empty-state">

@@ -74,7 +74,7 @@ describe('AppSidebar component', () => {
 		expect(wrapper.text()).toContain('STUDENT')
 	})
 
-	it('toggles theme correctly', async () => {
+	it('does not render streak or XP metrics for admin or mentor', () => {
 		const auth = useAuthStore()
 		auth.user = {
 			id: 1,
@@ -86,13 +86,8 @@ describe('AppSidebar component', () => {
 
 		const wrapper = mount(AppSidebar)
 
-		const buttons = wrapper.findAll('button')
-		const themeButton = buttons.find((b) => b.text().includes('Dark') || b.text().includes('Daylight') || b.text().includes('Tavern'))
-		expect(themeButton).toBeDefined()
-
-		if (themeButton) {
-			await themeButton.trigger('click')
-		}
+		expect(wrapper.text()).not.toContain('XP')
+		expect(wrapper.find('.streak-badge').exists()).toBe(false)
 	})
 
 	it('handles logout and navigates to /login', async () => {
@@ -116,5 +111,30 @@ describe('AppSidebar component', () => {
 			expect(auth.isAuthenticated).toBe(false)
 			expect(mockPush).toHaveBeenCalledWith('/login')
 		}
+	})
+
+	it('toggles collapse state when collapse button is clicked', async () => {
+		const auth = useAuthStore()
+		auth.user = {
+			id: 1,
+			name: 'Admin User',
+			email: 'admin@dept.edu',
+			role: 'admin',
+		}
+		auth.token = 'dummy-token'
+
+		const wrapper = mount(AppSidebar)
+		expect(wrapper.classes()).not.toContain('is-collapsed')
+
+		const collapseBtn = wrapper.find('.sidebar-collapse-btn')
+		expect(collapseBtn.exists()).toBe(true)
+
+		await collapseBtn.trigger('click')
+		expect(wrapper.classes()).toContain('is-collapsed')
+		expect(localStorage.getItem('sidebar_collapsed')).toBe('true')
+
+		await collapseBtn.trigger('click')
+		expect(wrapper.classes()).not.toContain('is-collapsed')
+		expect(localStorage.getItem('sidebar_collapsed')).toBe('false')
 	})
 })

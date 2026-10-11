@@ -427,6 +427,43 @@ function handleSubmit(): void {
   gap: 8px;
 }
 
+@media (max-width: 640px) {
+  .editor-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .lang-selector-group {
+    width: 100%;
+  }
+
+  .editor-hint {
+    display: none;
+  }
+
+  .editor-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-group {
+    width: 100%;
+  }
+
+  .run-btn,
+  .submit-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .console-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
 .solved-indicator {
   display: flex;
   align-items: center;

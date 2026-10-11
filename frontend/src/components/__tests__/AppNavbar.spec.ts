@@ -45,13 +45,8 @@ describe('AppNavbar component', () => {
 		expect(wrapper.text()).toContain('Leaderboard')
 	})
 
-	it('toggles dark mode class on document element', async () => {
-		const wrapper = mount(AppNavbar)
-
-		const toggleBtn = wrapper.findAll('button')[0]
-		expect(toggleBtn).toBeDefined()
-		if (toggleBtn) {
-			await toggleBtn.trigger('click')
-		}
+	it('ensures dark mode class on document element', () => {
+		mount(AppNavbar)
+		expect(document.documentElement.classList.contains('dark')).toBe(true)
 	})
 })

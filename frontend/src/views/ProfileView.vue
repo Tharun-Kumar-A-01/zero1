@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import type { ProgressData, LeaderboardEntry } from '@/types'
@@ -10,11 +11,12 @@ import PixelCardTitle from '@/components/pixel/PixelCardTitle.vue'
 import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
 import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
+import PixelButton from '@/components/pixel/PixelButton.vue'
 import PixelProgressBar from '@/components/pixel/PixelProgressBar.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
-import PixelFlame from '@/components/pixel/PixelFlame.vue'
 
+const router = useRouter()
 const authStore = useAuthStore()
 
 const isLoading = ref<boolean>(true)
@@ -68,6 +70,11 @@ const weekDays = computed(() => {
   })
 })
 
+function handleLogout(): void {
+  authStore.logout()
+  router.push('/login')
+}
+
 async function fetchProfileData(): Promise<void> {
   if (authStore.userRole === 'student') {
     try {
@@ -95,7 +102,7 @@ onMounted(() => {
 
 <template>
   <div class="profile-page">
-    <div class="profile-layout">
+    <div class="profile-layout" :class="{ 'single-col': user?.role !== 'student' }">
       <!-- Left Column: User Card, Streak Showcase, Tier Progression -->
       <div class="profile-main-col">
         <!-- User Info Header Card -->
@@ -113,28 +120,30 @@ onMounted(() => {
                     :text="user?.role === 'admin' ? 'ADMIN' : (user?.role || '').toUpperCase()"
                     :color="user?.role === 'admin' ? 'danger' : user?.role === 'mentor' ? 'warning' : 'primary'"
                   />
-                  <!-- Top 3 Champion Badges -->
-                  <PixelBadge
-                    v-if="userRank === 1"
-                    text="RANK #1 CHAMPION"
-                    color="warning"
-                  />
-                  <PixelBadge
-                    v-else-if="userRank === 2"
-                    text="RANK #2 RUNNER-UP"
-                    color="secondary"
-                  />
-                  <PixelBadge
-                    v-else-if="userRank === 3"
-                    text="RANK #3 PODIUM"
-                    color="warning"
-                  />
+                  <!-- Top 3 Champion Badges (Student Only) -->
+                  <template v-if="user?.role === 'student'">
+                    <PixelBadge
+                      v-if="userRank === 1"
+                      text="RANK #1 CHAMPION"
+                      color="warning"
+                    />
+                    <PixelBadge
+                      v-else-if="userRank === 2"
+                      text="RANK #2 RUNNER-UP"
+                      color="secondary"
+                    />
+                    <PixelBadge
+                      v-else-if="userRank === 3"
+                      text="RANK #3 PODIUM"
+                      color="warning"
+                    />
+                  </template>
                 </div>
                 <p class="profile-email">{{ user?.email }}</p>
 
                 <div class="meta-tags-row">
                   <PixelBadge
-                    v-if="user?.year_batch"
+                    v-if="user?.year_batch && user?.role === 'student'"
                     :text="`Batch ${user.year_batch}`"
                     color="secondary"
                   />
@@ -144,19 +153,75 @@ onMounted(() => {
                     color="secondary"
                   />
                   <PixelBadge
-                    v-if="user?.roll_number"
+                    v-if="user?.roll_number && user?.role === 'student'"
                     :text="user.roll_number"
                     color="secondary"
                   />
-                  <PixelBadge :text="`${totalPoints} XP`" color="primary" />
+                  <!-- XP Badge (Student Only) -->
+                  <PixelBadge
+                    v-if="user?.role === 'student'"
+                    :text="`${totalPoints} XP`"
+                    color="primary"
+                  />
                 </div>
+              </div>
+
+              <!-- Desktop Logout Button -->
+              <div class="user-header-actions">
+                <PixelButton
+                  color="danger"
+                  size="small"
+                  icon="logout"
+                  class="profile-logout-btn"
+                  @click="handleLogout"
+                >
+                  Logout
+                </PixelButton>
               </div>
             </div>
           </PixelCardContent>
         </PixelCard>
 
-        <!-- Streak Showcase Box with Animated Pixel Flame & Particle Embers -->
-        <PixelCard class="streak-box-card">
+        <!-- Admin Overview Card (Admin Only) -->
+        <PixelCard v-if="user?.role === 'admin'" class="role-overview-card">
+          <PixelCardTitle class="section-card-title">
+            <PixelSprite name="sword" :size="18" />
+            <span>Administrator Privileges</span>
+          </PixelCardTitle>
+          <PixelCardContent>
+            <p class="role-desc">Full administrative privileges. Manage problem pools, student cohorts, analytics, and platform configuration.</p>
+            <div class="quick-nav-row">
+              <PixelButton color="primary" size="small" icon="settings" @click="router.push('/admin')">
+                Admin Dashboard
+              </PixelButton>
+              <PixelButton color="secondary" size="small" icon="trophy" @click="router.push('/leaderboard')">
+                Leaderboard
+              </PixelButton>
+            </div>
+          </PixelCardContent>
+        </PixelCard>
+
+        <!-- Mentor Overview Card (Mentor Only) -->
+        <PixelCard v-if="user?.role === 'mentor'" class="role-overview-card">
+          <PixelCardTitle class="section-card-title">
+            <PixelSprite name="sword" :size="18" />
+            <span>Mentor Privileges</span>
+          </PixelCardTitle>
+          <PixelCardContent>
+            <p class="role-desc">Department faculty access. Author, review, and curate daily aptitude MCQs and coding practice problems.</p>
+            <div class="quick-nav-row">
+              <PixelButton color="primary" size="small" icon="edit" @click="router.push('/mentor')">
+                Question Sets
+              </PixelButton>
+              <PixelButton color="secondary" size="small" icon="trophy" @click="router.push('/leaderboard')">
+                Leaderboard
+              </PixelButton>
+            </div>
+          </PixelCardContent>
+        </PixelCard>
+
+        <!-- Streak Showcase Box (Student Only) -->
+        <PixelCard v-if="user?.role === 'student'" class="streak-box-card">
           <PixelCardTitle class="section-card-title">
             <PixelSprite name="flame" :size="18" />
             <span>Daily Consistency & Streak</span>
@@ -206,8 +271,8 @@ onMounted(() => {
           </PixelCardContent>
         </PixelCard>
 
-        <!-- Tier Level Progression -->
-        <PixelCard class="tier-card">
+        <!-- Tier Level Progression (Student Only) -->
+        <PixelCard v-if="user?.role === 'student'" class="tier-card">
           <PixelCardTitle class="section-card-title">
             <PixelSprite name="sword" :size="18" />
             <span>Skill Tier Progression</span>
@@ -225,10 +290,23 @@ onMounted(() => {
             <span class="tier-subtext">Earn points daily by solving assigned questions to unlock the next tier</span>
           </PixelCardContent>
         </PixelCard>
+
+        <!-- Duplicated Mobile Logout Section (Visible on Mobile Screens) -->
+        <div class="mobile-logout-wrapper">
+          <PixelButton
+            color="danger"
+            size="medium"
+            icon="logout"
+            block
+            @click="handleLogout"
+          >
+            Logout
+          </PixelButton>
+        </div>
       </div>
 
-      <!-- Right Column: Milestones & Top Peers (Batch) -->
-      <div class="profile-side-col">
+      <!-- Right Column: Milestones & Top Peers (Batch) (Student Only) -->
+      <div v-if="user?.role === 'student'" class="profile-side-col">
         <BadgesShowcase :badges="progress?.badges || []" />
         <CohortStandings :leaderboard="leaderboard" :currentUserId="user?.id" />
       </div>
@@ -445,5 +523,55 @@ onMounted(() => {
 .tier-subtext {
   font-size: 0.8rem;
   color: var(--pixel-text-dim);
+}
+
+.profile-layout.single-col {
+  grid-template-columns: 1fr;
+  max-width: 800px;
+}
+
+.user-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.role-overview-card {
+  margin-top: 0.25rem;
+}
+
+.role-desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--pixel-text);
+  margin-bottom: 1.25rem;
+}
+
+.quick-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mobile-logout-wrapper {
+  display: none;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .user-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .user-header-actions {
+    display: none;
+  }
+
+  .mobile-logout-wrapper {
+    display: block;
+  }
 }
 </style>

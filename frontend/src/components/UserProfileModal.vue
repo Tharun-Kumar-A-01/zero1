@@ -74,17 +74,17 @@ const weekDays = computed(() => {
               :color="user.role === 'admin' ? 'danger' : user.role === 'mentor' ? 'warning' : 'primary'"
             />
             <PixelBadge
-              v-if="user.roll_number"
+              v-if="user.role === 'student' && user.roll_number"
               :text="user.roll_number"
               color="secondary"
             />
             <PixelBadge
-              v-if="user.year_batch"
+              v-if="user.role === 'student' && user.year_batch"
               :text="`Batch ${user.year_batch}`"
               color="secondary"
             />
             <PixelBadge
-              v-if="user.total_points !== undefined"
+              v-if="user.role === 'student' && user.total_points !== undefined"
               :text="`${user.total_points ?? 0} XP`"
               color="primary"
             />
@@ -92,8 +92,8 @@ const weekDays = computed(() => {
         </div>
       </div>
 
-      <!-- Streak Showcase Box -->
-      <PixelCard class="streak-box-card">
+      <!-- Streak Showcase Box (Student Only) -->
+      <PixelCard v-if="user.role === 'student'" class="streak-box-card">
         <PixelCardContent>
           <div class="streak-top-row">
             <span class="streak-number">{{ streakCount }}</span>

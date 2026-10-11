@@ -11,6 +11,8 @@ import App from './App.vue'
 import router from './router'
 import * as PixelComponents from '@/components/pixel'
 
+document.documentElement.classList.add('dark')
+
 const app = createApp(App)
 
 app.use(createPinia())

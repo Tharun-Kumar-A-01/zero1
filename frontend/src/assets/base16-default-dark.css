@@ -1,21 +1,21 @@
-/* Base16 Default Dark (Chris Kempson) for PrismJS */
+/* Base16 Default Dark for PrismJS - Adjusted for Habitica theme */
 :root {
-	--base00: #181818;
-	--base01: #282828;
-	--base02: #383838;
-	--base03: #585858;
+	--base00: #1e192b; /* Habitica pixel-bg */
+	--base01: #262235; /* Habitica pixel-surface */
+	--base02: #2f2a42; /* Habitica pixel-surface-alt */
+	--base03: #8a81aa; /* Habitica muted */
 	--base04: #b8b8b8;
-	--base05: #d8d8d8;
-	--base06: #e8e8e8;
-	--base07: #f8f8f8;
-	--base08: #ab4642; /* Red */
-	--base09: #dc9656; /* Orange */
-	--base0A: #f7ca88; /* Yellow */
-	--base0B: #a1b56c; /* Green */
-	--base0C: #86c1b9; /* Cyan */
-	--base0D: #7cafc2; /* Blue */
-	--base0E: #ba8baf; /* Magenta/Purple */
-	--base0F: #a16946; /* Brown */
+	--base05: #f3effa; /* Habitica text */
+	--base06: #f8f8f8;
+	--base07: #ffffff;
+	--base08: #f87171; /* Red */
+	--base09: #fb923c; /* Orange */
+	--base0A: #fbbf24; /* Yellow / Gold */
+	--base0B: #4ade80; /* Green */
+	--base0C: #38bdf8; /* Cyan */
+	--base0D: #818cf8; /* Blue */
+	--base0E: #c084fc; /* Magenta/Purple */
+	--base0F: #e879f9; /* Brown/Pink */
 }
 
 .token.comment,

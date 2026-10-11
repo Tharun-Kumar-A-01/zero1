@@ -57,8 +57,8 @@ onMounted(async (): Promise<void> => {
 			@change="fetchLeaderboard"
 		/>
 
-		<!-- Top 3 Podium Cards -->
-		<PodiumSection :entries="entries" />
+		<!-- Top 3 Podium Cards (Desktop Only) -->
+		<PodiumSection :entries="entries" class="podium-desktop-only" />
 
 		<!-- Ranked Peer List -->
 		<RankingsList
@@ -81,5 +81,15 @@ onMounted(async (): Promise<void> => {
 	padding: 1.5rem;
 	width: 100%;
 	padding-bottom: 5rem;
+}
+
+@media (max-width: 768px) {
+	.podium-desktop-only {
+		display: none !important;
+	}
+
+	.leaderboard-page {
+		padding: 1rem 0.75rem;
+	}
 }
 </style>

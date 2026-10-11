@@ -87,7 +87,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 
 @media (max-width: 768px) {
   .podium-section {
-    grid-template-columns: 1fr;
+    display: none !important;
   }
 }
 
