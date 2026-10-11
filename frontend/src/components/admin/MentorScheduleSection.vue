@@ -452,7 +452,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 							<div class="item-info">
 								<span class="item-title">{{ leave.title }}</span>
 								<span class="item-dates">
-									<PixelIcon name="date_range" size="small" />
+									<PixelIcon name="date_range" :size="14" />
 									{{ formatIndianDate(leave.start_date) }} – {{ formatIndianDate(leave.end_date) }}
 								</span>
 								<p v-if="leave.description" class="item-desc">{{ leave.description }}</p>
@@ -498,7 +498,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 									/>
 								</div>
 								<span class="item-dates">
-									<PixelIcon name="calendar_today" size="small" />
+									<PixelIcon name="calendar_today" :size="14" />
 									{{ formatIndianDate(rot.week_start_date) }} – {{ formatIndianDate(rot.week_end_date) }}
 								</span>
 							</div>
@@ -872,12 +872,13 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .event-bar {
-	height: 22px;
+	height: 24px;
 	display: flex;
 	align-items: center;
-	gap: 4px;
-	padding: 0 4px;
-	font-size: 0.72rem;
+	gap: 6px;
+	padding: 0 6px;
+	font-family: var(--font-pixel);
+	font-size: 11px;
 	font-weight: 600;
 	color: #ffffff;
 	cursor: pointer;
@@ -886,8 +887,10 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	user-select: none;
 	transition: opacity 0.15s ease;
 	margin: 0;
-	border-radius: 0;
+	border-radius: 2px;
 	position: relative;
+	box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.4);
+	border-top: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .event-bar:hover {

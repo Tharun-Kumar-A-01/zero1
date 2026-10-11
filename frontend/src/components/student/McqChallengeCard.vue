@@ -41,13 +41,13 @@ function handleSubmit(): void {
   <PixelCard class="challenge-card">
     <PixelCardTitle class="card-header-row">
       <div class="question-meta-group">
-        <PixelBadge text="APTITUDE MCQ" color="primary" />
+        <span class="card-type-title">APTITUDE MCQ</span>
         <PixelBadge
           v-if="mcq?.difficulty"
           :text="mcq.difficulty.toUpperCase()"
           :color="getDifficultyColor(mcq.difficulty)"
         />
-        <PixelBadge text="+20 XP" color="warning" />
+        <PixelBadge text="+20 XP" color="primary" />
       </div>
     </PixelCardTitle>
 
@@ -124,6 +124,15 @@ function handleSubmit(): void {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.card-type-title {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pixel-text);
+  line-height: 1;
 }
 
 .mcq-body {

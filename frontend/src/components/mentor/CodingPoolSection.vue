@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue'
 import type { CodingQuestionItem } from '@/types'
 import RichTextEditor from '@/components/common/RichTextEditor.vue'
 import MarkdownRenderer from '@/components/common/MarkdownRenderer.vue'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
 import api from '@/services/api'
 import { usePixelToast } from '@/components/pixel/usePixelToast'
 import { generateBoilerplateTemplates } from '@/utils/boilerplate'
@@ -461,9 +460,9 @@ function handleCommitImport(): void {
 									:color="codeQ.difficulty === 'hard' ? 'danger' : codeQ.difficulty === 'medium' ? 'warning' : 'success'"
 									:text="codeQ.difficulty.toUpperCase()"
 								/>
-								<XpStarBadge
-									:points="codeQ.difficulty === 'hard' ? 50 : codeQ.difficulty === 'medium' ? 30 : 15"
-									size="small"
+								<PixelBadge
+									:text="`+${codeQ.difficulty === 'hard' ? 50 : codeQ.difficulty === 'medium' ? 30 : 15} XP`"
+									color="primary"
 								/>
 								<span class="meta-tag"><PixelIcon name="schedule" size="small" /> {{ codeQ.time_limit_ms }}ms</span>
 								<span class="meta-tag"><PixelIcon name="storage" size="small" /> {{ Math.round(codeQ.memory_limit_kb / 1024) }}MB</span>
@@ -520,7 +519,7 @@ function handleCommitImport(): void {
 							<PixelButton
 								v-if="!isPublished"
 								size="small"
-								icon="star"
+								icon="auto_awesome"
 								@click="emit('openAiGen', codeQ)"
 							>
 								Generate AI Stress Cases
@@ -656,7 +655,7 @@ function handleCommitImport(): void {
 						<PixelButton
 							color="secondary"
 							size="small"
-							icon="star"
+							icon="auto_awesome"
 							:loading="isGeneratingInlineAi"
 							@click="handleGenerateInlineAiCases('add')"
 						>
@@ -892,7 +891,7 @@ function handleCommitImport(): void {
 						<PixelButton
 							color="secondary"
 							size="small"
-							icon="star"
+							icon="auto_awesome"
 							:loading="isGeneratingInlineAi"
 							@click="handleGenerateInlineAiCases('edit')"
 						>
@@ -1060,7 +1059,7 @@ function handleCommitImport(): void {
 					<PixelButton
 						:loading="isImporting"
 						:disabled="!selectedImportFile"
-						icon="star"
+						icon="upload"
 						@click="handleCommitImport"
 					>
 						Import & Generate AI Tests

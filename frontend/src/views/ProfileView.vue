@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import type { ProgressData, LeaderboardEntry } from '@/types'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
 import BadgesShowcase from '@/components/student/BadgesShowcase.vue'
 import CohortStandings from '@/components/student/CohortStandings.vue'
 import PixelCard from '@/components/pixel/PixelCard.vue'
@@ -15,7 +14,6 @@ import PixelProgressBar from '@/components/pixel/PixelProgressBar.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 import PixelFlame from '@/components/pixel/PixelFlame.vue'
-import PixelParticles from '@/components/pixel/PixelParticles.vue'
 
 const authStore = useAuthStore()
 
@@ -104,12 +102,9 @@ onMounted(() => {
         <PixelCard class="user-header-card">
           <PixelCardContent>
             <div class="user-header-row">
-              <!-- If User is Top 3 in Leaderboard, wrap avatar in radiating Particle Aura -->
-              <PixelParticles :rank="userRank || undefined">
-                <PixelAvatar size="large" color="primary" class="profile-avatar">
-                  {{ user?.name ? user.name.charAt(0).toUpperCase() : 'U' }}
-                </PixelAvatar>
-              </PixelParticles>
+              <PixelAvatar size="large" color="primary" class="profile-avatar">
+                {{ user?.name ? user.name.charAt(0).toUpperCase() : 'U' }}
+              </PixelAvatar>
 
               <div class="user-meta-info">
                 <div class="name-badge-row">
@@ -153,7 +148,7 @@ onMounted(() => {
                     :text="user.roll_number"
                     color="secondary"
                   />
-                  <XpStarBadge :points="totalPoints" size="small" />
+                  <PixelBadge :text="`${totalPoints} XP`" color="primary" />
                 </div>
               </div>
             </div>
@@ -171,7 +166,6 @@ onMounted(() => {
               <span class="streak-number">{{ streakCount }}</span>
               <div class="streak-flame-group">
                 <div class="streak-flame-row">
-                  <PixelFlame :active="streakCount > 0" :size="40" />
                   <span class="streak-label">Days Active Streak</span>
                 </div>
                 <span v-if="progress?.longest_streak" class="streak-sub">
@@ -221,7 +215,7 @@ onMounted(() => {
           <PixelCardContent>
             <div class="tier-labels">
               <span class="tier-name">{{ currentTier }}</span>
-              <XpStarBadge :points="totalPoints" size="small" />
+              <PixelBadge :text="`${totalPoints} XP`" color="primary" />
             </div>
             <PixelProgressBar
               :model-value="tierProgressPercent"

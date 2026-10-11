@@ -197,7 +197,7 @@ function handleCommit(): void {
 			<div class="header-actions">
 				<PixelButton
 					size="small"
-					icon="upload_file"
+					icon="upload"
 					color="secondary"
 					@click="showImportDialog = true"
 				>
@@ -205,7 +205,7 @@ function handleCommit(): void {
 				</PixelButton>
 				<PixelButton
 					size="small"
-					icon="person_add"
+					icon="plus"
 					@click="showCreateDialog = true"
 				>
 					Add User
@@ -229,7 +229,7 @@ function handleCommit(): void {
 					clearable
 				>
 					<template #prependInner>
-						<PixelIcon name="search" size="small" />
+						<PixelIcon name="search" :size="14" />
 					</template>
 				</PixelInput>
 			</div>

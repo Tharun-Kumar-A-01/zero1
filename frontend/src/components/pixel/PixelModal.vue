@@ -134,6 +134,7 @@ watch(
 }
 
 .pixel-modal-container {
+  --pixel-tab-active-bg: var(--pixel-surface);
   width: 100%;
   background-color: var(--pixel-surface);
   border: 3px solid var(--pixel-border);

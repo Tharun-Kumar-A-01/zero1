@@ -63,7 +63,7 @@ const handleClick = (e: MouseEvent) => {
       <PixelIcon :name="icon" :size="size === 'small' ? 12 : 14" />
     </span>
 
-    <span class="pixel-button__label">
+    <span v-if="$slots.default" class="pixel-button__label">
       <slot />
     </span>
   </component>

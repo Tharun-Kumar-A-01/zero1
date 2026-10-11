@@ -22,7 +22,7 @@ describe('ConsistencyTracker component', () => {
 		expect(wrapper.text()).toContain('6')
 		expect(wrapper.text()).toContain('Personal best: 12 days')
 		expect(wrapper.text()).toContain('Silver Solver') // 250 pts is Silver Solver tier
-		expect(wrapper.text()).toContain('250XP')
+		expect(wrapper.text()).toContain('250 XP')
 		expect(wrapper.findAll('.day-node')).toHaveLength(7)
 	})
 
@@ -42,6 +42,6 @@ describe('ConsistencyTracker component', () => {
 		})
 
 		expect(wrapper.text()).toContain('Master Coder')
-		expect(wrapper.text()).toContain('1200XP')
+		expect(wrapper.text()).toContain('1200 XP')
 	})
 })

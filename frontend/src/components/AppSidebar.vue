@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserProfileModal from '@/components/UserProfileModal.vue'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
@@ -164,10 +163,7 @@ function navigateTo(path: string): void {
           <PixelSprite name="flame" :size="16" />
           <span class="streak-text">{{ authStore.user.current_streak ?? 0 }}d</span>
         </div>
-        <XpStarBadge
-          :points="authStore.user.total_points ?? 0"
-          size="small"
-        />
+        <PixelBadge :text="`${authStore.user.total_points ?? 0} XP`" color="primary" />
       </div>
 
       <!-- Controls: Theme Switch and Logout -->

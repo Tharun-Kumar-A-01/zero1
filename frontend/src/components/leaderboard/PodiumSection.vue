@@ -5,7 +5,6 @@ import PixelCard from '@/components/pixel/PixelCard.vue'
 import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
-import PixelParticles from '@/components/pixel/PixelParticles.vue'
 
 const props = defineProps<{
   entries: LeaderboardEntry[]
@@ -22,9 +21,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
     <PixelCard v-if="runnerUp" class="podium-card silver-card">
       <PixelCardContent class="podium-content">
         <div class="medal-icon silver-medal">
-          <PixelParticles aura="silver">
-            <PixelSprite name="silver" :size="36" />
-          </PixelParticles>
+          <PixelSprite name="star_silver" :size="36" />
         </div>
         <span class="podium-rank">Rank #2</span>
         <h3 class="podium-name">{{ runnerUp.name }}</h3>
@@ -33,7 +30,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
           <PixelBadge :text="`${runnerUp.total_points} XP`" color="primary" />
           <div class="streak-pill">
             <PixelSprite name="flame" :size="14" />
-            <span>{{ runnerUp.current_streak }}d</span>
+            <span>{{ runnerUp.current_streak }}</span>
           </div>
         </div>
       </PixelCardContent>
@@ -43,9 +40,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
     <PixelCard class="podium-card gold-card">
       <PixelCardContent class="podium-content">
         <div class="medal-icon gold-medal">
-          <PixelParticles aura="gold">
-            <PixelSprite name="crown" :size="48" />
-          </PixelParticles>
+          <PixelSprite name="star_gold" :size="48" />
         </div>
         <span class="podium-rank gold-rank">Champion</span>
         <h3 class="podium-name gold-name">{{ champion.name }}</h3>
@@ -54,7 +49,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
           <PixelBadge :text="`${champion.total_points} XP`" color="primary" />
           <div class="streak-pill">
             <PixelSprite name="flame" :size="14" />
-            <span>{{ champion.current_streak }}d</span>
+            <span>{{ champion.current_streak }}</span>
           </div>
         </div>
       </PixelCardContent>
@@ -64,9 +59,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
     <PixelCard v-if="thirdPlace" class="podium-card bronze-card">
       <PixelCardContent class="podium-content">
         <div class="medal-icon bronze-medal">
-          <PixelParticles aura="bronze">
-            <PixelSprite name="bronze" :size="32" />
-          </PixelParticles>
+          <PixelSprite name="star_bronze" :size="32" />
         </div>
         <span class="podium-rank">Rank #3</span>
         <h3 class="podium-name">{{ thirdPlace.name }}</h3>
@@ -75,7 +68,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
           <PixelBadge :text="`${thirdPlace.total_points} XP`" color="primary" />
           <div class="streak-pill">
             <PixelSprite name="flame" :size="14" />
-            <span>{{ thirdPlace.current_streak }}d</span>
+            <span>{{ thirdPlace.current_streak }}</span>
           </div>
         </div>
       </PixelCardContent>

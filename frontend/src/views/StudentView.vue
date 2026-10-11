@@ -118,13 +118,13 @@ onMounted(async (): Promise<void> => {
         <PixelCard class="coding-overview-card">
           <PixelCardTitle class="coding-card-header">
             <div class="coding-meta-badges">
-              <PixelBadge text="DAILY CODING QUEST" color="primary" />
+              <span class="card-type-title">CODING PROBLEM</span>
               <PixelBadge
                 v-if="challenge?.coding_question?.difficulty"
                 :text="challenge.coding_question.difficulty.toUpperCase()"
                 :color="getDifficultyColor(challenge.coding_question.difficulty)"
               />
-              <PixelBadge text="+30 XP" color="warning" />
+              <PixelBadge text="+30 XP" color="primary" />
             </div>
 
             <PixelBadge
@@ -207,6 +207,15 @@ onMounted(async (): Promise<void> => {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.card-type-title {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pixel-text);
+  line-height: 1;
 }
 
 .coding-overview-body {

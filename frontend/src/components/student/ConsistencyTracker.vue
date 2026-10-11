@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ProgressData } from '@/types'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelCard from '@/components/pixel/PixelCard.vue'
 import PixelCardTitle from '@/components/pixel/PixelCardTitle.vue'
 import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
@@ -125,7 +125,7 @@ const daysOfWeek = computed<Array<{ day: string; dateStr: string; isPast: boolea
         <div class="tier-progress-section">
           <div class="tier-labels">
             <span class="tier-name">{{ currentTier }}</span>
-            <XpStarBadge :points="progress?.total_points ?? 0" size="small" />
+            <PixelBadge :text="`${progress?.total_points ?? 0} XP`" color="primary" />
           </div>
           <PixelProgressBar :model-value="tierProgressPercent" color="warning" class="tier-progress-bar" />
           <span class="tier-subtext">Earn points daily by solving assigned questions</span>

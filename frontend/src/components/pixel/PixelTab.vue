@@ -58,9 +58,9 @@ const handleClick = () => {
   border-radius: 4px 4px 0 0;
   cursor: pointer;
   user-select: none;
-  transition: all 0.1s ease;
+  transition: color 0.1s ease, background-color 0.1s ease;
   position: relative;
-  bottom: -2px;
+  z-index: 1;
 }
 
 .pixel-tab:hover:not(.pixel-tab--disabled) {
@@ -69,12 +69,13 @@ const handleClick = () => {
 }
 
 .pixel-tab--active {
-  background-color: var(--pixel-surface);
-  color: #fff;
-  border-color: var(--pixel-btn-primary-bg);
-  border-bottom: 2px solid var(--pixel-surface);
+  background-color: var(--pixel-tab-active-bg, var(--pixel-bg));
+  color: #ffffff;
+  border-color: var(--pixel-border);
+  border-top: 2px solid var(--pixel-btn-primary-bg);
+  border-bottom: 2px solid var(--pixel-tab-active-bg, var(--pixel-bg));
+  margin-bottom: -2px;
   z-index: 2;
-  box-shadow: 0 -2px 0 0 var(--pixel-btn-primary-border);
 }
 
 .pixel-tab--disabled {

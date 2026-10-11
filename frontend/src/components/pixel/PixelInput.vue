@@ -156,17 +156,30 @@ const errorMessage = computed(() => {
 }
 
 .pixel-input-slot {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: var(--pixel-text-muted);
+  width: 16px;
+  height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  flex-shrink: 0;
+}
+
+.pixel-input-slot :deep(svg) {
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
 }
 
 .pixel-input-slot.prepend {
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .pixel-input-slot.append {
-  margin-left: 4px;
+  margin-left: 6px;
 }
 
 .pixel-input-clear-btn {

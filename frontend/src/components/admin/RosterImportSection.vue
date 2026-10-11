@@ -121,7 +121,7 @@ function handleCommit(): void {
 						<PixelButton
 							:loading="isUploading"
 							:disabled="!selectedFile || !targetYearBatch.trim()"
-							icon="star"
+							icon="search"
 							@click="handleUpload"
 						>
 							Analyze Spreadsheet

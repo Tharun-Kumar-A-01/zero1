@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LeaderboardEntry } from '@/types'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 
 defineProps<{
@@ -24,7 +24,7 @@ defineProps<{
           <PixelSprite name="flame" :size="14" />
           <span>{{ entry.current_streak }}d streak</span>
         </div>
-        <XpStarBadge :points="entry.total_points" size="small" />
+        <PixelBadge :text="`${entry.total_points} XP`" color="primary" />
       </div>
     </div>
   </div>

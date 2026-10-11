@@ -109,13 +109,13 @@ function handleSubmit(): void {
   <PixelCard class="challenge-card">
     <PixelCardTitle class="card-header-row">
       <div class="question-meta-group">
-        <PixelBadge color="primary" text="DAILY CODING QUEST" />
+        <span class="card-type-title">CODING PROBLEM</span>
         <PixelBadge
           v-if="codingQuestion?.difficulty"
           :color="codingQuestion.difficulty === 'hard' ? 'danger' : codingQuestion.difficulty === 'medium' ? 'warning' : 'success'"
           :text="codingQuestion.difficulty.toUpperCase()"
         />
-        <PixelBadge text="+30 XP" color="warning" />
+        <PixelBadge text="+30 XP" color="primary" />
       </div>
     </PixelCardTitle>
 
@@ -292,6 +292,15 @@ function handleSubmit(): void {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.card-type-title {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pixel-text);
+  line-height: 1;
 }
 
 .coding-body {

@@ -34,9 +34,9 @@ const columns = [
         >
           <template #cell(rank)="{ value }">
             <div class="rank-cell">
-              <PixelSprite v-if="Number(value) === 1" name="crown" :size="20" />
-              <PixelSprite v-else-if="Number(value) === 2" name="silver" :size="20" />
-              <PixelSprite v-else-if="Number(value) === 3" name="bronze" :size="20" />
+              <PixelSprite v-if="Number(value) === 1" name="star_gold" :size="20" />
+              <PixelSprite v-else-if="Number(value) === 2" name="star_silver" :size="20" />
+              <PixelSprite v-else-if="Number(value) === 3" name="star_bronze" :size="20" />
               <span v-else class="rank-number">#{{ value }}</span>
             </div>
           </template>
@@ -68,12 +68,12 @@ const columns = [
           <template #cell(current_streak)="{ value }">
             <div class="streak-pill">
               <PixelSprite name="flame" :size="14" />
-              <span>{{ value }}d</span>
+              <span>{{ value }}</span>
             </div>
           </template>
 
           <template #cell(total_points)="{ value }">
-            <span class="points-val">{{ value }} XP</span>
+            <PixelBadge :text="`${value} XP`" color="primary" />
           </template>
         </PixelDataTable>
       </PixelCardContent>

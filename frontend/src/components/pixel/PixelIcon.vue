@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
   color: 'currentColor',
 })
 
-// Normalization alias dictionary
+// Normalization alias dictionary to charm-icons keys
 const ALIAS_MAP: Record<string, string> = {
   trash: 'Bin',
   bin: 'Bin',
@@ -23,6 +23,7 @@ const ALIAS_MAP: Record<string, string> = {
   tick: 'Tick',
   done: 'Tick',
   success: 'Tick',
+  check_circle: 'CircleTick',
   close: 'Cross',
   cross: 'Cross',
   x: 'Cross',
@@ -31,8 +32,8 @@ const ALIAS_MAP: Record<string, string> = {
   add: 'Plus',
   minus: 'Minus',
   search: 'Search',
-  edit: 'Edit',
-  pencil: 'Edit',
+  edit: 'Pencil',
+  pencil: 'Pencil',
   copy: 'Copy',
   refresh: 'Refresh',
   sync: 'Refresh',
@@ -46,12 +47,19 @@ const ALIAS_MAP: Record<string, string> = {
   sword: 'Sword',
   eye: 'Eye',
   info: 'Info',
-  warning: 'Alert',
-  alert: 'Alert',
+  warning: 'CircleWarning',
+  alert: 'CircleWarning',
+  circle_warning: 'CircleWarning',
   user: 'Person',
   person: 'Person',
+  person_add: 'Person',
+  user_add: 'Person',
   users: 'People',
   people: 'People',
+  upload: 'Upload',
+  upload_file: 'Upload',
+  import: 'Upload',
+  download: 'Download',
   logout: 'SignOut',
   signout: 'SignOut',
   exit: 'SignOut',
@@ -63,6 +71,7 @@ const ALIAS_MAP: Record<string, string> = {
   terminal: 'Terminal',
   clock: 'Clock',
   time: 'Clock',
+  schedule: 'Clock',
   calendar: 'Calendar',
   calendar_today: 'Calendar',
   date_range: 'Calendar',
@@ -70,8 +79,10 @@ const ALIAS_MAP: Record<string, string> = {
   event_busy: 'Calendar',
   beach_access: 'TreeFir',
   school: 'GraduateCap',
+  storage: 'Database',
+  database: 'Database',
   filter: 'Filter',
-  sort: 'Sort',
+  sort: 'SwapVertical',
   chevron_down: 'ChevronDown',
   'chevron-down': 'ChevronDown',
   chevron_up: 'ChevronUp',
@@ -88,8 +99,8 @@ const ALIAS_MAP: Record<string, string> = {
   'arrow-left': 'ArrowLeft',
   arrow_right: 'ArrowRight',
   'arrow-right': 'ArrowRight',
-  external: 'ExternalLink',
-  'external-link': 'ExternalLink',
+  external: 'LinkExternal',
+  'external-link': 'LinkExternal',
   link: 'Link',
   menu: 'MenuHamburger',
   hamburger: 'MenuHamburger',
@@ -112,12 +123,16 @@ const ALIAS_MAP: Record<string, string> = {
   integration_instructions: 'Terminal',
   format_list_bulleted: 'LayoutList',
   format_list_numbered: 'LayoutList',
+  list: 'LayoutList',
+  auto_awesome: 'LightningBolt',
 }
 
 const charmMap = charm as unknown as Record<string, { paths: string }>
 
 const iconPath = computed(() => {
   const raw = props.name.trim()
+  if (!raw) return ''
+
   if (ALIAS_MAP[raw]) {
     const key = ALIAS_MAP[raw]
     if (charmMap[key]) return charmMap[key].paths
@@ -134,21 +149,39 @@ const iconPath = computed(() => {
   // Try direct match
   if (charmMap[raw]) return charmMap[raw].paths
 
-  // Fallback to Star or Circle
-  return charmMap['Star']?.paths || ''
+  // If not found, return empty string — NEVER fall back to Star!
+  return ''
 })
 
 const numericSize = computed(() => {
+  if (props.size === 'small') return '12px'
+  if (props.size === 'medium') return '16px'
+  if (props.size === 'large') return '24px'
   if (typeof props.size === 'number') return `${props.size}px`
-  return props.size
+  if (typeof props.size === 'string') {
+    const trimmed = props.size.trim()
+    if (trimmed.endsWith('px') || trimmed.endsWith('rem') || trimmed.endsWith('em')) {
+      return trimmed
+    }
+    const parsed = parseFloat(trimmed)
+    if (!isNaN(parsed)) return `${parsed}px`
+  }
+  return '16px'
 })
 </script>
 
 <template>
   <svg
+    v-if="iconPath"
     xmlns="http://www.w3.org/2000/svg"
     :width="numericSize"
     :height="numericSize"
+    :style="{
+      width: numericSize,
+      height: numericSize,
+      maxWidth: numericSize,
+      maxHeight: numericSize,
+    }"
     viewBox="0 0 16 16"
     fill="none"
     :stroke="props.color"
@@ -166,5 +199,6 @@ const numericSize = computed(() => {
   vertical-align: middle;
   flex-shrink: 0;
   shape-rendering: crispEdges;
+  box-sizing: content-box;
 }
 </style>

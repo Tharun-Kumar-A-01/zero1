@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { LeaderboardEntry } from '@/types'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
+import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelCard from '@/components/pixel/PixelCard.vue'
 import PixelCardTitle from '@/components/pixel/PixelCardTitle.vue'
 import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
@@ -21,7 +21,7 @@ const sortedLeaderboard = computed<LeaderboardEntry[]>(() =>
 <template>
   <PixelCard class="cohort-card">
     <PixelCardTitle class="tracker-header">
-      <PixelSprite name="crown" :size="18" />
+      <PixelSprite name="star_gold" :size="18" />
       <span class="tracker-title">Top Peers (Cohort)</span>
     </PixelCardTitle>
 
@@ -34,9 +34,9 @@ const sortedLeaderboard = computed<LeaderboardEntry[]>(() =>
           :class="{ 'is-me': entry.student_id === currentUserId }"
         >
           <div class="peer-rank-section">
-            <PixelSprite v-if="entry.rank === 1" name="crown" :size="20" />
-            <PixelSprite v-else-if="entry.rank === 2" name="silver" :size="20" />
-            <PixelSprite v-else-if="entry.rank === 3" name="bronze" :size="20" />
+            <PixelSprite v-if="entry.rank === 1" name="star_gold" :size="20" />
+            <PixelSprite v-else-if="entry.rank === 2" name="star_silver" :size="20" />
+            <PixelSprite v-else-if="entry.rank === 3" name="star_bronze" :size="20" />
             <span v-else class="peer-rank-num">#{{ entry.rank }}</span>
           </div>
 
@@ -50,7 +50,7 @@ const sortedLeaderboard = computed<LeaderboardEntry[]>(() =>
           </div>
 
           <div class="peer-stats">
-            <XpStarBadge :points="entry.total_points" size="small" />
+            <PixelBadge :text="`${entry.total_points} XP`" color="primary" />
             <span class="peer-streak">
               <PixelSprite name="flame" :size="14" />
               <span>{{ entry.current_streak }}d</span>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
 import PixelModal from '@/components/pixel/PixelModal.vue'
 import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
@@ -84,10 +83,10 @@ const weekDays = computed(() => {
               :text="`Batch ${user.year_batch}`"
               color="secondary"
             />
-            <XpStarBadge
+            <PixelBadge
               v-if="user.total_points !== undefined"
-              :points="user.total_points ?? 0"
-              size="small"
+              :text="`${user.total_points ?? 0} XP`"
+              color="primary"
             />
           </div>
         </div>

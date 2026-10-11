@@ -328,7 +328,7 @@ onUnmounted(() => {
                     :text="codingQuestion.difficulty.toUpperCase()"
                     :color="getDifficultyColor(codingQuestion.difficulty)"
                   />
-                  <PixelBadge text="+30 XP" color="warning" />
+                  <PixelBadge text="+30 XP" color="primary" />
                   <PixelBadge :text="`${codingQuestion?.time_limit_ms ?? 2000} ms`" color="secondary" />
                   <PixelBadge :text="`${Math.round((codingQuestion?.memory_limit_kb ?? 128000) / 1024)} MB`" color="secondary" />
                 </div>

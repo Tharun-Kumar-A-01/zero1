@@ -25,6 +25,7 @@ withDefaults(defineProps<Props>(), {
 
 <style scoped>
 .pixel-card {
+  --pixel-tab-active-bg: var(--pixel-surface);
   background-color: var(--pixel-surface);
   border: 2px solid var(--pixel-border);
   box-shadow: 0 4px 0 0 var(--pixel-border-dark);

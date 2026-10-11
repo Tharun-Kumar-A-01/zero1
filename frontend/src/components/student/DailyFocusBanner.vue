@@ -27,7 +27,7 @@ defineProps<{
         </PixelAvatar>
         <span class="status-label">MCQ:</span>
         <PixelBadge
-          :text="challenge?.mcq_status === 'correct' ? 'SOLVED (+20 XP)' : challenge?.mcq_status === 'incorrect' ? 'RETRY' : 'PENDING'"
+          :text="challenge?.mcq_status === 'correct' ? 'SOLVED' : challenge?.mcq_status === 'incorrect' ? 'RETRY' : 'PENDING'"
           :color="challenge?.mcq_status === 'correct' ? 'success' : challenge?.mcq_status === 'incorrect' ? 'danger' : 'secondary'"
         />
       </div>

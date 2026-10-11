@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import XpStarBadge from '@/components/common/XpStarBadge.vue'
 import type { MCQItem } from '@/types'
 
 function formatEntities(str?: string): string {
@@ -212,9 +211,9 @@ function handleCommitImport(): void {
 									:color="mcq.difficulty === 'hard' ? 'danger' : mcq.difficulty === 'medium' ? 'warning' : 'success'"
 									:text="mcq.difficulty.toUpperCase()"
 								/>
-								<XpStarBadge
-									:points="mcq.difficulty === 'hard' ? 30 : mcq.difficulty === 'medium' ? 20 : 10"
-									size="small"
+								<PixelBadge
+									:text="`+${mcq.difficulty === 'hard' ? 30 : mcq.difficulty === 'medium' ? 20 : 10} XP`"
+									color="primary"
 								/>
 							</div>
 							<div v-if="!isPublished" class="meta-actions">

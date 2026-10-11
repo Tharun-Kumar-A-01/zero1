@@ -39,6 +39,16 @@ provide('pixelTabsContext', {
   align-items: flex-end;
   gap: 4px;
   border-bottom: 2px solid var(--pixel-border);
+  position: relative;
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pixel-tabs__nav::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 </style>
