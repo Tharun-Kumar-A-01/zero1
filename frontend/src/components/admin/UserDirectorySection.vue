@@ -7,6 +7,7 @@ const props = defineProps<{
 	users: UserItem[]
 	isCreating: boolean
 	isUpdating?: boolean
+	isDeleting?: boolean
 	isUploadingSheet?: boolean
 	isCommittingImport?: boolean
 	importJob?: ImportJobResponse | null
@@ -16,11 +17,13 @@ const props = defineProps<{
 const emit = defineEmits<{
 	(e: 'createUser', payload: { name: string; email: string; role: 'student' | 'mentor' | 'admin'; password: string }): void
 	(e: 'updateUser', userId: number, payload: { name: string; email: string; role: 'student' | 'mentor' | 'admin'; password?: string }): void
+	(e: 'deleteUser', userId: number): void
 	(e: 'uploadRoster', file: File, year: string): void
 	(e: 'commitRoster', mapping: Record<string, number>): void
 }>()
 
 const filterRole = ref<string>('all')
+const filterBatch = ref<string>('all')
 const searchQuery = ref<string>('')
 const currentPage = ref<number>(1)
 const perPage = ref<number>(10)
@@ -131,6 +134,9 @@ const filteredUsers = computed<UserItem[]>(() => {
 	if (filterRole.value !== 'all') {
 		list = list.filter((u) => u.role === filterRole.value)
 	}
+	if (filterBatch.value !== 'all') {
+		list = list.filter((u) => u.year_batch === filterBatch.value)
+	}
 	if (searchQuery.value.trim()) {
 		const q = searchQuery.value.toLowerCase()
 		list = list.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.roll_number && u.roll_number.toLowerCase().includes(q)))
@@ -188,6 +194,45 @@ function handleUpload(): void {
 function handleCommit(): void {
 	emit('commitRoster', customColumnMapping.value)
 }
+
+const roleFilterOptions = computed(() => [
+	{ label: `All Roles (${props.users.length})`, value: 'all' },
+	{ label: `Students (${props.users.filter((u) => u.role === 'student').length})`, value: 'student' },
+	{ label: `Mentors (${props.users.filter((u) => u.role === 'mentor').length})`, value: 'mentor' },
+	{ label: `Admins (${props.users.filter((u) => u.role === 'admin').length})`, value: 'admin' },
+])
+
+const batchFilterOptions = computed(() => {
+	const batches = Array.from(
+		new Set(
+			props.users
+				.map((u) => u.year_batch)
+				.filter((b): b is string => Boolean(b && b.trim()))
+		)
+	).sort((a, b) => b.localeCompare(a))
+
+	return [
+		{ label: 'All Batches', value: 'all' },
+		...batches.map((b) => ({ label: `Batch ${b}`, value: b })),
+	]
+})
+
+// Delete User state
+const showDeleteUserDialog = ref<boolean>(false)
+const userToDelete = ref<UserItem | null>(null)
+
+function openDeleteModal(user: UserItem): void {
+	userToDelete.value = user
+	showDeleteUserDialog.value = true
+}
+
+function handleConfirmDeleteUser(): void {
+	if (userToDelete.value) {
+		emit('deleteUser', userToDelete.value.id)
+	}
+	showDeleteUserDialog.value = false
+	userToDelete.value = null
+}
 </script>
 
 <template>
@@ -215,40 +260,52 @@ function handleCommit(): void {
 
 		<!-- Filter Bar -->
 		<div class="directory-filter-bar">
-			<PixelTabs v-model="filterRole">
-				<PixelTab name="all">All Roles ({{ users.length }})</PixelTab>
-				<PixelTab name="student">Students</PixelTab>
-				<PixelTab name="mentor">Mentors</PixelTab>
-				<PixelTab name="admin">Admins</PixelTab>
-			</PixelTabs>
+			<div class="filter-controls-group">
+				<div class="role-select-box">
+					<PixelSelect
+						v-model="filterRole"
+						:options="roleFilterOptions"
+						value-by="value"
+						text-by="label"
+					/>
+				</div>
 
-			<div class="search-box">
-				<PixelInput
-					v-model="searchQuery"
-					placeholder="Search by name, email, roll..."
-					clearable
-				>
-					<template #prependInner>
-						<PixelIcon name="search" :size="14" />
-					</template>
-				</PixelInput>
+				<div class="batch-select-box">
+					<PixelSelect
+						v-model="filterBatch"
+						:options="batchFilterOptions"
+						value-by="value"
+						text-by="label"
+					/>
+				</div>
+
+				<div class="search-box">
+					<PixelInput
+						v-model="searchQuery"
+						placeholder="Search by name, email, roll..."
+						clearable
+					>
+						<template #prependInner>
+							<PixelIcon name="search" :size="14" />
+						</template>
+					</PixelInput>
+				</div>
 			</div>
 		</div>
 
 		<!-- User Data Table -->
-		<PixelCard v-if="filteredUsers.length > 0">
-			<PixelCardContent>
 				<PixelDataTable
 					:items="filteredUsers"
 					:columns="columns"
 					:per-page="perPage"
 					:current-page="currentPage"
 					striped
-					hoverable
+					hoverable 
+					v-if="filteredUsers.length > 0"
 				>
 					<template #cell(name)="{ rowData }">
 						<div class="user-cell clickable-user" @click="openProfileModal(rowData as UserItem)">
-							<PixelAvatar size="small" color="primary">
+							<PixelAvatar size="small" color="primary" :avatar="(rowData as UserItem).avatar">
 								{{ (rowData as UserItem).name.charAt(0).toUpperCase() }}
 							</PixelAvatar>
 							<div class="user-details">
@@ -285,27 +342,34 @@ function handleCommit(): void {
 					</template>
 
 					<template #cell(actions)="{ rowData }">
-						<PixelButton
-							size="small"
-							color="secondary"
-							icon="edit"
-							title="Edit User"
-							@click="openEditModal(rowData as UserItem)"
-						/>
+						<div class="row-actions">
+							<PixelButton
+								size="small"
+								color="secondary"
+								icon="edit"
+								title="Edit User"
+								@click="openEditModal(rowData as UserItem)"
+							/>
+							<PixelButton
+								size="small"
+								color="danger"
+								icon="trash"
+								title="Delete User"
+								@click="openDeleteModal(rowData as UserItem)"
+							/>
+						</div>
 					</template>
 				</PixelDataTable>
 
-				<div v-if="totalPages > 1" class="table-pagination">
+				<div v-if="filteredUsers.length > 0 && totalPages > 1" class="table-pagination">
 					<PixelPagination
 						v-model="currentPage"
 						:pages="totalPages"
 						:visible-pages="5"
 					/>
 				</div>
-			</PixelCardContent>
-		</PixelCard>
 
-		<PixelCard v-else class="empty-state-card">
+		<PixelCard v-if="filteredUsers.length <= 0" class="empty-state-card">
 			<PixelCardContent class="empty-content">
 				<PixelIcon name="search" size="48px" color="secondary" class="empty-icon" />
 				<h3>No users match your filter</h3>
@@ -395,6 +459,27 @@ function handleCommit(): void {
 					placeholder="Leave blank to keep unchanged"
 				/>
 			</form>
+		</PixelModal>
+
+		<!-- DELETE USER CONFIRMATION MODAL -->
+		<PixelModal
+			v-model="showDeleteUserDialog"
+			title="Delete User Account"
+			ok-text="Delete User"
+			ok-color="danger"
+			cancel-text="Cancel"
+			:loading="isDeleting"
+			@ok="handleConfirmDeleteUser"
+		>
+			<div v-if="userToDelete" class="delete-confirm-body">
+				<p>
+					Are you sure you want to permanently delete user
+					<strong>{{ userToDelete.name }}</strong> ({{ userToDelete.email }})?
+				</p>
+				<p class="delete-warning-text">
+					All associated records, assignments, streaks, and submissions will be permanently deleted. This action cannot be undone.
+				</p>
+			</div>
 		</PixelModal>
 
 		<!-- INLINE ROSTER IMPORT MODAL -->
@@ -572,8 +657,47 @@ function handleCommit(): void {
 	gap: 1rem;
 }
 
+.filter-controls-group {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.role-select-box {
+	min-width: 200px;
+}
+
+.batch-select-box {
+	min-width: 170px;
+}
+
+.row-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.delete-confirm-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 0.5rem 0;
+	font-size: 0.95rem;
+	color: var(--pixel-text);
+}
+
+.delete-warning-text {
+	color: #ef4444;
+	font-size: 0.85rem;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
 .search-box {
 	min-width: 280px;
+	flex: 1;
 }
 
 .user-cell {

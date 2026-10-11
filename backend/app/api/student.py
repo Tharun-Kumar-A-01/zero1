@@ -26,6 +26,7 @@ from app.services.code_analyzer import analyze_student_code
 from app.services.code_harness import prepare_code_for_execution
 from app.services.judge0_client import Judge0ExecutionResult, judge0_service
 from app.services.rotation_service import generate_daily_assignments_for_date
+from app.services.gamification_service import evaluate_student_milestones
 from app.services.sanitizer import sanitize_code
 from app.services.streak_service import evaluate_daily_streak_and_points, get_student_total_points
 
@@ -165,11 +166,14 @@ def submit_mcq() -> tuple[Response, int]:
 		current_streak, points_awarded, is_day_solved = evaluate_daily_streak_and_points(
 			session=session, student_id=student_id, assignment_date=assignment.assignment_date
 		)
+		evaluate_student_milestones(session, student_id)
 
 		return api_success(
 			{
 				"is_correct": is_correct,
-				"explanation": mcq.explanation if is_correct else None,
+				"selected_option_index": selected_option,
+				"correct_option_index": mcq.correct_option_index,
+				"explanation": mcq.explanation,
 				"points_awarded": points_awarded,
 				"current_streak": current_streak,
 				"is_day_solved": is_day_solved,
@@ -642,6 +646,7 @@ def submit_daily_code() -> tuple[Response, int]:
 		current_streak, points_awarded, is_day_solved = evaluate_daily_streak_and_points(
 			session=session, student_id=student_id, assignment_date=assignment.assignment_date
 		)
+		evaluate_student_milestones(session, student_id)
 
 		return api_success(
 			{
@@ -670,6 +675,7 @@ def get_progress() -> tuple[Response, int]:
 	"""Retrieve streak, points breakdown, and earned badges."""
 	student_id: int = int(get_jwt_identity())
 	with get_db_session() as session:
+		evaluate_student_milestones(session, student_id)
 		streak_record = session.scalars(
 			select(Streak).where(Streak.student_id == student_id)
 		).first()
@@ -706,6 +712,7 @@ def get_leaderboard() -> tuple[Response, int]:
 			select(
 				User.id,
 				User.name,
+				User.avatar,
 				User.roll_number,
 				User.year_batch,
 				User.department,
@@ -722,7 +729,11 @@ def get_leaderboard() -> tuple[Response, int]:
 
 		query = (
 			query.group_by(User.id, Streak.current_streak)
-			.order_by(func.sum(PointsLedger.delta).desc())
+			.order_by(
+				func.coalesce(func.sum(PointsLedger.delta), 0).desc(),
+				func.coalesce(Streak.current_streak, 0).desc(),
+				User.name.asc(),
+			)
 			.limit(50)
 		)
 		results = session.execute(query).all()
@@ -732,6 +743,7 @@ def get_leaderboard() -> tuple[Response, int]:
 				"rank": idx + 1,
 				"student_id": row.id,
 				"name": row.name,
+				"avatar": row.avatar,
 				"roll_number": row.roll_number,
 				"year_batch": row.year_batch,
 				"department": row.department,

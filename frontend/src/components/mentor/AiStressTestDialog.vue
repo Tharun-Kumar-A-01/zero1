@@ -56,12 +56,11 @@ function handleAccept(cases: Array<{ input: string; expected_output: string }>):
       <div class="generate-trigger-bar">
         <PixelButton
           :loading="isGenerating"
-          size="small"
           color="primary"
+          icon="auto_awesome"
           @click="emit('generate')"
         >
-          <PixelSprite name="star" :size="14" />
-          Run AI Stress Analysis
+          Generate Test Cases
         </PixelButton>
       </div>
 
@@ -101,13 +100,12 @@ function handleAccept(cases: Array<{ input: string; expected_output: string }>):
 
     <template #footer>
       <div class="modal-footer-actions">
-        <PixelButton color="secondary" size="small" @click="emit('update:visible', false)">
+        <PixelButton color="secondary" @click="emit('update:visible', false)">
           Cancel
         </PixelButton>
         <PixelButton
           v-if="generatedCases.length > 0"
           color="primary"
-          size="small"
           icon="check"
           @click="handleAccept(generatedCases)"
         >

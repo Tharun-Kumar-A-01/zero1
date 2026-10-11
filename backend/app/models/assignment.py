@@ -80,13 +80,18 @@ class DailyAssignment(Base):
 			)
 			elapsed_seconds = max(0, int((now - started_at).total_seconds()))
 
+		is_attended = self.mcq_status != DailyMCQStatus.PENDING
+		last_sub = self.mcq_submissions[-1] if self.mcq_submissions else None
+
 		return {
 			"id": self.id,
 			"student_id": self.student_id,
 			"assignment_date": self.assignment_date.isoformat(),
-			"mcq_question": self.mcq_question.to_dict(include_answer=False)
+			"mcq_question": self.mcq_question.to_dict(include_answer=is_attended)
 			if self.mcq_question
 			else None,
+			"mcq_selected_option_index": last_sub.selected_option_index if last_sub else None,
+			"mcq_correct_option_index": self.mcq_question.correct_option_index if (self.mcq_question and is_attended) else None,
 			"coding_question": self.coding_question.to_dict() if self.coding_question else None,
 			"mcq_status": self.mcq_status.value,
 			"coding_status": self.coding_status.value,

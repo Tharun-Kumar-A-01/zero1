@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UserProfileModal from '@/components/UserProfileModal.vue'
@@ -14,9 +14,21 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const isDesktopCollapsed = ref<boolean>(false)
+const isTablet = ref<boolean>(false)
 const showProfileModal = ref<boolean>(false)
 
 const isWorkspaceRoute = computed<boolean>(() => route.path.startsWith('/workspace'))
+
+function checkScreenSize(): void {
+  if (typeof window !== 'undefined') {
+    const width = window.innerWidth
+    isTablet.value = width > 768 && width < 1024
+    // On tablet, collapse sidebar by default if no explicit user preference
+    if (isTablet.value && localStorage.getItem('sidebar_collapsed') === null) {
+      isDesktopCollapsed.value = true
+    }
+  }
+}
 
 function toggleCollapse(): void {
   isDesktopCollapsed.value = !isDesktopCollapsed.value
@@ -32,15 +44,37 @@ onMounted(() => {
   if (savedCollapsed === 'true') {
     isDesktopCollapsed.value = true
   }
+
+  checkScreenSize()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', checkScreenSize)
+  }
 })
 
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', checkScreenSize)
+  }
+})
+
+const showLogoutConfirm = ref<boolean>(false)
+
 function handleLogout(): void {
+  showLogoutConfirm.value = true
+}
+
+function confirmLogout(): void {
+  showLogoutConfirm.value = false
   authStore.logout()
   router.push('/login')
 }
 
 function navigateTo(path: string): void {
   router.push(path)
+  // On tablet, close the overlay after navigation
+  if (isTablet.value) {
+    isDesktopCollapsed.value = true
+  }
 }
 </script>
 
@@ -50,10 +84,19 @@ function navigateTo(path: string): void {
       'app-sidebar',
       {
         'is-collapsed': isDesktopCollapsed,
-        'sidebar--hidden-mobile': isWorkspaceRoute
+        'sidebar--hidden-mobile': isWorkspaceRoute,
+        'tablet-overlay': isTablet && !isDesktopCollapsed
       }
     ]"
   >
+    <!-- Tablet Backdrop when overlay is active -->
+    <Teleport to="body">
+      <div
+        v-if="isTablet && !isDesktopCollapsed"
+        class="sidebar-backdrop"
+        @click="isDesktopCollapsed = true"
+      />
+    </Teleport>
     <!-- Brand Logo & Collapse Toggle (Desktop Header) -->
     <div class="sidebar-header">
       <div class="sidebar-brand" @click="navigateTo('/')" title="ZERO1 Home">
@@ -154,12 +197,12 @@ function navigateTo(path: string): void {
         <button
           type="button"
           :class="['nav-item', { 'nav-item--active': route.path === '/student' }]"
-          title="Daily Practice"
+          title="Daily Quests"
           @click="navigateTo('/student')"
         >
           <PixelIcon name="calendar" :size="18" />
-          <span v-if="!isDesktopCollapsed" class="nav-label">Daily Practice</span>
-          <span class="mobile-nav-label">Practice</span>
+          <span v-if="!isDesktopCollapsed" class="nav-label">Daily Quests</span>
+          <span class="mobile-nav-label">Quests</span>
         </button>
 
         <button
@@ -194,7 +237,7 @@ function navigateTo(path: string): void {
     <!-- Sidebar Bottom / User Profile & Controls (Desktop Only) -->
     <div v-if="authStore.isAuthenticated && authStore.user" class="sidebar-user-block">
       <div class="user-row clickable-user" :title="authStore.user.name" @click="navigateTo('/profile')">
-        <PixelAvatar size="small" color="primary">
+        <PixelAvatar size="small" color="primary" :avatar="authStore.user.avatar">
           {{ authStore.user.name.charAt(0).toUpperCase() }}
         </PixelAvatar>
         <div v-if="!isDesktopCollapsed" class="user-info">
@@ -237,6 +280,21 @@ function navigateTo(path: string): void {
       v-model="showProfileModal"
       :user="authStore.user"
     />
+
+    <!-- Logout Confirmation Modal -->
+    <PixelModal
+      v-model="showLogoutConfirm"
+      title="Confirm Log Out"
+      ok-text="Log Out"
+      ok-color="danger"
+      cancel-text="Cancel"
+      @ok="confirmLogout"
+    >
+      <div class="logout-confirm-content">
+        <p>Are you sure you want to log out of your session?</p>
+        <p class="logout-subtext">You will need to sign in again to access your account.</p>
+      </div>
+    </PixelModal>
   </aside>
 </template>
 
@@ -569,6 +627,38 @@ function navigateTo(path: string): void {
 
   .sidebar--hidden-mobile {
     display: none !important;
+  }
+}
+
+/* =========================================================
+   TABLET LAYOUT FLOATING OVERLAY (769px - 1024px)
+   ========================================================= */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+}
+
+.tablet-sidebar-spacer {
+  width: 72px;
+  height: 100vh;
+  flex-shrink: 0;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-sidebar.tablet-overlay {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 250px !important;
+    height: 100vh;
+    z-index: 999;
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.7);
   }
 }
 </style>

@@ -34,6 +34,9 @@ async function fetchDailyChallenge(): Promise<void> {
     const res = await api.get<DailyChallengeData>('/student/daily/today')
     if (res.success && res.data) {
       challenge.value = res.data
+      if (res.data.mcq_question?.explanation) {
+        mcqExplanation.value = res.data.mcq_question.explanation
+      }
     }
   } catch {
     notify({ color: 'warning', message: 'Could not load today challenge.' })
@@ -55,7 +58,15 @@ async function handleMcqSubmit(selectedOption: number): Promise<void> {
   if (!challenge.value) return
   isSubmittingMcq.value = true
   try {
-    const res = await api.post<{ is_correct: boolean; explanation?: string; points_awarded: number; current_streak: number; is_day_solved: boolean }>(
+    const res = await api.post<{
+      is_correct: boolean
+      explanation?: string
+      points_awarded: number
+      current_streak: number
+      is_day_solved: boolean
+      selected_option_index?: number
+      correct_option_index?: number
+    }>(
       '/student/daily/mcq-submit',
       {
         assignment_id: challenge.value.id,
@@ -65,11 +76,13 @@ async function handleMcqSubmit(selectedOption: number): Promise<void> {
 
     if (res.success && res.data) {
       challenge.value.mcq_status = res.data.is_correct ? 'correct' : 'incorrect'
+      challenge.value.mcq_selected_option_index = res.data.selected_option_index ?? selectedOption
+      challenge.value.mcq_correct_option_index = res.data.correct_option_index
       mcqExplanation.value = res.data.explanation || null
       if (res.data.is_correct) {
         notify({ color: 'success', message: `Correct Answer! +${res.data.points_awarded} Points awarded.` })
       } else {
-        notify({ color: 'danger', message: 'Incorrect. Review the question and try again.' })
+        notify({ color: 'danger', message: 'Incorrect. Review the correct option and explanation below.' })
       }
       await fetchProgress()
     } else {

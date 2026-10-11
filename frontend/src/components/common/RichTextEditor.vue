@@ -78,8 +78,8 @@ function insertLinePrefix(prefix: string): void {
 					:class="{ active: activeTab === 'write' }"
 					@click="activeTab = 'write'"
 				>
-					<PixelIcon name="edit" :size="14" />
-					Write
+					<PixelIcon name="edit" :size="12" />
+					<span>Write</span>
 				</button>
 				<button
 					type="button"
@@ -87,8 +87,8 @@ function insertLinePrefix(prefix: string): void {
 					:class="{ active: activeTab === 'preview' }"
 					@click="activeTab = 'preview'"
 				>
-					<PixelIcon name="visibility" :size="14" />
-					Preview
+					<PixelIcon name="visibility" :size="12" />
+					<span>Preview</span>
 				</button>
 			</div>
 		</div>
@@ -101,7 +101,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Bold"
 				@click="applyFormat('**', '**', 'bold text')"
 			>
-				<PixelIcon name="format_bold" :size="16" />
+				<span class="text-icon text-bold">B</span>
 			</button>
 			<button
 				type="button"
@@ -109,7 +109,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Italic"
 				@click="applyFormat('*', '*', 'italic text')"
 			>
-				<PixelIcon name="format_italic" :size="16" />
+				<span class="text-icon text-italic">I</span>
 			</button>
 			<button
 				type="button"
@@ -117,7 +117,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Heading 3"
 				@click="insertLinePrefix('### ')"
 			>
-				<PixelIcon name="title" :size="16" />
+				<span class="text-icon text-heading">H3</span>
 			</button>
 			<span class="toolbar-divider"></span>
 			<button
@@ -126,7 +126,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Inline Code"
 				@click="applyFormat('`', '`', 'code')"
 			>
-				<PixelIcon name="code" :size="16" />
+				<PixelIcon name="code" :size="13" />
 			</button>
 			<button
 				type="button"
@@ -134,7 +134,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Code Block"
 				@click="applyFormat('```\n', '\n```', '// code block')"
 			>
-				<PixelIcon name="integration_instructions" :size="16" />
+				<PixelIcon name="terminal" :size="13" />
 			</button>
 			<span class="toolbar-divider"></span>
 			<button
@@ -143,7 +143,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Bullet List"
 				@click="insertLinePrefix('- ')"
 			>
-				<PixelIcon name="format_list_bulleted" :size="16" />
+				<PixelIcon name="list" :size="13" />
 			</button>
 			<button
 				type="button"
@@ -151,7 +151,7 @@ function insertLinePrefix(prefix: string): void {
 				title="Numbered List"
 				@click="insertLinePrefix('1. ')"
 			>
-				<PixelIcon name="format_list_numbered" :size="16" />
+				<span class="text-icon text-numlist">1.</span>
 			</button>
 		</div>
 
@@ -186,120 +186,178 @@ function insertLinePrefix(prefix: string): void {
 .rich-text-editor {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--va-background-border);
-	border-radius: 4px;
+	border: 2px solid var(--pixel-border);
+	border-radius: 2px;
+	box-shadow: 0 4px 0 0 var(--pixel-border-dark);
+	background-color: var(--pixel-surface);
 	overflow: hidden;
-	background-color: var(--va-background-primary);
 }
 
 .editor-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 0.5rem 0.75rem;
-	background-color: var(--va-background-element);
-	border-bottom: 1px solid var(--va-background-border);
+	padding: 6px 10px;
+	background-color: var(--pixel-surface-alt);
+	border-bottom: 2px solid var(--pixel-border);
 }
 
 .editor-label {
-	font-size: 0.78rem;
+	font-family: var(--font-pixel);
+	font-size: 11px;
 	font-weight: 700;
-	color: var(--va-text-secondary);
+	color: var(--pixel-text-muted);
 	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	letter-spacing: 0.05em;
 }
 
 .mode-tabs {
 	display: flex;
-	gap: 0.25rem;
-	background-color: var(--va-background-primary);
-	border: 1px solid var(--va-background-border);
-	border-radius: 4px;
+	gap: 4px;
+	background-color: var(--pixel-bg-alt);
+	border: 1px solid var(--pixel-border);
+	border-radius: 2px;
 	padding: 2px;
 }
 
 .tab-btn {
 	background: transparent;
-	border: none;
+	border: 1px solid transparent;
 	padding: 3px 8px;
-	font-size: 0.75rem;
+	font-family: var(--font-pixel);
+	font-size: 11px;
 	font-weight: 600;
-	color: var(--va-text-secondary);
+	color: var(--pixel-text-muted);
 	cursor: pointer;
-	border-radius: 3px;
+	border-radius: 2px;
 	display: flex;
 	align-items: center;
-	gap: 4px;
-	transition: all 0.15s ease;
+	gap: 5px;
+	transition: all 0.1s ease;
+}
+
+.tab-btn:hover {
+	color: var(--pixel-text);
+	background-color: var(--pixel-surface-raised);
 }
 
 .tab-btn.active {
-	background-color: var(--va-primary);
-	color: #ffffff;
+	background-color: var(--pixel-btn-primary-bg);
+	border-color: var(--pixel-btn-primary-border);
+	color: var(--pixel-btn-primary-text);
+	box-shadow: inset 0 -2px 0 0 var(--pixel-btn-primary-shade);
 }
 
 .toolbar {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.25rem;
-	padding: 0.35rem 0.75rem;
-	border-bottom: 1px solid var(--va-background-border);
-	background-color: var(--va-background-primary);
+	gap: 4px;
+	padding: 6px 10px;
+	border-bottom: 2px solid var(--pixel-border);
+	background-color: var(--pixel-surface);
 }
 
 .toolbar-btn {
-	background: transparent;
-	border: none;
-	border-radius: 4px;
-	padding: 4px;
+	background: var(--pixel-surface-alt);
+	border: 1px solid var(--pixel-border);
+	border-radius: 2px;
+	padding: 3px 7px;
+	min-width: 28px;
+	height: 26px;
 	cursor: pointer;
-	color: var(--va-text-primary);
-	display: flex;
+	color: var(--pixel-text);
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	transition: background 0.15s ease;
+	box-shadow: 0 2px 0 0 var(--pixel-border-dark);
+	transition: all 0.1s ease;
 }
 
 .toolbar-btn:hover {
-	background-color: var(--va-background-element);
+	background-color: var(--pixel-surface-raised);
+	border-color: var(--pixel-border-bright);
+	color: #ffffff;
+}
+
+.toolbar-btn:active {
+	transform: translateY(2px);
+	box-shadow: none;
+}
+
+.text-icon {
+	font-family: var(--font-pixel);
+	font-size: 12px;
+	line-height: 1;
+}
+
+.text-bold {
+	font-weight: 800;
+}
+
+.text-italic {
+	font-style: italic;
+	font-weight: 700;
+}
+
+.text-heading {
+	font-weight: 800;
+	font-size: 10px;
+}
+
+.text-numlist {
+	font-size: 11px;
+	font-weight: 700;
 }
 
 .toolbar-divider {
-	width: 1px;
-	height: 16px;
-	background-color: var(--va-background-border);
-	margin: 0 0.25rem;
+	width: 2px;
+	height: 18px;
+	background-color: var(--pixel-border);
+	margin: 0 4px;
 }
 
 .editor-content-area {
 	min-height: 140px;
+	background-color: var(--pixel-bg-alt);
 }
 
 .editor-textarea {
 	width: 100%;
 	border: none;
 	outline: none;
-	padding: 0.75rem;
-	font-family: inherit;
-	font-size: 0.92rem;
+	padding: 10px 12px;
+	font-family: var(--font-mono);
+	font-size: 13px;
 	line-height: 1.6;
-	color: var(--va-text-primary);
-	background-color: transparent;
+	color: var(--pixel-text);
+	caret-color: #fbbf24;
+	background-color: var(--pixel-bg-alt);
 	resize: vertical;
 	box-sizing: border-box;
 }
 
+.editor-textarea:focus {
+	background-color: #110e19;
+}
+
+.editor-textarea::placeholder {
+	color: var(--pixel-text-dim);
+}
+
 .editor-preview-box {
-	padding: 0.75rem;
+	padding: 12px;
 	min-height: 140px;
-	background-color: var(--va-background-primary);
+	background-color: var(--pixel-bg-alt);
+	color: var(--pixel-text);
 }
 
 .preview-empty-hint {
-	font-size: 0.85rem;
-	color: var(--va-text-secondary);
+	font-family: var(--font-pixel);
+	font-size: 12px;
+	color: var(--pixel-text-dim);
 	font-style: italic;
-	padding: 1.5rem 0;
+	padding: 2rem 0;
 	text-align: center;
 }
 </style>

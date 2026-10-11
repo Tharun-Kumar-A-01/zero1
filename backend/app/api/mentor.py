@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import openpyxl
 from flask import Blueprint, Response, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -206,7 +206,8 @@ def add_mcq() -> tuple[Response, int]:
 		else:
 			q_set = _get_or_create_active_question_set(session, mentor_id)
 
-		if not q_set or q_set.status != QuestionSetStatus.DRAFT:
+		is_admin: bool = get_jwt().get("role") == UserRole.ADMIN.value
+		if not q_set or (q_set.status != QuestionSetStatus.DRAFT and not is_admin):
 			return api_error(
 				"INVALID_QUESTION_SET",
 				"Question set must be in draft status to add questions.",
@@ -234,7 +235,7 @@ def add_mcq() -> tuple[Response, int]:
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
 def update_mcq(mcq_id: int) -> tuple[Response, int]:
-	"""Edit an existing MCQ in draft status."""
+	"""Edit an existing MCQ."""
 	data: dict[str, Any] | None = request.get_json(silent=True)
 	if not data:
 		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
@@ -244,7 +245,8 @@ def update_mcq(mcq_id: int) -> tuple[Response, int]:
 		if not mcq:
 			return api_error("NOT_FOUND", "MCQ not found.", status_code=404)
 
-		if mcq.question_set.status != QuestionSetStatus.DRAFT:
+		is_admin: bool = get_jwt().get("role") == UserRole.ADMIN.value
+		if mcq.question_set.status != QuestionSetStatus.DRAFT and not is_admin:
 			return api_error("LOCKED", "Cannot edit questions in a published question set.", status_code=400)
 
 		if "prompt_text" in data and str(data["prompt_text"]).strip():
@@ -279,13 +281,14 @@ def update_mcq(mcq_id: int) -> tuple[Response, int]:
 @jwt_required()
 @require_roles(UserRole.MENTOR, UserRole.ADMIN)
 def delete_mcq(mcq_id: int) -> tuple[Response, int]:
-	"""Delete an MCQ from draft status."""
+	"""Delete an MCQ."""
 	with get_db_session() as session:
 		mcq: MCQQuestion | None = session.get(MCQQuestion, mcq_id)
 		if not mcq:
 			return api_error("NOT_FOUND", "MCQ not found.", status_code=404)
 
-		if mcq.question_set.status != QuestionSetStatus.DRAFT:
+		is_admin: bool = get_jwt().get("role") == UserRole.ADMIN.value
+		if mcq.question_set.status != QuestionSetStatus.DRAFT and not is_admin:
 			return api_error("LOCKED", "Cannot delete questions from a published set.", status_code=400)
 
 		q_set = mcq.question_set
@@ -465,7 +468,8 @@ def add_coding_question() -> tuple[Response, int]:
 		else:
 			q_set = _get_or_create_active_question_set(session, mentor_id)
 
-		if not q_set or q_set.status != QuestionSetStatus.DRAFT:
+		is_admin: bool = get_jwt().get("role") == UserRole.ADMIN.value
+		if not q_set or (q_set.status != QuestionSetStatus.DRAFT and not is_admin):
 			return api_error(
 				"INVALID_QUESTION_SET",
 				"Question set must be in draft status to add questions.",
@@ -530,7 +534,8 @@ def update_coding_question(coding_q_id: int) -> tuple[Response, int]:
 		if not coding_q:
 			return api_error("NOT_FOUND", "Coding question not found.", status_code=404)
 
-		if coding_q.question_set.status != QuestionSetStatus.DRAFT:
+		is_admin: bool = get_jwt().get("role") == UserRole.ADMIN.value
+		if coding_q.question_set.status != QuestionSetStatus.DRAFT and not is_admin:
 			return api_error("LOCKED", "Cannot edit questions in a published set.", status_code=400)
 
 		if "title" in data and str(data["title"]).strip():
@@ -621,7 +626,8 @@ def delete_coding_question(coding_q_id: int) -> tuple[Response, int]:
 		if not coding_q:
 			return api_error("NOT_FOUND", "Coding question not found.", status_code=404)
 
-		if coding_q.question_set.status != QuestionSetStatus.DRAFT:
+		is_admin: bool = get_jwt().get("role") == UserRole.ADMIN.value
+		if coding_q.question_set.status != QuestionSetStatus.DRAFT and not is_admin:
 			return api_error("LOCKED", "Cannot delete questions from a published set.", status_code=400)
 
 		q_set = coding_q.question_set

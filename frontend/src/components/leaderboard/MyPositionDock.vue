@@ -2,6 +2,7 @@
 import type { LeaderboardEntry } from '@/types'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
+import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 
 defineProps<{
   entry: LeaderboardEntry
@@ -12,7 +13,9 @@ defineProps<{
   <div class="my-position-dock">
     <div class="dock-content">
       <div class="dock-left">
-        <PixelSprite name="sword" :size="24" />
+        <PixelAvatar size="small" color="primary" :avatar="entry.avatar">
+          {{ entry.name.charAt(0).toUpperCase() }}
+        </PixelAvatar>
         <div class="dock-text">
           <span class="dock-label">Your Current Standing</span>
           <span class="dock-desc">Rank #{{ entry.rank }} in Batch {{ entry.year_batch }}</span>
@@ -45,6 +48,13 @@ defineProps<{
 @media (max-width: 768px) {
   .my-position-dock {
     left: 0;
+    bottom: 56px !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .my-position-dock {
+    left: 72px;
   }
 }
 

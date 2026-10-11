@@ -66,7 +66,7 @@ describe('AppSidebar component', () => {
 
 		const wrapper = mount(AppSidebar)
 
-		expect(wrapper.text()).toContain('Daily Practice')
+		expect(wrapper.text()).toContain('Daily Quests')
 		expect(wrapper.text()).toContain('Leaderboard')
 		expect(wrapper.text()).toContain('5d')
 		expect(wrapper.text()).toContain('250')
@@ -108,8 +108,14 @@ describe('AppSidebar component', () => {
 
 		if (logoutButton) {
 			await logoutButton.trigger('click')
-			expect(auth.isAuthenticated).toBe(false)
-			expect(mockPush).toHaveBeenCalledWith('/login')
+			const modals = wrapper.findAllComponents({ name: 'PixelModal' })
+			const logoutModal = modals.find((m) => m.props('title') === 'Confirm Log Out')
+			expect(logoutModal).toBeDefined()
+			if (logoutModal) {
+				logoutModal.vm.$emit('ok')
+				expect(auth.isAuthenticated).toBe(false)
+				expect(mockPush).toHaveBeenCalledWith('/login')
+			}
 		}
 	})
 

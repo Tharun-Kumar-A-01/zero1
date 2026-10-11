@@ -128,6 +128,10 @@ class StudentReward(Base):
 			"student_id": self.student_id,
 			"reward_id": self.reward_id,
 			"reward": self.reward.to_dict() if self.reward else None,
+			"reward_name": self.reward.name if self.reward else "Milestone Badge",
+			"description": self.reward.description if self.reward else "",
+			"icon": self.reward.icon_asset_ref if self.reward else "gem_ruby",
+			"points_value": self.reward.points_value if self.reward else 0,
 			"milestone_id": self.milestone_id,
 			"awarded_at": self.awarded_at.isoformat(),
 		}

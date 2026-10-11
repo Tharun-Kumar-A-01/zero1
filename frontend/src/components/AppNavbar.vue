@@ -87,7 +87,7 @@ function handleLogout(): void {
 
     <div class="navbar-right">
       <div v-if="authStore.isAuthenticated && authStore.user" class="user-profile-menu">
-        <PixelAvatar size="small" color="primary">
+        <PixelAvatar size="small" color="primary" :avatar="authStore.user.avatar">
           {{ authStore.user.name.charAt(0).toUpperCase() }}
         </PixelAvatar>
         <span class="user-name">{{ authStore.user.name }}</span>

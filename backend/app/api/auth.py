@@ -111,3 +111,32 @@ def get_current_user() -> tuple[Response, int]:
 			user_data["longest_streak"] = user.streak.longest_streak if user.streak else 0
 
 		return api_success(user_data)
+
+
+@auth_bp.route("/profile", methods=["PATCH", "PUT"])
+@jwt_required()
+def update_profile() -> tuple[Response, int]:
+	"""Update current authenticated user profile (such as avatar)."""
+	user_id: str = get_jwt_identity()
+	data: dict[str, Any] | None = request.get_json(silent=True)
+	if not data:
+		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
+
+	with get_db_session() as session:
+		user: User | None = session.get(User, int(user_id))
+		if user is None:
+			return api_error("USER_NOT_FOUND", "User not found.", status_code=404)
+
+		if "avatar" in data:
+			avatar_val = data.get("avatar")
+			user.avatar = sanitize_text(str(avatar_val), max_length=64) if avatar_val else None
+
+		session.flush()
+		user_data: dict[str, Any] = user.to_dict()
+		if user.role.value == "student":
+			user_data["total_points"] = get_student_total_points(session, user.id)
+			user_data["current_streak"] = user.streak.current_streak if user.streak else 0
+			user_data["longest_streak"] = user.streak.longest_streak if user.streak else 0
+
+		return api_success(user_data, message="Profile updated successfully.")
+

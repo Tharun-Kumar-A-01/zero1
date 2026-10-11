@@ -231,8 +231,52 @@ const handleClear = (e?: Event) => {
   emit('update:modelValue', null)
 }
 
+const dropdownRef = ref<HTMLElement | null>(null)
+const dropdownStyle = ref<Record<string, string>>({})
+
+const updateDropdownPosition = () => {
+  if (!containerRef.value) return
+  const rect = containerRef.value.getBoundingClientRect()
+  const dropdownHeight = 310
+  const spaceBelow = window.innerHeight - rect.bottom
+
+  const leftPos = Math.max(8, Math.min(window.innerWidth - 290, rect.left))
+
+  if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: `${Math.max(8, rect.top - dropdownHeight - 6)}px`,
+      left: `${leftPos}px`,
+      width: '280px',
+      zIndex: '9999',
+    }
+  } else {
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 6}px`,
+      left: `${leftPos}px`,
+      width: '280px',
+      zIndex: '9999',
+    }
+  }
+}
+
+watch(isOpen, (open) => {
+  if (open) {
+    updateDropdownPosition()
+    window.addEventListener('scroll', updateDropdownPosition, true)
+    window.addEventListener('resize', updateDropdownPosition)
+  } else {
+    window.removeEventListener('scroll', updateDropdownPosition, true)
+    window.removeEventListener('resize', updateDropdownPosition)
+  }
+})
+
 const handleClickOutside = (e: MouseEvent) => {
-  if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
+  const target = e.target as Node
+  const inContainer = containerRef.value && containerRef.value.contains(target)
+  const inDropdown = dropdownRef.value && dropdownRef.value.contains(target)
+  if (!inContainer && !inDropdown) {
     isOpen.value = false
   }
 }
@@ -251,6 +295,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('scroll', updateDropdownPosition, true)
+  window.removeEventListener('resize', updateDropdownPosition)
 })
 </script>
 
@@ -296,82 +342,90 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- CUSTOM PIXEL ART DROPDOWN CALENDAR -->
-    <transition name="pixel-drop">
-      <div v-if="isOpen" class="pixel-calendar-dropdown">
-        <!-- Calendar Header -->
-        <div class="calendar-header">
-          <button
-            type="button"
-            class="pixel-nav-btn"
-            aria-label="Previous month"
-            @click.stop="prevMonth"
-          >
-            <PixelIcon name="chevron_left" :size="12" />
-          </button>
+    <!-- CUSTOM PIXEL ART DROPDOWN CALENDAR (TELEPORTED OUTSIDE TO PREVENT MODAL CLIPPING) -->
+    <Teleport to="body">
+      <transition name="pixel-drop">
+        <div
+          v-if="isOpen"
+          ref="dropdownRef"
+          class="pixel-calendar-dropdown"
+          :style="dropdownStyle"
+          @click.stop
+        >
+          <!-- Calendar Header -->
+          <div class="calendar-header">
+            <button
+              type="button"
+              class="pixel-nav-btn"
+              aria-label="Previous month"
+              @click.stop="prevMonth"
+            >
+              <PixelIcon name="chevron_left" :size="12" />
+            </button>
 
-          <span class="calendar-title">{{ monthYearTitle }}</span>
+            <span class="calendar-title">{{ monthYearTitle }}</span>
 
-          <button
-            type="button"
-            class="pixel-nav-btn"
-            aria-label="Next month"
-            @click.stop="nextMonth"
-          >
-            <PixelIcon name="chevron_right" :size="12" />
-          </button>
+            <button
+              type="button"
+              class="pixel-nav-btn"
+              aria-label="Next month"
+              @click.stop="nextMonth"
+            >
+              <PixelIcon name="chevron_right" :size="12" />
+            </button>
+          </div>
+
+          <!-- Weekday Labels -->
+          <div class="calendar-weekdays">
+            <span
+              v-for="dayName in WEEKDAY_NAMES"
+              :key="dayName"
+              class="calendar-weekday"
+            >
+              {{ dayName }}
+            </span>
+          </div>
+
+          <!-- Days Grid -->
+          <div class="calendar-grid">
+            <button
+              v-for="(day, idx) in calendarDays"
+              :key="`${day.year}-${day.month}-${day.date}-${idx}`"
+              type="button"
+              class="calendar-day-btn"
+              :class="{
+                'is-current-month': day.isCurrentMonth,
+                'is-other-month': !day.isCurrentMonth,
+                'is-today': day.isToday,
+                'is-selected': day.isSelected,
+              }"
+              @click.stop="selectDay(day)"
+            >
+              <span class="day-number">{{ day.date }}</span>
+            </button>
+          </div>
+
+          <!-- Calendar Quick Action Footer -->
+          <div class="calendar-footer">
+            <button
+              type="button"
+              class="pixel-quick-btn"
+              @click.stop="selectToday"
+            >
+              Today
+            </button>
+            <button
+              v-if="clearable && selectedDate"
+              type="button"
+              class="pixel-quick-btn is-clear"
+              @click.stop="handleClear"
+            >
+              Clear
+            </button>
+          </div>
         </div>
-
-        <!-- Weekday Labels -->
-        <div class="calendar-weekdays">
-          <span
-            v-for="dayName in WEEKDAY_NAMES"
-            :key="dayName"
-            class="calendar-weekday"
-          >
-            {{ dayName }}
-          </span>
-        </div>
-
-        <!-- Days Grid -->
-        <div class="calendar-grid">
-          <button
-            v-for="(day, idx) in calendarDays"
-            :key="`${day.year}-${day.month}-${day.date}-${idx}`"
-            type="button"
-            class="calendar-day-btn"
-            :class="{
-              'is-current-month': day.isCurrentMonth,
-              'is-other-month': !day.isCurrentMonth,
-              'is-today': day.isToday,
-              'is-selected': day.isSelected,
-            }"
-            @click.stop="selectDay(day)"
-          >
-            <span class="day-number">{{ day.date }}</span>
-          </button>
-        </div>
-
-        <!-- Calendar Quick Action Footer -->
-        <div class="calendar-footer">
-          <button
-            type="button"
-            class="pixel-quick-btn"
-            @click.stop="selectToday"
-          >
-            Today
-          </button>
-          <button
-            v-if="clearable && selectedDate"
-            type="button"
-            class="pixel-quick-btn is-clear"
-            @click.stop="handleClear"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-    </transition>
+      </transition>
+    </Teleport>
   </div>
 </template>
 

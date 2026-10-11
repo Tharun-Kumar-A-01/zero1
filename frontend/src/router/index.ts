@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginView from '@/views/LoginView.vue'
+import LandingView from '@/views/LandingView.vue'
 import StudentView from '@/views/StudentView.vue'
 import MentorView from '@/views/MentorView.vue'
 import AdminView from '@/views/AdminView.vue'
@@ -9,6 +10,11 @@ import ProfileView from '@/views/ProfileView.vue'
 import CodingWorkspaceView from '@/views/CodingWorkspaceView.vue'
 
 const routes: RouteRecordRaw[] = [
+	{
+		path: '/landing',
+		name: 'landing',
+		component: LandingView,
+	},
 	{
 		path: '/login',
 		name: 'login',
@@ -21,7 +27,7 @@ const routes: RouteRecordRaw[] = [
 		redirect: () => {
 			const authStore = useAuthStore()
 			if (!authStore.isAuthenticated) {
-				return '/login'
+				return '/landing'
 			}
 			if (authStore.userRole === 'admin') {
 				return '/admin'

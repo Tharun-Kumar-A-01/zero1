@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { DailyChallengeData, MCQQuestionData } from '@/types'
 import { getDifficultyColor } from '@/utils/text'
 import PixelCard from '@/components/pixel/PixelCard.vue'
@@ -25,8 +25,30 @@ const emit = defineEmits<{
 
 const selectedOption = ref<number | null>(null)
 
+const isAttended = computed<boolean>(() => {
+  return !!props.challenge?.mcq_status && props.challenge.mcq_status !== 'pending'
+})
+
+const markedOptionIndex = computed<number | null>(() => {
+  if (selectedOption.value !== null) return selectedOption.value
+  if (props.challenge?.mcq_selected_option_index !== undefined && props.challenge.mcq_selected_option_index !== null) {
+    return props.challenge.mcq_selected_option_index
+  }
+  return null
+})
+
+const correctOptionIndex = computed<number | null>(() => {
+  if (props.challenge?.mcq_correct_option_index !== undefined && props.challenge.mcq_correct_option_index !== null) {
+    return props.challenge.mcq_correct_option_index
+  }
+  if (props.mcq?.correct_option_index !== undefined && props.mcq.correct_option_index !== null) {
+    return props.mcq.correct_option_index
+  }
+  return null
+})
+
 function handleSelect(index: number): void {
-  if (props.challenge?.mcq_status === 'correct') return
+  if (isAttended.value) return
   selectedOption.value = index
 }
 
@@ -61,19 +83,54 @@ function handleSubmit(): void {
             :key="idx"
             class="option-tile"
             :class="{
-              selected: selectedOption === idx,
-              disabled: challenge?.mcq_status === 'correct',
+              selected: !isAttended && selectedOption === idx,
+              disabled: isAttended,
+              'is-correct-option': isAttended && correctOptionIndex === idx,
+              'is-wrong-marked': isAttended && markedOptionIndex === idx && correctOptionIndex !== idx,
             }"
             @click="handleSelect(idx)"
           >
-            <div class="radio-indicator" :class="{ checked: selectedOption === idx }">
+            <!-- Radio Indicator (Active Mode) -->
+            <div
+              v-if="!isAttended"
+              class="radio-indicator"
+              :class="{ checked: selectedOption === idx }"
+            >
               <div v-if="selectedOption === idx" class="radio-dot" />
             </div>
-            <PixelBadge
-              :text="String.fromCharCode(65 + idx)"
-              color="secondary"
-            />
+
+            <!-- Attended Status Icon -->
+            <div v-else-if="correctOptionIndex === idx" class="result-indicator correct-icon">
+              <PixelIcon name="check" :size="14" color="#10b981" />
+            </div>
+            <div v-else-if="markedOptionIndex === idx" class="result-indicator wrong-icon">
+              <PixelIcon name="cross" :size="14" color="#ef4444" />
+            </div>
+            <div v-else class="result-indicator neutral-dot">
+              <span class="neutral-dash">—</span>
+            </div>
+
+            <span class="option-prefix">{{ String.fromCharCode(65 + idx) }}.</span>
             <span class="option-text">{{ opt }}</span>
+
+            <!-- Attended Choice Badges -->
+            <div v-if="isAttended" class="option-badges-wrap">
+              <PixelBadge
+                v-if="correctOptionIndex === idx && markedOptionIndex === idx"
+                text="YOUR ANSWER ✓"
+                color="success"
+              />
+              <PixelBadge
+                v-else-if="correctOptionIndex === idx"
+                text="CORRECT ANSWER"
+                color="success"
+              />
+              <PixelBadge
+                v-else-if="markedOptionIndex === idx"
+                text="YOUR ANSWER ✗"
+                color="danger"
+              />
+            </div>
           </div>
         </div>
 
@@ -87,7 +144,7 @@ function handleSubmit(): void {
 
         <PixelCardActions class="action-footer">
           <PixelButton
-            v-if="challenge?.mcq_status !== 'correct'"
+            v-if="!isAttended"
             color="primary"
             :disabled="selectedOption === null"
             :loading="isSubmitting"
@@ -96,9 +153,13 @@ function handleSubmit(): void {
           >
             Submit Answer
           </PixelButton>
-          <div v-else class="completed-msg">
+          <div v-else-if="challenge?.mcq_status === 'correct'" class="completed-msg success-msg">
             <PixelIcon name="check" :size="16" color="#34d399" />
             <span>Aptitude challenge verified (+20 XP).</span>
+          </div>
+          <div v-else class="completed-msg incorrect-msg">
+            <PixelIcon name="cross" :size="16" color="#ef4444" />
+            <span>Aptitude challenge completed. Marked and correct options are shown above.</span>
           </div>
         </PixelCardActions>
       </div>
@@ -182,7 +243,50 @@ function handleSubmit(): void {
 
 .option-tile.disabled {
   cursor: default;
-  opacity: 0.7;
+}
+
+.option-tile.is-correct-option {
+  border-color: #10b981 !important;
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  box-shadow: 0 3px 0 0 #065f46 !important;
+}
+
+.option-tile.is-wrong-marked {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  box-shadow: 0 3px 0 0 #7f1d1d !important;
+}
+
+.result-indicator {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.neutral-dash {
+  color: var(--pixel-text-dim);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+}
+
+.option-prefix {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pixel-text-muted);
+  min-width: 20px;
+  flex-shrink: 0;
+}
+
+.option-badges-wrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .radio-indicator {
@@ -233,6 +337,10 @@ function handleSubmit(): void {
   font-family: var(--font-pixel);
   font-size: 12px;
   color: #34d399;
+}
+
+.incorrect-msg {
+  color: #f87171 !important;
 }
 
 .empty-state {

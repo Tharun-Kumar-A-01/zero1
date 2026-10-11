@@ -7,6 +7,7 @@ export interface UserProfile {
 	name: string
 	email: string
 	role: 'admin' | 'mentor' | 'student'
+	avatar?: string | null
 	roll_number?: string | null
 	year_batch?: string | null
 	department?: string | null
@@ -50,6 +51,19 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
+	async function updateAvatar(avatar: string | null): Promise<boolean> {
+		try {
+			const res = await api.patch<UserProfile>('/auth/profile', { avatar })
+			if (res.success && res.data) {
+				user.value = res.data
+				return true
+			}
+			return false
+		} catch {
+			return false
+		}
+	}
+
 	function logout(): void {
 		user.value = null
 		token.value = null
@@ -64,6 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
 		userRole,
 		login,
 		fetchProfile,
+		updateAvatar,
 		logout,
 	}
 })

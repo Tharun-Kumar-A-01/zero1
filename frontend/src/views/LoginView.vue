@@ -93,6 +93,12 @@ async function handleLogin(): Promise<void> {
               Enter Guild
             </PixelButton>
           </PixelCardActions>
+
+          <div class="auth-footer-nav">
+            <button type="button" class="back-link" @click="router.push('/landing')">
+              ← Return to Arena Overview
+            </button>
+          </div>
         </form>
       </PixelCardContent>
     </PixelCard>
@@ -157,5 +163,27 @@ async function handleLogin(): Promise<void> {
   margin-top: 0.5rem;
   background: transparent;
   border-top: none;
+}
+
+.auth-footer-nav {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: var(--pixel-text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--pixel-primary);
+  text-decoration: underline;
 }
 </style>

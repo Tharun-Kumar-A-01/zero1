@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { getAvatarUrl } from '@/utils/avatar'
 
 interface Props {
   size?: 'small' | 'medium' | 'large' | number | string
   color?: string
   src?: string
+  avatar?: string | null
   square?: boolean
 }
 
@@ -12,6 +14,12 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'medium',
   color: 'primary',
   square: true,
+})
+
+const effectiveSrc = computed(() => {
+  if (props.src) return props.src
+  if (props.avatar) return getAvatarUrl(props.avatar)
+  return null
 })
 
 const sizePx = computed(() => {
@@ -29,6 +37,9 @@ const fontSizePx = computed(() => {
 })
 
 const bgColor = computed(() => {
+  if (effectiveSrc.value) {
+    return 'transparent'
+  }
   const COLOR_MAP: Record<string, string> = {
     primary: 'var(--pixel-btn-primary-bg)',
     success: 'var(--pixel-btn-success-bg)',
@@ -43,7 +54,13 @@ const bgColor = computed(() => {
 
 <template>
   <div
-    :class="['pixel-avatar', { 'pixel-avatar--rounded': !square }]"
+    :class="[
+      'pixel-avatar',
+      {
+        'pixel-avatar--rounded': !square,
+        'pixel-avatar--has-img': Boolean(effectiveSrc),
+      },
+    ]"
     :style="{
       width: sizePx,
       height: sizePx,
@@ -51,7 +68,7 @@ const bgColor = computed(() => {
       backgroundColor: bgColor,
     }"
   >
-    <img v-if="src" :src="src" class="pixel-avatar__img" alt="Avatar" />
+    <img v-if="effectiveSrc" :src="effectiveSrc" class="pixel-avatar__img" alt="Avatar" />
     <slot v-else />
   </div>
 </template>
@@ -72,6 +89,13 @@ const bgColor = computed(() => {
   flex-shrink: 0;
 }
 
+.pixel-avatar--has-img {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  border-radius: 0;
+}
+
 .pixel-avatar--rounded {
   border-radius: 50%;
 }
@@ -79,7 +103,7 @@ const bgColor = computed(() => {
 .pixel-avatar__img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   image-rendering: pixelated;
 }
 </style>

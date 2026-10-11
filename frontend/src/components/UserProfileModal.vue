@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import PixelModal from '@/components/pixel/PixelModal.vue'
 import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
@@ -8,6 +9,7 @@ import PixelCard from '@/components/pixel/PixelCard.vue'
 import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import PixelFlame from '@/components/pixel/PixelFlame.vue'
+import AvatarPickerModal from '@/components/common/AvatarPickerModal.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -16,6 +18,7 @@ const props = defineProps<{
     name: string
     email: string
     role: string
+    avatar?: string | null
     current_streak?: number
     total_points?: number
     roll_number?: string | null
@@ -28,6 +31,10 @@ const emit = defineEmits<{
   (e: 'update:modelValue', val: boolean): void
 }>()
 
+const authStore = useAuthStore()
+const showAvatarPicker = ref<boolean>(false)
+
+const isSelf = computed(() => !props.user?.id || props.user.id === authStore.user?.id)
 const streakCount = computed<number>(() => props.user?.current_streak ?? 0)
 
 // Generate the 7 days of the current week (Sat, Sun, Mon, Tue, Wed, Thu, Fri)
@@ -62,9 +69,18 @@ const weekDays = computed(() => {
     <div v-if="user" class="profile-container">
       <!-- User Header Information -->
       <div class="user-header-card">
-        <PixelAvatar size="large" color="primary" class="profile-avatar">
-          {{ user.name.charAt(0).toUpperCase() }}
-        </PixelAvatar>
+        <div
+          :class="['profile-avatar-wrap', { 'profile-avatar-wrap--clickable': isSelf }]"
+          :title="isSelf ? 'Click to change avatar' : undefined"
+          @click="isSelf && (showAvatarPicker = true)"
+        >
+          <PixelAvatar size="large" color="primary" class="profile-avatar" :avatar="user.avatar">
+            {{ user.name.charAt(0).toUpperCase() }}
+          </PixelAvatar>
+          <div v-if="isSelf" class="avatar-edit-overlay">
+            <PixelIcon name="edit" :size="12" />
+          </div>
+        </div>
         <div class="profile-meta">
           <h3 class="profile-name">{{ user.name }}</h3>
           <span class="profile-email">{{ user.email }}</span>
@@ -136,11 +152,23 @@ const weekDays = computed(() => {
       </PixelCard>
 
       <div class="profile-actions">
-        <PixelButton color="secondary" size="small" @click="emit('update:modelValue', false)">
+        <PixelButton
+          v-if="isSelf"
+          color="secondary"
+          icon="edit"
+          @click="showAvatarPicker = true"
+        >
+          Change Avatar
+        </PixelButton>
+
+        <PixelButton color="secondary" @click="emit('update:modelValue', false)">
           Close
         </PixelButton>
       </div>
     </div>
+
+    <!-- Avatar Picker Modal -->
+    <AvatarPickerModal v-model="showAvatarPicker" />
   </PixelModal>
 </template>
 
@@ -155,6 +183,33 @@ const weekDays = computed(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.profile-avatar-wrap--clickable {
+  cursor: pointer;
+}
+
+.profile-avatar-wrap--clickable:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border-radius: 4px;
 }
 
 .profile-avatar {
@@ -279,5 +334,6 @@ const weekDays = computed(() => {
 .profile-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
 }
 </style>

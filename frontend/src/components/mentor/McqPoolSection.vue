@@ -17,6 +17,7 @@ const props = defineProps<{
 	isPublished: boolean
 	isSubmitting: boolean
 	isImporting?: boolean
+	allowAdminEdit?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -176,7 +177,7 @@ function handleCommitImport(): void {
 	<div class="pool-container">
 		<div class="pool-header">
 			<h2 class="section-title">MCQ Questions</h2>
-			<div v-if="!isPublished" class="header-action-group">
+			<div v-if="!isPublished || allowAdminEdit" class="header-action-group">
 				<PixelButton
 					size="small"
 					color="secondary"
@@ -206,7 +207,7 @@ function handleCommitImport(): void {
 					<div class="card-inner">
 						<div class="card-meta">
 							<div class="meta-left">
-								<PixelBadge color="secondary" :text="`Q${index + 1}`" />
+								<span class="question-index-text">Q{{ index + 1 }}</span>
 								<PixelBadge
 									:color="mcq.difficulty === 'hard' ? 'danger' : mcq.difficulty === 'medium' ? 'warning' : 'success'"
 									:text="mcq.difficulty.toUpperCase()"
@@ -216,7 +217,7 @@ function handleCommitImport(): void {
 									color="primary"
 								/>
 							</div>
-							<div v-if="!isPublished" class="meta-actions">
+							<div v-if="!isPublished || allowAdminEdit" class="meta-actions">
 								<PixelButton
 									color="secondary"
 									size="small"
@@ -243,12 +244,7 @@ function handleCommitImport(): void {
 								class="option-item"
 								:class="{ correct: oIdx === mcq.correct_option_index }"
 							>
-								<div class="option-badge-wrap">
-									<PixelBadge
-										:text="String.fromCharCode(65 + oIdx)"
-										:color="oIdx === mcq.correct_option_index ? 'success' : 'secondary'"
-									/>
-								</div>
+								<span class="option-prefix">{{ String.fromCharCode(65 + oIdx) }}.</span>
 
 								<div class="option-content">
 									{{ formatEntities(opt) }}
@@ -387,6 +383,7 @@ function handleCommitImport(): void {
 			v-model="showDeleteDialog"
 			title="Delete MCQ Question"
 			ok-text="Delete"
+			ok-color="danger"
 			cancel-text="Cancel"
 			@ok="handleConfirmDelete"
 		>
@@ -418,7 +415,6 @@ function handleCommitImport(): void {
 				<div class="modal-actions-row">
 					<PixelButton
 						color="secondary"
-						size="small"
 						:disabled="isImporting"
 						@click="showImportDialog = false"
 					>
@@ -426,7 +422,6 @@ function handleCommitImport(): void {
 					</PixelButton>
 					<PixelButton
 						color="primary"
-						size="small"
 						:loading="isImporting"
 						:disabled="!selectedImportFile"
 						icon="upload"
@@ -461,9 +456,10 @@ function handleCommitImport(): void {
 
 .section-title {
 	margin: 0;
-	font-size: 1.25rem;
+	font-family: var(--font-pixel);
+	font-size: 1.15rem;
 	font-weight: 700;
-	color: var(--va-text-primary);
+	color: var(--pixel-text);
 }
 
 .cards-list {
@@ -473,7 +469,9 @@ function handleCommitImport(): void {
 }
 
 .item-card {
-	border: 1px solid var(--va-background-border);
+	border: 2px solid var(--pixel-border);
+	box-shadow: 0 4px 0 0 var(--pixel-border-dark);
+	background-color: var(--pixel-surface);
 }
 
 .card-inner {
@@ -491,7 +489,15 @@ function handleCommitImport(): void {
 .meta-left {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 0.75rem;
+}
+
+.question-index-text {
+	font-family: var(--font-pixel);
+	font-size: 13px;
+	font-weight: 700;
+	color: #fbbf24;
+	letter-spacing: 0.04em;
 }
 
 .meta-actions {
@@ -501,31 +507,61 @@ function handleCommitImport(): void {
 }
 
 .question-text {
-	font-size: 1rem;
+	font-size: 0.95rem;
 	font-weight: 600;
 	margin: 0;
-	color: var(--va-text-primary);
+	color: var(--pixel-text);
 	line-height: 1.5;
 }
 
 .options-list {
-	border: 1px solid var(--va-background-border);
-	border-radius: 4px;
+	border: 1px solid var(--pixel-border);
+	border-radius: 2px;
 	overflow: hidden;
+	background-color: var(--pixel-bg-alt);
 }
 
 .option-item {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
 	padding: 0.5rem 0.75rem;
-	transition: background-color 0.15s ease;
+	border-bottom: 1px solid var(--pixel-border);
+	transition: background-color 0.1s ease;
+}
+
+.option-item:last-child {
+	border-bottom: none;
 }
 
 .option-item.correct {
-	background-color: rgba(61, 146, 9, 0.08);
+	background-color: rgba(34, 197, 94, 0.12);
+}
+
+.option-prefix {
+	font-family: var(--font-pixel);
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--pixel-text-muted);
+	min-width: 18px;
+	flex-shrink: 0;
+}
+
+.option-item.correct .option-prefix {
+	color: #34d399;
 }
 
 .option-content {
-	font-size: 0.9rem;
-	color: var(--va-text-primary);
+	flex: 1;
+	font-size: 0.88rem;
+	color: var(--pixel-text);
+	line-height: 1.4;
+}
+
+.option-check {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 
 .explanation-alert {
@@ -533,13 +569,14 @@ function handleCommitImport(): void {
 }
 
 .empty-pool-card {
-	border: 2px dashed var(--va-background-border);
+	border: 2px dashed var(--pixel-border);
+	background-color: var(--pixel-surface);
 }
 
 .empty-content {
 	padding: 3rem 2rem;
 	text-align: center;
-	color: var(--va-text-secondary);
+	color: var(--pixel-text-muted);
 }
 
 .empty-pool-icon {
@@ -563,7 +600,7 @@ function handleCommitImport(): void {
 
 .import-instruction {
 	font-size: 0.88rem;
-	color: var(--va-text-secondary);
+	color: var(--pixel-text-muted);
 	margin: 0;
 	line-height: 1.5;
 }

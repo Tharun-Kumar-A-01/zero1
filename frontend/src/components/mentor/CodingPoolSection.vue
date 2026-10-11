@@ -12,6 +12,7 @@ const props = defineProps<{
 	isPublished: boolean
 	isSubmitting: boolean
 	isImporting?: boolean
+	allowAdminEdit?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -426,7 +427,7 @@ function handleCommitImport(): void {
 	<div class="pool-container">
 		<div class="pool-header">
 			<h2 class="section-title">Coding Problems</h2>
-			<div v-if="!isPublished" class="header-action-group">
+			<div v-if="!isPublished || allowAdminEdit" class="header-action-group">
 				<PixelButton
 					size="small"
 					color="secondary"
@@ -455,7 +456,7 @@ function handleCommitImport(): void {
 					<div class="card-inner">
 						<div class="card-meta">
 							<div class="meta-left">
-								<PixelBadge color="backgroundElement" :text="`P${index + 1}`" />
+								<span class="question-index-text">P{{ index + 1 }}</span>
 								<PixelBadge
 									:color="codeQ.difficulty === 'hard' ? 'danger' : codeQ.difficulty === 'medium' ? 'warning' : 'success'"
 									:text="codeQ.difficulty.toUpperCase()"
@@ -468,7 +469,7 @@ function handleCommitImport(): void {
 								<span class="meta-tag"><PixelIcon name="storage" size="small" /> {{ Math.round(codeQ.memory_limit_kb / 1024) }}MB</span>
 							</div>
 
-							<div v-if="!isPublished" class="meta-actions">
+							<div v-if="!isPublished || allowAdminEdit" class="meta-actions">
 								<PixelButton
 									color="secondary"
 									icon="edit"
@@ -517,12 +518,12 @@ function handleCommitImport(): void {
 								</template>
 							</PixelBadge>
 							<PixelButton
-								v-if="!isPublished"
+								v-if="!isPublished || allowAdminEdit"
 								size="small"
 								icon="auto_awesome"
 								@click="emit('openAiGen', codeQ)"
 							>
-								Generate AI Stress Cases
+								Generate AI Test Cases
 							</PixelButton>
 						</div>
 					</div>
@@ -610,7 +611,6 @@ function handleCommitImport(): void {
 							<span class="group-title">Parameters</span>
 							<PixelButton
 								color="secondary"
-								size="small"
 								icon="plus"
 								@click="addParameterDef(false)"
 							>
@@ -654,7 +654,6 @@ function handleCommitImport(): void {
 						</div>
 						<PixelButton
 							color="secondary"
-							size="small"
 							icon="auto_awesome"
 							:loading="isGeneratingInlineAi"
 							@click="handleGenerateInlineAiCases('add')"
@@ -672,7 +671,6 @@ function handleCommitImport(): void {
 							</div>
 							<PixelButton
 								color="secondary"
-								size="small"
 								icon="plus"
 								@click="addSampleCase(false)"
 							>
@@ -725,7 +723,6 @@ function handleCommitImport(): void {
 							</div>
 							<PixelButton
 								color="secondary"
-								size="small"
 								icon="plus"
 								@click="addHiddenCase(false)"
 							>
@@ -846,7 +843,6 @@ function handleCommitImport(): void {
 							<span class="group-title">Parameters</span>
 							<PixelButton
 								color="secondary"
-								size="small"
 								icon="plus"
 								@click="addParameterDef(true)"
 							>
@@ -890,7 +886,6 @@ function handleCommitImport(): void {
 						</div>
 						<PixelButton
 							color="secondary"
-							size="small"
 							icon="auto_awesome"
 							:loading="isGeneratingInlineAi"
 							@click="handleGenerateInlineAiCases('edit')"
@@ -908,7 +903,6 @@ function handleCommitImport(): void {
 							</div>
 							<PixelButton
 								color="secondary"
-								size="small"
 								icon="plus"
 								@click="addSampleCase(true)"
 							>
@@ -961,7 +955,6 @@ function handleCommitImport(): void {
 							</div>
 							<PixelButton
 								color="secondary"
-								size="small"
 								icon="plus"
 								@click="addHiddenCase(true)"
 							>
@@ -1123,6 +1116,14 @@ function handleCommitImport(): void {
 	align-items: center;
 	gap: 0.65rem;
 	flex-wrap: wrap;
+}
+
+.question-index-text {
+	font-family: var(--font-pixel);
+	font-size: 13px;
+	font-weight: 700;
+	color: #fbbf24;
+	letter-spacing: 0.04em;
 }
 
 .meta-actions {

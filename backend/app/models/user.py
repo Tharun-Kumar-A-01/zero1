@@ -32,6 +32,7 @@ class User(Base):
 	department: Mapped[str | None] = mapped_column(String(64), nullable=True)
 	section: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
+	avatar: Mapped[str | None] = mapped_column(String(64), nullable=True, default=None)
 	is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -58,6 +59,7 @@ class User(Base):
 			"name": self.name,
 			"email": self.email,
 			"role": self.role.value,
+			"avatar": self.avatar,
 			"roll_number": self.roll_number,
 			"year_batch": self.year_batch,
 			"department": self.department,

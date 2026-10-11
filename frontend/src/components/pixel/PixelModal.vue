@@ -7,6 +7,7 @@ interface Props {
   modelValue: boolean
   title?: string
   okText?: string
+  okColor?: 'primary' | 'secondary' | 'danger' | 'warning' | 'info' | 'success'
   cancelText?: string
   hideDefaultActions?: boolean
   loading?: boolean
@@ -16,6 +17,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   okText: 'OK',
+  okColor: 'primary',
   cancelText: 'Cancel',
   hideDefaultActions: false,
   loading: false,
@@ -99,14 +101,12 @@ watch(
             <slot name="footer">
               <PixelButton
                 color="secondary"
-                size="small"
                 @click="handleClose"
               >
                 {{ cancelText }}
               </PixelButton>
               <PixelButton
-                color="primary"
-                size="small"
+                :color="okColor"
                 :loading="loading"
                 @click="handleOk"
               >

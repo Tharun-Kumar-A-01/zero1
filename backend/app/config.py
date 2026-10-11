@@ -63,7 +63,7 @@ class Config:
 	OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:7b")
 
 	# Platform Business Rules
-	STREAK_REQUIRES_BOTH: bool = os.getenv("STREAK_REQUIRES_BOTH", "true").lower() == "true"
+	STREAK_REQUIRES_BOTH: bool = os.getenv("STREAK_REQUIRES_BOTH", "false").lower() == "true"
 	GRACE_CUTOFF_HOURS: int = int(os.getenv("GRACE_CUTOFF_HOURS", "3"))
 	MIN_MCQ_POOL_SIZE: int = int(os.getenv("MIN_MCQ_POOL_SIZE", "7"))
 	MIN_CODING_POOL_SIZE: int = int(os.getenv("MIN_CODING_POOL_SIZE", "7"))

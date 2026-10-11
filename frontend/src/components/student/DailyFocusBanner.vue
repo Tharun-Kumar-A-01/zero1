@@ -13,7 +13,7 @@ defineProps<{
 <template>
   <div class="focus-header-bar">
     <div>
-      <h1 class="page-title">Daily Practice</h1>
+      <h1 class="page-title">Daily Quests</h1>
     </div>
 
     <!-- Status strip with tactile pixel indicators -->

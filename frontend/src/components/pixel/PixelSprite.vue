@@ -7,11 +7,11 @@ import trophyImg from '@/assets/pixel-icons/trophy.png'
 import silverImg from '@/assets/pixel-icons/silver.png'
 import bronzeImg from '@/assets/pixel-icons/bronze.png'
 import starImg from '@/assets/pixel-icons/star.png'
-import swordImg from '@/assets/pixel-icons/sword.png'
-import shieldImg from '@/assets/pixel-icons/shield.png'
+import swordImg from '@/assets/pixel-icons/icons_8x8/sword_thick.png'
+import shieldImg from '@/assets/pixel-icons/icons_8x8/shield.png'
 import gemImg from '@/assets/pixel-icons/gem.png'
 import potionImg from '@/assets/pixel-icons/potion.png'
-import chestImg from '@/assets/pixel-icons/chest.png'
+import chestImg from '@/assets/pixel-icons/icons_8x8/iron_chest_open.png'
 import scrollImg from '@/assets/pixel-icons/scroll.png'
 import starGoldImg from '@/assets/pixel-icons/star_gold.png'
 import starSilverImg from '@/assets/pixel-icons/star_silver.png'
@@ -33,6 +33,19 @@ const props = withDefaults(defineProps<Props>(), {
   name: 'flame',
   scale: 1,
 })
+
+// 8x8 icons and faces glob
+const icons8x8Modules = import.meta.glob<{ default: string }>(
+  ['@/assets/pixel-icons/icons_8x8/*.png', '@/assets/pixel-icons/icons_8x8/faces/*.png'],
+  { eager: true }
+)
+const ICONS_8X8_MAP: Record<string, string> = {}
+for (const [path, module] of Object.entries(icons8x8Modules)) {
+  const filename = path.split('/').pop()?.replace('.png', '').toLowerCase()
+  if (filename) {
+    ICONS_8X8_MAP[filename] = module.default
+  }
+}
 
 // RPG Maker icons glob for seamless icon lookups
 const rpgMakerModules = import.meta.glob<{ default: string }>('@/assets/pixel-icons/rpg-maker/*.png', {
@@ -72,6 +85,7 @@ const ASSET_MAP: Record<string, string> = {
   swords: swordImg,
   blade: swordImg,
   dagger: swordImg,
+  sword_thick: swordImg,
   shield: shieldImg,
   gem: gemRubyImg,
   ruby: gemRubyImg,
@@ -86,8 +100,9 @@ const ASSET_MAP: Record<string, string> = {
   pearl: gemDiamondImg,
   emerald: gemEmeraldImg,
   gem_emerald: gemEmeraldImg,
-  potion: potionImg,
   chest: chestImg,
+  iron_chest_open: chestImg,
+  potion: potionImg,
   key: chestImg,
   book: scrollImg,
   scroll: scrollImg,
@@ -96,7 +111,7 @@ const ASSET_MAP: Record<string, string> = {
 
 const src = computed(() => {
   const key = (props.name || 'flame').toLowerCase().trim()
-  return ASSET_MAP[key] ?? RPG_MAKER_MAP[key] ?? null
+  return ASSET_MAP[key] ?? ICONS_8X8_MAP[key] ?? RPG_MAKER_MAP[key] ?? null
 })
 
 const pixelDimension = computed(() => {

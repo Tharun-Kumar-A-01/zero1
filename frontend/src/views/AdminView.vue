@@ -10,10 +10,12 @@ import type { UserItem, RotationItem, CustomLeaveItem, ImportJobResponse } from 
 import AdminHubBanner from '@/components/admin/AdminHubBanner.vue'
 import MentorScheduleSection from '@/components/admin/MentorScheduleSection.vue'
 import UserDirectorySection from '@/components/admin/UserDirectorySection.vue'
+import ProblemPoolAdminSection from '@/components/admin/ProblemPoolAdminSection.vue'
+import AchievementsAdminSection from '@/components/admin/AchievementsAdminSection.vue'
 
 const { init: notify } = usePixelToast()
 
-const activeTab = ref<'rotations' | 'users'>('users')
+const activeTab = ref<'rotations' | 'users' | 'problems' | 'achievements'>('users')
 const isLoading = ref<boolean>(true)
 
 // User Management
@@ -215,6 +217,25 @@ async function handleUpdateUser(userId: number, payload: { name: string; email: 
 	}
 }
 
+const isDeletingUser = ref<boolean>(false)
+
+async function handleDeleteUser(userId: number): Promise<void> {
+	isDeletingUser.value = true
+	try {
+		const res = await api.delete<{ id: number }>(`/admin/users/${userId}`)
+		if (res.success) {
+			users.value = users.value.filter((u) => u.id !== userId)
+			notify({ color: 'success', message: 'User deleted successfully.' })
+		} else {
+			notify({ color: 'danger', message: res.error?.message || 'Failed to delete user.' })
+		}
+	} catch (err: unknown) {
+		notify({ color: 'danger', message: err instanceof Error ? err.message : 'Error deleting user.' })
+	} finally {
+		isDeletingUser.value = false
+	}
+}
+
 async function handleCreateLeave(payload: { title: string; start_date: string; end_date: string; description?: string }): Promise<void> {
 	isCreatingLeave.value = true
 	try {
@@ -274,6 +295,14 @@ onMounted(async (): Promise<void> => {
 				<PixelIcon name="calendar" :size="14" class="tab-icon" />
 				Mentor Schedule ({{ rotations.length }})
 			</PixelTab>
+			<PixelTab name="problems">
+				<PixelIcon name="code" :size="14" class="tab-icon" />
+				Problem Pool
+			</PixelTab>
+			<PixelTab name="achievements">
+				<PixelIcon name="trophy" :size="14" class="tab-icon" />
+				Achievements & Badges
+			</PixelTab>
 		</PixelTabs>
 
 		<!-- SECTION 1: USER DIRECTORY (WITH INLINE ROSTER IMPORT & USER EDITING) -->
@@ -282,12 +311,14 @@ onMounted(async (): Promise<void> => {
 			:users="users"
 			:isCreating="isCreatingUser"
 			:isUpdating="isUpdatingUser"
+			:isDeleting="isDeletingUser"
 			:isUploadingSheet="isUploadingSheet"
 			:isCommittingImport="isCommittingImport"
 			:importJob="currentImportJob"
 			:importSummary="importSummary"
 			@createUser="handleCreateUser"
 			@updateUser="handleUpdateUser"
+			@deleteUser="handleDeleteUser"
 			@uploadRoster="handleUploadSheet"
 			@commitRoster="handleCommitImport"
 		/>
@@ -306,6 +337,16 @@ onMounted(async (): Promise<void> => {
 			@deleteRotation="handleDeleteRotation"
 			@createLeave="handleCreateLeave"
 			@deleteLeave="handleDeleteLeave"
+		/>
+
+		<!-- SECTION 3: PROBLEM POOL MANAGEMENT (PUBLISHED / DRAFTS / MCQS / CODING) -->
+		<ProblemPoolAdminSection
+			v-if="activeTab === 'problems'"
+		/>
+
+		<!-- SECTION 4: ACHIEVEMENTS & MILESTONE BADGES -->
+		<AchievementsAdminSection
+			v-if="activeTab === 'achievements'"
 		/>
 	</div>
 </template>

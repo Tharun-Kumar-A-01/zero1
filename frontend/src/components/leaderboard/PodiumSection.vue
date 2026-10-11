@@ -5,6 +5,7 @@ import PixelCard from '@/components/pixel/PixelCard.vue'
 import PixelCardContent from '@/components/pixel/PixelCardContent.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
+import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 
 const props = defineProps<{
   entries: LeaderboardEntry[]
@@ -23,6 +24,9 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
         <div class="medal-icon silver-medal">
           <PixelSprite name="star_silver" :size="36" />
         </div>
+        <PixelAvatar size="medium" color="secondary" :avatar="runnerUp.avatar" class="podium-avatar">
+          {{ runnerUp.name.charAt(0).toUpperCase() }}
+        </PixelAvatar>
         <span class="podium-rank">Rank #2</span>
         <h3 class="podium-name">{{ runnerUp.name }}</h3>
         <span class="podium-roll">{{ runnerUp.roll_number || 'Student' }}</span>
@@ -42,6 +46,9 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
         <div class="medal-icon gold-medal">
           <PixelSprite name="star_gold" :size="48" />
         </div>
+        <PixelAvatar size="large" color="primary" :avatar="champion.avatar" class="podium-avatar">
+          {{ champion.name.charAt(0).toUpperCase() }}
+        </PixelAvatar>
         <span class="podium-rank gold-rank">Champion</span>
         <h3 class="podium-name gold-name">{{ champion.name }}</h3>
         <span class="podium-roll">{{ champion.roll_number || 'Student' }}</span>
@@ -61,6 +68,9 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
         <div class="medal-icon bronze-medal">
           <PixelSprite name="star_bronze" :size="32" />
         </div>
+        <PixelAvatar size="medium" color="secondary" :avatar="thirdPlace.avatar" class="podium-avatar">
+          {{ thirdPlace.name.charAt(0).toUpperCase() }}
+        </PixelAvatar>
         <span class="podium-rank">Rank #3</span>
         <h3 class="podium-name">{{ thirdPlace.name }}</h3>
         <span class="podium-roll">{{ thirdPlace.roll_number || 'Student' }}</span>
@@ -108,21 +118,36 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 }
 
 .gold-card {
+  min-height: 280px;
   border-color: #f59e0b;
   box-shadow: 0 6px 0 0 #b45309;
   background-color: #2a2016;
 }
 
+.gold-card .podium-content {
+  padding: 2rem 1rem 1.75rem;
+}
+
 .silver-card {
+  min-height: 240px;
   border-color: #94a3b8;
   box-shadow: 0 5px 0 0 #475569;
   background-color: #1e222d;
 }
 
+.silver-card .podium-content {
+  padding: 1.6rem 1rem 1.4rem;
+}
+
 .bronze-card {
+  min-height: 205px;
   border-color: #b45309;
   box-shadow: 0 5px 0 0 #78350f;
   background-color: #281a14;
+}
+
+.bronze-card .podium-content {
+  padding: 1.2rem 1rem 1.2rem;
 }
 
 .podium-rank {

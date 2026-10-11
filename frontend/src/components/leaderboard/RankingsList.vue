@@ -42,7 +42,7 @@ const columns = [
 
           <template #cell(name)="{ rowData }">
             <div class="student-cell">
-              <PixelAvatar size="small" color="primary">
+              <PixelAvatar size="small" color="primary" :avatar="(rowData as LeaderboardEntry).avatar">
                 {{ (rowData as LeaderboardEntry).name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() }}
               </PixelAvatar>
               <div class="student-name-group">

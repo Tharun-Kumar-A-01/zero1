@@ -3,6 +3,7 @@ export interface UserProfile {
 	name: string
 	email: string
 	role: 'admin' | 'mentor' | 'student'
+	avatar?: string | null
 	roll_number?: string | null
 	year_batch?: string | null
 	department?: string | null
@@ -41,6 +42,8 @@ export interface MCQQuestionData {
 	options: string[]
 	difficulty: 'easy' | 'medium' | 'hard'
 	tags: string[]
+	correct_option_index?: number | null
+	explanation?: string | null
 }
 
 export interface DailyChallengeData {
@@ -48,6 +51,8 @@ export interface DailyChallengeData {
 	student_id: number
 	assignment_date: string
 	mcq_status: 'pending' | 'correct' | 'incorrect'
+	mcq_selected_option_index?: number | null
+	mcq_correct_option_index?: number | null
 	coding_status: 'pending' | 'attempted_unsolved' | 'solved'
 	coding_started_at?: string | null
 	coding_completed_at?: string | null
@@ -108,6 +113,7 @@ export interface LeaderboardEntry {
 	rank: number
 	student_id: number
 	name: string
+	avatar?: string | null
 	roll_number: string
 	year_batch: string
 	department?: string | null
@@ -177,6 +183,7 @@ export interface UserItem {
 	name: string
 	email: string
 	role: 'admin' | 'mentor' | 'student'
+	avatar?: string | null
 	roll_number?: string | null
 	year_batch?: string | null
 	department?: string | null
@@ -210,5 +217,29 @@ export interface CustomLeaveItem {
 	end_date: string
 	description?: string | null
 	created_by_admin_id: number
+}
+
+export interface QuestionSetItem {
+	id: number
+	mentor_id?: number | null
+	mentor_name?: string
+	mentor_assignment_id?: number | null
+	week_start_date?: string | null
+	status: 'draft' | 'published' | 'archived'
+	mcq_count: number
+	coding_count: number
+}
+
+export interface MilestoneItem {
+	id: number
+	name: string
+	description: string
+	threshold_type: 'streak_days' | 'total_points' | 'problems_solved'
+	threshold_value: number
+	reward_type: 'badge' | 'points' | 'custom'
+	icon: string
+	points_value: number
+	is_active: boolean
+	earned_count: number
 }
 

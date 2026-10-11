@@ -15,10 +15,12 @@ import PixelButton from '@/components/pixel/PixelButton.vue'
 import PixelProgressBar from '@/components/pixel/PixelProgressBar.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
+import AvatarPickerModal from '@/components/common/AvatarPickerModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+const showAvatarPicker = ref<boolean>(false)
 const isLoading = ref<boolean>(true)
 const progress = ref<ProgressData | null>(null)
 const leaderboard = ref<LeaderboardEntry[]>([])
@@ -70,7 +72,14 @@ const weekDays = computed(() => {
   })
 })
 
+const showLogoutConfirm = ref<boolean>(false)
+
 function handleLogout(): void {
+  showLogoutConfirm.value = true
+}
+
+function confirmLogout(): void {
+  showLogoutConfirm.value = false
   authStore.logout()
   router.push('/login')
 }
@@ -109,9 +118,14 @@ onMounted(() => {
         <PixelCard class="user-header-card">
           <PixelCardContent>
             <div class="user-header-row">
-              <PixelAvatar size="large" color="primary" class="profile-avatar">
-                {{ user?.name ? user.name.charAt(0).toUpperCase() : 'U' }}
-              </PixelAvatar>
+              <div class="avatar-interactive-wrapper" title="Click to change avatar" @click="showAvatarPicker = true">
+                <PixelAvatar size="large" color="primary" class="profile-avatar" :avatar="user?.avatar">
+                  {{ user?.name ? user.name.charAt(0).toUpperCase() : 'U' }}
+                </PixelAvatar>
+                <div class="avatar-edit-overlay">
+                  <PixelIcon name="edit" :size="12" />
+                </div>
+              </div>
 
               <div class="user-meta-info">
                 <div class="name-badge-row">
@@ -166,8 +180,17 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Desktop Logout Button -->
+              <!-- Desktop Actions -->
               <div class="user-header-actions">
+                <PixelButton
+                  color="secondary"
+                  size="small"
+                  icon="edit"
+                  @click="showAvatarPicker = true"
+                >
+                  Avatar
+                </PixelButton>
+
                 <PixelButton
                   color="danger"
                   size="small"
@@ -291,8 +314,17 @@ onMounted(() => {
           </PixelCardContent>
         </PixelCard>
 
-        <!-- Duplicated Mobile Logout Section (Visible on Mobile Screens) -->
+        <!-- Duplicated Mobile Actions (Visible on Mobile Screens) -->
         <div class="mobile-logout-wrapper">
+          <PixelButton
+            color="secondary"
+            size="medium"
+            icon="edit"
+            block
+            @click="showAvatarPicker = true"
+          >
+            Change Avatar
+          </PixelButton>
           <PixelButton
             color="danger"
             size="medium"
@@ -311,6 +343,24 @@ onMounted(() => {
         <CohortStandings :leaderboard="leaderboard" :currentUserId="user?.id" />
       </div>
     </div>
+
+    <!-- Logout Confirmation Modal -->
+    <PixelModal
+      v-model="showLogoutConfirm"
+      title="Confirm Log Out"
+      ok-text="Log Out"
+      ok-color="danger"
+      cancel-text="Cancel"
+      @ok="confirmLogout"
+    >
+      <div class="logout-confirm-content">
+        <p>Are you sure you want to log out of your session?</p>
+        <p class="logout-subtext">You will need to sign in again to access your account.</p>
+      </div>
+    </PixelModal>
+
+    <!-- Avatar Picker Modal -->
+    <AvatarPickerModal v-model="showAvatarPicker" />
   </div>
 </template>
 
@@ -350,6 +400,30 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.avatar-interactive-wrapper {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.avatar-interactive-wrapper:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border-radius: 4px;
 }
 
 .profile-avatar {
@@ -533,6 +607,7 @@ onMounted(() => {
 .user-header-actions {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   flex-shrink: 0;
 }
 
@@ -557,6 +632,8 @@ onMounted(() => {
 .mobile-logout-wrapper {
   display: none;
   margin-top: 1.25rem;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 @media (max-width: 768px) {
@@ -571,7 +648,7 @@ onMounted(() => {
   }
 
   .mobile-logout-wrapper {
-    display: block;
+    display: flex;
   }
 }
 </style>

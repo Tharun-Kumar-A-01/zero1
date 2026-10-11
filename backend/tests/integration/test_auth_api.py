@@ -175,4 +175,19 @@ def test_student_roster_upload_and_commit(client: FlaskClient, admin_auth_header
 	assert commit_data["data"]["skipped_count"] == 0
 
 
+def test_update_user_avatar(client: FlaskClient, student_auth_headers: dict[str, str]) -> None:
+	# Update avatar
+	res = client.patch(
+		"/api/auth/profile",
+		json={"avatar": "spiderman"},
+		headers=student_auth_headers,
+	)
+	assert res.status_code == 200
+	data = res.get_json()
+	assert data["success"] is True
+	assert data["data"]["avatar"] == "spiderman"
 
+	# Verify with GET /me
+	me_res = client.get("/api/auth/me", headers=student_auth_headers)
+	assert me_res.status_code == 200
+	assert me_res.get_json()["data"]["avatar"] == "spiderman"

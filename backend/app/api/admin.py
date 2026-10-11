@@ -11,7 +11,7 @@ from typing import Any
 import openpyxl
 from flask import Blueprint, Response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 
 from app.api.utils import api_error, api_success, require_roles
 from app.database import get_db_session
@@ -478,6 +478,46 @@ def update_user(user_id: int) -> tuple[Response, int]:
 		return api_success(user.to_dict(), message="User updated successfully.")
 
 
+@admin_bp.route("/users/<int:user_id>", methods=["DELETE"], strict_slashes=False)
+@admin_bp.route("/users/<int:user_id>/", methods=["DELETE"], strict_slashes=False)
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def delete_user(user_id: int) -> tuple[Response, int]:
+	"""Admin permanently deletes a user and cleanly cascades associated records."""
+	admin_id: int = int(get_jwt_identity())
+	if user_id == admin_id:
+		return api_error("CANNOT_DELETE_SELF", "You cannot delete your own account.", status_code=400)
+
+	with get_db_session() as session:
+		user = session.get(User, user_id)
+		if not user:
+			return api_error("USER_NOT_FOUND", "User not found.", status_code=404)
+
+		user_name = user.name
+
+		# Clean up any child records referencing this user
+		from app.models.assignment import CodeSubmission, DailyAssignment, MCQSubmission
+		from app.models.gamification import PointsLedger, Streak, StudentReward
+		from app.models.mentor import MentorAssignment
+		from app.models.question import QuestionSet
+
+		session.execute(delete(Streak).where(Streak.student_id == user_id))
+		session.execute(delete(PointsLedger).where(PointsLedger.student_id == user_id))
+		session.execute(delete(StudentReward).where(StudentReward.student_id == user_id))
+
+		assignments = session.scalars(select(DailyAssignment).where(DailyAssignment.student_id == user_id)).all()
+		for a in assignments:
+			session.execute(delete(CodeSubmission).where(CodeSubmission.daily_assignment_id == a.id))
+			session.execute(delete(MCQSubmission).where(MCQSubmission.daily_assignment_id == a.id))
+			session.delete(a)
+
+		session.execute(delete(MentorAssignment).where(MentorAssignment.user_id == user_id))
+		session.execute(update(QuestionSet).where(QuestionSet.mentor_id == user_id).values(mentor_id=None))
+
+		session.delete(user)
+		return api_success({"id": user_id}, message=f"User '{user_name}' deleted successfully.")
+
+
 @admin_bp.route("/leaves", methods=["GET"])
 @jwt_required()
 @require_roles(UserRole.ADMIN)
@@ -543,5 +583,272 @@ def delete_custom_leave(leave_id: int) -> tuple[Response, int]:
 			return api_error("LEAVE_NOT_FOUND", "Leave not found.", status_code=404)
 		session.delete(leave)
 		return api_success({"id": leave_id}, message="Custom leave removed.")
+
+
+# ========================================================
+# Question Sets & Problem Management (Admin)
+# ========================================================
+
+@admin_bp.route("/question-sets", methods=["GET"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def get_all_question_sets() -> tuple[Response, int]:
+	"""List all question sets across all mentors and cohorts."""
+	with get_db_session() as session:
+		sets = session.scalars(
+			select(QuestionSet).order_by(QuestionSet.id.desc())
+		).all()
+		data = []
+		for qs in sets:
+			item = qs.to_dict()
+			item["mentor_name"] = qs.mentor.name if qs.mentor else "Admin / Unassigned"
+			data.append(item)
+		return api_success(data)
+
+
+@admin_bp.route("/question-sets/<int:set_id>", methods=["GET"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def get_question_set_details(set_id: int) -> tuple[Response, int]:
+	"""Fetch complete question set details including all MCQs and Coding problems."""
+	from app.api.mentor import serialize_question_set
+
+	with get_db_session() as session:
+		qs = session.get(QuestionSet, set_id)
+		if not qs:
+			return api_error("NOT_FOUND", "Question set not found.", status_code=404)
+		data = serialize_question_set(qs)
+		data["mentor_name"] = qs.mentor.name if qs.mentor else "Admin / Unassigned"
+		return api_success(data)
+
+
+@admin_bp.route("/problems/active", methods=["GET"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def get_active_published_problems() -> tuple[Response, int]:
+	"""Fetch the currently published/active question set for practice management."""
+	from app.api.mentor import serialize_question_set
+
+	with get_db_session() as session:
+		qs = session.scalars(
+			select(QuestionSet)
+			.where(QuestionSet.status == QuestionSetStatus.PUBLISHED)
+			.order_by(QuestionSet.id.desc())
+		).first()
+		if not qs:
+			qs = session.scalars(
+				select(QuestionSet).order_by(QuestionSet.id.desc())
+			).first()
+
+		if not qs:
+			admin_id = int(get_jwt_identity())
+			qs = QuestionSet(mentor_id=admin_id, status=QuestionSetStatus.PUBLISHED)
+			session.add(qs)
+			session.flush()
+
+		data = serialize_question_set(qs)
+		data["mentor_name"] = qs.mentor.name if qs.mentor else "Admin"
+		return api_success(data)
+
+
+@admin_bp.route("/question-sets", methods=["POST"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def create_question_set() -> tuple[Response, int]:
+	"""Create a new question set."""
+	admin_id = int(get_jwt_identity())
+	data: dict[str, Any] | None = request.get_json(silent=True) or {}
+
+	status_str = str(data.get("status", "draft")).lower()
+	status = (
+		QuestionSetStatus.PUBLISHED
+		if status_str == "published"
+		else QuestionSetStatus.DRAFT
+	)
+	week_start_str = data.get("week_start_date")
+	week_start = date.fromisoformat(week_start_str) if week_start_str else None
+
+	with get_db_session() as session:
+		if status == QuestionSetStatus.PUBLISHED:
+			session.execute(
+				update(QuestionSet)
+				.where(QuestionSet.status == QuestionSetStatus.PUBLISHED)
+				.values(status=QuestionSetStatus.ARCHIVED)
+			)
+
+		qs = QuestionSet(
+			mentor_id=admin_id,
+			status=status,
+			week_start_date=week_start,
+		)
+		session.add(qs)
+		session.flush()
+		return api_success(qs.to_dict(), message="Question set created successfully.")
+
+
+@admin_bp.route("/question-sets/<int:set_id>/publish", methods=["POST"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def publish_question_set(set_id: int) -> tuple[Response, int]:
+	"""Publish a question set, making it the active problem pool for daily challenges."""
+	from app.api.mentor import serialize_question_set
+
+	with get_db_session() as session:
+		qs = session.get(QuestionSet, set_id)
+		if not qs:
+			return api_error("NOT_FOUND", "Question set not found.", status_code=404)
+
+		session.execute(
+			update(QuestionSet)
+			.where(QuestionSet.id != set_id, QuestionSet.status == QuestionSetStatus.PUBLISHED)
+			.values(status=QuestionSetStatus.ARCHIVED)
+		)
+
+		qs.status = QuestionSetStatus.PUBLISHED
+		session.flush()
+		return api_success(serialize_question_set(qs), message="Question set is now published and active.")
+
+
+@admin_bp.route("/question-sets/<int:set_id>/unpublish", methods=["POST"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def unpublish_question_set(set_id: int) -> tuple[Response, int]:
+	"""Unpublish a question set, setting its status back to DRAFT."""
+	from app.api.mentor import serialize_question_set
+
+	with get_db_session() as session:
+		qs = session.get(QuestionSet, set_id)
+		if not qs:
+			return api_error("NOT_FOUND", "Question set not found.", status_code=404)
+
+		qs.status = QuestionSetStatus.DRAFT
+		session.flush()
+		return api_success(serialize_question_set(qs), message="Question set moved to draft.")
+
+
+@admin_bp.route("/question-sets/<int:set_id>", methods=["DELETE"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def delete_question_set(set_id: int) -> tuple[Response, int]:
+	"""Delete a question set and all its associated questions."""
+	with get_db_session() as session:
+		qs = session.get(QuestionSet, set_id)
+		if not qs:
+			return api_error("NOT_FOUND", "Question set not found.", status_code=404)
+
+		session.delete(qs)
+		session.flush()
+		return api_success({"id": set_id}, message="Question set deleted.")
+
+
+# ========================================================
+# Achievements & Badges Management (Admin)
+# ========================================================
+
+@admin_bp.route("/achievements", methods=["GET"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def get_achievements() -> tuple[Response, int]:
+	"""List all achievements, milestones, and badges with requirements and recipient counts."""
+	from app.services.gamification_service import get_all_milestones
+
+	with get_db_session() as session:
+		milestones = get_all_milestones(session)
+		return api_success(milestones)
+
+
+@admin_bp.route("/achievements", methods=["POST"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def create_achievement() -> tuple[Response, int]:
+	"""Create a new customizable achievement or milestone badge."""
+	from app.models.enums import MilestoneThresholdType, RewardType
+	from app.services.gamification_service import create_custom_milestone
+
+	admin_id = int(get_jwt_identity())
+	data: dict[str, Any] | None = request.get_json(silent=True)
+	if not data:
+		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
+
+	name = str(data.get("name", "")).strip()
+	description = str(data.get("description", "")).strip()
+	threshold_type_str = str(data.get("threshold_type", "total_points")).lower()
+	threshold_value = int(data.get("threshold_value", 0))
+
+	if not name:
+		return api_error("MISSING_NAME", "'name' is required.")
+	if threshold_value <= 0:
+		return api_error("INVALID_THRESHOLD", "'threshold_value' must be a positive integer.")
+
+	if threshold_type_str not in MilestoneThresholdType.__members__.values():
+		return api_error(
+			"INVALID_THRESHOLD_TYPE",
+			f"Invalid threshold type. Allowed: {list(MilestoneThresholdType.__members__.values())}",
+		)
+
+	reward_type_str = str(data.get("reward_type", "badge")).lower()
+	reward_type = (
+		RewardType(reward_type_str)
+		if reward_type_str in RewardType.__members__.values()
+		else RewardType.BADGE
+	)
+	icon = str(data.get("icon", "gem_ruby")).strip()
+	points_value = max(0, int(data.get("points_value", 0)))
+
+	with get_db_session() as session:
+		m = create_custom_milestone(
+			session=session,
+			creator_id=admin_id,
+			name=name,
+			description=description,
+			threshold_type=MilestoneThresholdType(threshold_type_str),
+			threshold_value=threshold_value,
+			reward_type=reward_type,
+			icon=icon,
+			points_value=points_value,
+		)
+		d = m.to_dict()
+		if m.reward:
+			d["icon"] = m.reward.icon_asset_ref
+			d["points_value"] = m.reward.points_value or 0
+			d["reward_type"] = m.reward.type.value
+		return api_success(d, message="Achievement created successfully.")
+
+
+@admin_bp.route("/achievements/<int:achievement_id>", methods=["PUT"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def update_achievement(achievement_id: int) -> tuple[Response, int]:
+	"""Update an existing achievement or milestone badge."""
+	from app.services.gamification_service import update_custom_milestone
+
+	data: dict[str, Any] | None = request.get_json(silent=True)
+	if not data:
+		return api_error("INVALID_PAYLOAD", "Request body must be valid JSON.")
+
+	with get_db_session() as session:
+		m = update_custom_milestone(session, achievement_id, data)
+		if not m:
+			return api_error("NOT_FOUND", "Achievement not found.", status_code=404)
+		d = m.to_dict()
+		if m.reward:
+			d["icon"] = m.reward.icon_asset_ref
+			d["points_value"] = m.reward.points_value or 0
+			d["reward_type"] = m.reward.type.value
+		return api_success(d, message="Achievement updated successfully.")
+
+
+@admin_bp.route("/achievements/<int:achievement_id>", methods=["DELETE"])
+@jwt_required()
+@require_roles(UserRole.ADMIN)
+def delete_achievement(achievement_id: int) -> tuple[Response, int]:
+	"""Delete an achievement and its associated rewards."""
+	from app.services.gamification_service import delete_custom_milestone
+
+	with get_db_session() as session:
+		success = delete_custom_milestone(session, achievement_id)
+		if not success:
+			return api_error("NOT_FOUND", "Achievement not found.", status_code=404)
+		return api_success({"id": achievement_id}, message="Achievement deleted.")
 
 

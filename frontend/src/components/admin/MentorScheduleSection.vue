@@ -329,7 +329,6 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 
 				<div class="action-buttons">
 					<PixelButton
-						size="small"
 						color="primary"
 						icon="event"
 						@click="showScheduleDialog = true"
@@ -337,7 +336,6 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 						Assign Mentor
 					</PixelButton>
 					<PixelButton
-						size="small"
 						color="danger"
 						icon="event_busy"
 						@click="showLeaveDialog = true"
@@ -713,10 +711,6 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 </template>
 
 <style scoped>
-:deep(.va-card__inner) {
-	overflow: visible !important;
-}
-
 .schedule-section {
 	display: flex;
 	flex-direction: column;
@@ -725,7 +719,9 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 
 /* CALENDAR TOOLBAR */
 .calendar-toolbar-card {
-	border: 1px solid var(--va-background-border);
+	border: 2px solid var(--pixel-border);
+	box-shadow: 0 4px 0 0 var(--pixel-border-dark);
+	background-color: var(--pixel-surface);
 }
 
 .toolbar-content {
@@ -734,28 +730,27 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 1rem;
-	padding: 1rem 1.25rem;
+	padding: 0.85rem 1.25rem;
 }
 
 .nav-controls {
 	display: flex;
 	align-items: center;
-	gap: 1.25rem;
+	gap: 0.75rem;
 	flex-wrap: wrap;
 }
 
 .calendar-month-title {
 	margin: 0;
-	font-size: 1.35rem;
+	font-family: var(--font-pixel);
+	font-size: 1.15rem;
 	font-weight: 700;
-	color: var(--va-text-primary);
+	color: #fbbf24;
+	text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 	min-width: 170px;
-}
-
-.nav-btn-group {
-	display: flex;
-	align-items: center;
-	gap: 0.35rem;
+	text-align: center;
 }
 
 .action-buttons {
@@ -767,41 +762,51 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 
 /* CALENDAR GRID */
 .calendar-grid-card {
-	border: 1px solid var(--va-background-border);
-	overflow: visible;
+	border: 2px solid var(--pixel-border);
+	box-shadow: 0 4px 0 0 var(--pixel-border-dark);
+	background-color: var(--pixel-surface);
+	overflow: hidden;
 	position: relative;
 	z-index: 0;
-	isolation: isolate;
 }
 
 .calendar-header-row {
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
-	border-bottom: 1px solid var(--va-background-border);
-	background-color: var(--va-background-element);
+	border-bottom: 2px solid var(--pixel-border);
+	background-color: var(--pixel-surface-alt);
 }
 
 .calendar-header-cell {
 	padding: 0.65rem 0.5rem;
 	text-align: center;
-	font-size: 0.8rem;
+	font-family: var(--font-pixel);
+	font-size: 11px;
 	font-weight: 700;
-	color: var(--va-text-secondary);
+	color: var(--pixel-text-muted);
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: 0.08em;
+	border-right: 1px solid var(--pixel-border);
+}
+
+.calendar-header-cell:last-child {
+	border-right: none;
+}
+
+.calendar-header-cell:first-child {
+	color: #ef4444;
 }
 
 .calendar-month-body {
 	display: flex;
 	flex-direction: column;
-	overflow: visible;
+	background-color: var(--pixel-surface);
 }
 
 .calendar-week-row {
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
-	border-bottom: 1px solid var(--va-background-border);
-	overflow: visible;
+	border-bottom: 1px solid var(--pixel-border);
 	position: relative;
 }
 
@@ -812,12 +817,12 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 .calendar-day-cell {
 	min-height: 105px;
 	min-width: 0;
-	border-right: 1px solid var(--va-background-border);
+	border-right: 1px solid var(--pixel-border);
 	display: flex;
 	flex-direction: column;
-	background-color: var(--va-background-primary);
+	background-color: var(--pixel-surface);
 	position: relative;
-	transition: background-color 0.15s ease;
+	transition: background-color 0.1s ease;
 }
 
 .calendar-day-cell:last-child {
@@ -825,16 +830,17 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .calendar-day-cell.is-other-month {
-	background-color: var(--va-background-element);
-	opacity: 0.6;
-}
-
-.calendar-day-cell.is-today {
-	background-color: rgba(21, 78, 193, 0.04);
+	background-color: var(--pixel-bg-alt);
+	opacity: 0.45;
 }
 
 .calendar-day-cell.is-leave-day {
-	background-color: rgba(228, 34, 34, 0.07);
+	background-color: rgba(239, 68, 68, 0.08);
+}
+
+.calendar-day-cell.is-today {
+	background-color: rgba(251, 191, 36, 0.08);
+	box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.4);
 }
 
 .day-number-wrapper {
@@ -844,21 +850,23 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .day-number {
-	font-size: 0.78rem;
-	font-weight: 600;
-	color: var(--va-text-primary);
+	font-family: var(--font-pixel);
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--pixel-text);
 	min-width: 22px;
 	height: 22px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	border-radius: 2px;
 }
 
 .today-badge {
-	background-color: var(--va-primary);
-	color: #ffffff !important;
-	border-radius: 50%;
-	font-weight: 700;
+	background-color: #fbbf24;
+	color: #161220 !important;
+	font-weight: 800;
+	box-shadow: 0 1px 0 0 #b45309;
 }
 
 /* EVENT BARS (SPANNING GOOGLE CALENDAR STYLE) */
@@ -867,56 +875,61 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	flex-direction: column;
 	gap: 3px;
 	width: 100%;
-	overflow: visible;
 	position: relative;
+	padding: 0 1px;
 }
 
 .event-bar {
-	height: 24px;
+	height: 22px;
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: 5px;
 	padding: 0 6px;
 	font-family: var(--font-pixel);
-	font-size: 11px;
-	font-weight: 600;
+	font-size: 10px;
+	font-weight: 700;
 	color: #ffffff;
 	cursor: pointer;
 	white-space: nowrap;
-	overflow: visible;
+	overflow: hidden;
 	user-select: none;
-	transition: opacity 0.15s ease;
-	margin: 0;
+	margin: 0 2px;
 	border-radius: 2px;
-	position: relative;
-	box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.4);
-	border-top: 1px solid rgba(255, 255, 255, 0.25);
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.45);
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+	transition: filter 0.1s ease, transform 0.08s ease;
 }
 
 .event-bar:hover {
-	opacity: 0.88;
+	filter: brightness(1.2);
+	transform: translateY(-1px);
+}
+
+.event-bar:active {
+	transform: translateY(1px);
+	box-shadow: none;
 }
 
 .event-bar.is-start {
-	border-top-left-radius: 4px;
-	border-bottom-left-radius: 4px;
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
 	margin-left: 3px;
-	padding-left: 6px;
 }
 
 .event-bar.is-end {
-	border-top-right-radius: 4px;
-	border-bottom-right-radius: 4px;
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
 	margin-right: 3px;
-	padding-right: 6px;
 }
 
 .leave-bar {
-	background-color: var(--va-danger);
+	background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+	border-color: #7f1d1d;
 }
 
 .rotation-bar {
-	background-color: var(--va-primary);
+	border-color: rgba(0, 0, 0, 0.6);
 }
 
 .event-icon {
@@ -925,8 +938,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 
 .event-label {
 	white-space: nowrap;
-	overflow: visible;
-	position: relative;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	pointer-events: none;
 }
 
@@ -944,15 +957,21 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .summary-card {
-	border: 1px solid var(--va-background-border);
+	border: 2px solid var(--pixel-border);
+	box-shadow: 0 4px 0 0 var(--pixel-border-dark);
+	background-color: var(--pixel-surface);
 }
 
 .summary-title {
-	font-size: 1rem;
+	font-family: var(--font-pixel);
+	font-size: 0.92rem;
 	font-weight: 700;
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
+	color: var(--pixel-text);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 }
 
 .items-list {
@@ -966,58 +985,63 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	justify-content: space-between;
 	align-items: flex-start;
 	padding: 0.75rem 1rem;
-	background-color: var(--va-background-element);
-	border: 1px solid var(--va-background-border);
-	border-radius: 4px;
+	background-color: var(--pixel-surface-alt);
+	border: 1px solid var(--pixel-border);
+	border-radius: 2px;
+	box-shadow: 0 2px 0 0 var(--pixel-border-dark);
 	gap: 0.75rem;
 }
 
 .item-info {
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
+	gap: 0.3rem;
 	flex: 1;
 }
 
 .item-title {
+	font-family: var(--font-pixel);
 	font-weight: 700;
-	font-size: 0.92rem;
-	color: var(--va-text-primary);
+	font-size: 0.88rem;
+	color: var(--pixel-text);
 }
 
 .rotation-color-dot {
 	display: inline-block;
 	width: 10px;
 	height: 10px;
-	border-radius: 50%;
+	border-radius: 2px;
+	border: 1px solid rgba(0, 0, 0, 0.4);
 	flex-shrink: 0;
 }
 
 .mentor-row-head {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
+	gap: 0.6rem;
 }
 
 .item-dates {
 	display: flex;
 	align-items: center;
 	gap: 0.35rem;
-	font-size: 0.78rem;
-	color: var(--va-text-secondary);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--pixel-text-muted);
 }
 
 .item-desc {
 	margin: 0.25rem 0 0;
-	font-size: 0.78rem;
-	color: var(--va-text-secondary);
+	font-size: 12px;
+	color: var(--pixel-text-dim);
 }
 
 .empty-state-text {
 	text-align: center;
 	padding: 1.5rem 1rem;
-	font-size: 0.85rem;
-	color: var(--va-text-secondary);
+	font-family: var(--font-pixel);
+	font-size: 12px;
+	color: var(--pixel-text-dim);
 }
 
 /* MODALS */
@@ -1033,8 +1057,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	display: flex;
 	align-items: flex-start;
 	gap: 0.35rem;
-	font-size: 0.77rem;
-	color: var(--va-text-secondary);
+	font-size: 12px;
+	color: var(--pixel-text-muted);
 	line-height: 1.4;
 }
 
@@ -1052,16 +1076,19 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .field-label {
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: var(--va-text-secondary);
+	font-family: var(--font-pixel);
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--pixel-text-muted);
 	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 
 .field-value {
-	font-size: 0.95rem;
+	font-family: var(--font-body);
+	font-size: 0.92rem;
 	font-weight: 600;
-	color: var(--va-text-primary);
+	color: var(--pixel-text);
 }
 
 .inspect-actions {

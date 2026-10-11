@@ -147,6 +147,13 @@ def init_db() -> None:
 						) THEN
 							ALTER TABLE coding_questions ADD COLUMN starter_templates JSON NOT NULL DEFAULT '{}';
 						END IF;
+
+						IF NOT EXISTS (
+							SELECT 1 FROM information_schema.columns
+							WHERE table_name='users' AND column_name='avatar'
+						) THEN
+							ALTER TABLE users ADD COLUMN avatar VARCHAR(64);
+						END IF;
 					END $$;
 				""")
 				)
