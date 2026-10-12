@@ -161,17 +161,17 @@ onMounted(() => {
 									<template v-if="user?.role === 'student'">
 										<PixelBadge
 											v-if="userRank === 1"
-											text="RANK #1 CHAMPION"
+											text="RANK #1"
 											color="warning"
 										/>
 										<PixelBadge
 											v-else-if="userRank === 2"
-											text="RANK #2 RUNNER-UP"
+											text="RANK #2"
 											color="secondary"
 										/>
 										<PixelBadge
 											v-else-if="userRank === 3"
-											text="RANK #3 PODIUM"
+											text="RANK #3"
 											color="warning"
 										/>
 									</template>

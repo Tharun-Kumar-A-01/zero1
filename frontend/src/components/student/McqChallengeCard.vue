@@ -169,13 +169,12 @@ function handleSubmit(): void {
 						class="completed-msg success-msg"
 					>
 						<PixelIcon name="check" :size="16" color="var(--pixel-success)" />
-						<span>Aptitude challenge verified (+20 XP).</span>
+						<span>Aptitude challenge verified.</span>
 					</div>
 					<div v-else class="completed-msg incorrect-msg">
 						<PixelIcon name="cross" :size="16" color="var(--pixel-danger)" />
 						<span
-							>Aptitude challenge completed. Marked and correct options are shown
-							above.</span
+							>Aptitude challenge completed.</span
 						>
 					</div>
 				</PixelCardActions>

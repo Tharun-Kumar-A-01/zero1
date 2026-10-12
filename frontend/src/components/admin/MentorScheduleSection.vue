@@ -107,6 +107,17 @@ function getMentorName(userId: number): string {
 	return user ? user.name : `Mentor ID #${userId}`
 }
 
+function getRotationStatus(rot: RotationItem): 'active' | 'upcoming' | 'completed' | 'missed' {
+	const todayStr = formatISODate(new Date())
+	if (todayStr >= rot.week_start_date && todayStr <= rot.week_end_date) {
+		return 'active'
+	}
+	if (todayStr < rot.week_start_date) {
+		return 'upcoming'
+	}
+	return rot.status === 'active' || rot.status === 'upcoming' ? 'completed' : (rot.status as any)
+}
+
 // Compute the end date so the mentor gets exactly 6 working days (Sundays skipped)
 function computeWorkingEnd(start: Date): Date {
 	let d = new Date(start.getFullYear(), start.getMonth(), start.getDate())
@@ -474,14 +485,17 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 					<div v-if="rotations.length > 0" class="items-list">
 						<div
 							v-for="rot in [...rotations].sort((a, b) => {
-								const o = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
-								const so = (o[a.status] ?? 9) - (o[b.status] ?? 9)
+								const o = { active: 0, upcoming: 1, completed: 2, missed: 3 }
+								const sA = getRotationStatus(a)
+								const sB = getRotationStatus(b)
+								const so = (o[sA] ?? 9) - (o[sB] ?? 9)
 								return so !== 0
 									? so
 									: a.week_start_date.localeCompare(b.week_start_date)
 							})"
 							:key="rot.id"
-							class="list-item-row"
+							class="list-item-row clickable-mentor-card"
+							@click="inspectRotation = rot"
 						>
 							<div class="item-info">
 								<div class="mentor-row-head">
@@ -492,13 +506,13 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 									<span class="item-title">{{ getMentorName(rot.user_id) }}</span>
 									<PixelBadge
 										:color="
-											rot.status === 'active'
+											getRotationStatus(rot) === 'active'
 												? 'success'
-												: rot.status === 'upcoming'
+												: getRotationStatus(rot) === 'upcoming'
 													? 'info'
 													: 'secondary'
 										"
-										:text="rot.status.toUpperCase()"
+										:text="getRotationStatus(rot).toUpperCase()"
 									/>
 								</div>
 								<span class="item-dates">
@@ -645,14 +659,15 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 				<div class="inspect-field">
 					<span class="field-label">Status</span>
 					<PixelBadge
+						class="inspect-status-badge"
 						:color="
-							inspectRotation.status === 'active'
+							getRotationStatus(inspectRotation) === 'active'
 								? 'success'
-								: inspectRotation.status === 'upcoming'
+								: getRotationStatus(inspectRotation) === 'upcoming'
 									? 'info'
 									: 'secondary'
 						"
-						:text="inspectRotation.status.toUpperCase()"
+						:text="getRotationStatus(inspectRotation).toUpperCase()"
 					/>
 				</div>
 				<div class="inspect-field">
@@ -753,8 +768,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	font-family: var(--font-pixel);
 	font-size: 1.15rem;
 	font-weight: 700;
-	color: var(--pixel-warning);
-	text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+	color: var(--pixel-primary);
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
 	min-width: 170px;
@@ -847,8 +861,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .calendar-day-cell.is-today {
-	background-color: rgba(251, 191, 36, 0.08);
-	box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.4);
+	background-color: var(--pixel-selection-bg);
+	box-shadow: inset 0 0 0 1px var(--pixel-primary);
 }
 
 .day-number-wrapper {
@@ -871,10 +885,10 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .today-badge {
-	background-color: var(--pixel-warning);
-	color: var(--pixel-border-dark) !important;
+	background-color: var(--pixel-btn-primary-bg);
+	color: var(--pixel-btn-primary-text) !important;
 	font-weight: 800;
-	box-shadow: 0 1px 0 0 var(--pixel-btn-warning-border);
+	box-shadow: 0 1px 0 0 var(--pixel-btn-primary-shade);
 }
 
 /* EVENT BARS (SPANNING GOOGLE CALENDAR STYLE) */
@@ -1106,5 +1120,28 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	justify-content: flex-end;
 	gap: 0.75rem;
 	margin-top: 1rem;
+}
+
+.inspect-status-badge {
+	width: fit-content !important;
+	align-self: flex-start !important;
+}
+
+.clickable-mentor-card {
+	cursor: pointer;
+	transition:
+		transform 0.08s ease,
+		background-color 0.1s ease,
+		border-color 0.1s ease;
+}
+
+.clickable-mentor-card:hover {
+	background-color: var(--pixel-surface-raised);
+	border-color: var(--pixel-border-bright);
+	transform: translateY(-1px);
+}
+
+.clickable-mentor-card:active {
+	transform: translateY(1px);
 }
 </style>

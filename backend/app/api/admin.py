@@ -282,11 +282,19 @@ def schedule_mentor_rotation() -> tuple[Response, int]:
 				"OVERLAP_CONFLICT", "A mentor is already assigned for this date range."
 			)
 
+		today = date.today()
+		if week_start <= today <= week_end:
+			init_status = AssignmentStatus.ACTIVE
+		elif today > week_end:
+			init_status = AssignmentStatus.COMPLETED
+		else:
+			init_status = AssignmentStatus.UPCOMING
+
 		assignment = MentorAssignment(
 			user_id=user_id,
 			week_start_date=week_start,
 			week_end_date=week_end,
-			status=AssignmentStatus.UPCOMING,
+			status=init_status,
 			created_by_admin_id=admin_id,
 		)
 		session.add(assignment)
@@ -317,8 +325,23 @@ def schedule_mentor_rotation() -> tuple[Response, int]:
 def get_rotation_schedule() -> tuple[Response, int]:
 	"""List all scheduled mentor rotations."""
 	with get_db_session() as session:
+		today = date.today()
 		stmt = select(MentorAssignment).order_by(MentorAssignment.week_start_date.desc())
 		assignments = session.scalars(stmt).all()
+		has_updates = False
+		for a in assignments:
+			if a.status == AssignmentStatus.UPCOMING and a.week_start_date <= today <= a.week_end_date:
+				a.status = AssignmentStatus.ACTIVE
+				has_updates = True
+			elif a.status in (AssignmentStatus.ACTIVE, AssignmentStatus.UPCOMING) and a.week_end_date < today:
+				a.status = (
+					AssignmentStatus.COMPLETED
+					if (a.question_set and a.question_set.status == QuestionSetStatus.PUBLISHED)
+					else AssignmentStatus.MISSED
+				)
+				has_updates = True
+		if has_updates:
+			session.flush()
 		return api_success([a.to_dict() for a in assignments])
 
 
@@ -363,6 +386,14 @@ def update_rotation(rotation_id: int) -> tuple[Response, int]:
 			assignment.week_end_date = new_end
 			if assignment.question_set:
 				assignment.question_set.week_start_date = new_start
+
+			today = date.today()
+			if new_start <= today <= new_end:
+				assignment.status = AssignmentStatus.ACTIVE
+			elif today > new_end:
+				assignment.status = AssignmentStatus.COMPLETED
+			else:
+				assignment.status = AssignmentStatus.UPCOMING
 
 		session.flush()
 		return api_success(assignment.to_dict(), message="Rotation updated.")

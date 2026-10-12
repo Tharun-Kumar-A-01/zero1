@@ -638,9 +638,10 @@ function navigateTo(path: string): void {
 	.nav-item--active {
 		background: transparent;
 		box-shadow: none;
-		color: var(--pixel-warning);
+		color: var(--pixel-primary);
 		border: none;
-		border-top: 2px solid var(--pixel-warning);
+		border-top: 2px solid var(--pixel-primary);
+		padding: 28px 0 !important;
 	}
 
 	.nav-label {

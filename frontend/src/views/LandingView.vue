@@ -2,7 +2,6 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PixelButton from '@/components/pixel/PixelButton.vue'
-import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
@@ -49,13 +48,12 @@ function goToGithub(): void {
 		<section class="hero-section">
 			<div class="hero-container">
 				<h1 class="hero-title">
-					Self-Hostable Daily Coding Practice for Your College & Class
+					Self-Hostable Daily Coding Practice
 				</h1>
 
 				<p class="hero-desc">
-					Deploy Zero1 directly on campus servers or private clouds. Empower engineering
-					cohorts with daily aptitude and coding quests, Judge0 automated execution,
-					faculty rotation scheduling, and gamified streak leaderboards.
+					A gamified coding platform for colleges and classrooms. Daily aptitude and
+					code quests, faculty rotations, automated test execution, and persistent streaks.
 				</p>
 
 				<div class="hero-buttons">
@@ -70,106 +68,66 @@ function goToGithub(): void {
 			</div>
 		</section>
 
-		<!-- 3 CORE PILLARS -->
+		<!-- CORE PILLARS & FEATURES -->
 		<section class="pillars-section">
 			<div class="section-container">
-				<h2 class="section-heading">Built Specifically for Colleges & Classrooms</h2>
+				<h2 class="section-heading">Built for College Classrooms</h2>
 				<p class="section-subheading">
-					A self-contained platform designed to build lifelong daily coding habits and
-					interview aptitude.
+					Everything you need to run daily coding practice with full data privacy.
 				</p>
 
 				<div class="pillars-grid">
-					<!-- Pillar 1 -->
+					<!-- Card 1 -->
 					<div class="pillar-card">
-						<PixelSprite name="sword" :size="32" />
+						<PixelSprite name="sword" :size="28" />
 						<h3 class="pillar-title">Daily Quests</h3>
 						<p class="pillar-text">
-							Every morning unlocks one aptitude MCQ and one hands-on coding problem
-							tailored for college batches. Solving either quest maintains the
-							student's daily streak.
+							1 aptitude MCQ and 1 coding challenge unlocked daily. Solving either quest keeps the streak alive.
 						</p>
 					</div>
 
-					<!-- Pillar 2 -->
+					<!-- Card 2 -->
 					<div class="pillar-card">
-						<PixelSprite name="shield" :size="32" />
+						<PixelSprite name="shield" :size="28" />
 						<h3 class="pillar-title">Self-Hosted</h3>
 						<p class="pillar-text">
-							Run entirely on your department hardware or private infrastructure. Full
-							data ownership of student grades, batch rosters, and source code
-							submissions.
+							Deploy on campus servers or private clouds. Full ownership of student submissions and data.
 						</p>
 					</div>
 
-					<!-- Pillar 3 -->
+					<!-- Card 3 -->
 					<div class="pillar-card">
-						<PixelSprite name="trophy" :size="32" />
-						<h3 class="pillar-title">Gamification</h3>
+						<PixelSprite name="scroll" :size="28" />
+						<h3 class="pillar-title">Faculty Rotations</h3>
 						<p class="pillar-text">
-							Motivate students with persistent streak counters, milestone badges
-							(Bronze, Silver, Gold, Emerald, Ruby, Diamond), and batch-filtered
-							Olympic leaderboards.
-						</p>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<!-- CAMPUS FEATURES GRID -->
-		<section class="features-section">
-			<div class="section-container">
-				<h2 class="section-heading">Institutional Features for Faculty & Admins</h2>
-				<p class="section-subheading">
-					Equipped with enterprise tools for smooth academic administration.
-				</p>
-
-				<div class="features-grid">
-					<div class="feature-item">
-						<div class="feature-head">
-							<PixelSprite name="scroll" :scale="1.2" />
-							<h4 class="feature-title">Faculty Rotation Scheduling</h4>
-						</div>
-						<p class="feature-desc">
-							Assign weekly mentoring rotations among professors. Faculty draft
-							curriculum-aligned problem sets with AI test-case synthesis before
-							publishing.
+							Schedule weekly mentor rotations. Faculty author questions with automated test-case synthesis.
 						</p>
 					</div>
 
-					<div class="feature-item">
-						<div class="feature-head">
-							<PixelSprite name="chest" :scale="1.2" />
-							<h4 class="feature-title">Excel & CSV Roster Onboarding</h4>
-						</div>
-						<p class="feature-desc">
-							Upload class spreadsheets with roll numbers, department sections, and
-							batch years. Intelligent mapping parses headers and registers students
-							seamlessly.
+					<!-- Card 4 -->
+					<div class="pillar-card">
+						<PixelSprite name="chest" :size="28" />
+						<h3 class="pillar-title">Roster Onboarding</h3>
+						<p class="pillar-text">
+							Import class spreadsheets with roll numbers, sections, and batch years in seconds.
 						</p>
 					</div>
 
-					<div class="feature-item">
-						<div class="feature-head">
-							<PixelSprite name="thunder" :scale="1.2" />
-							<h4 class="feature-title">Automated Judge0 Sandbox</h4>
-						</div>
-						<p class="feature-desc">
-							Execute code safely across Python, C++, Java, and JavaScript against
-							sample and hidden edge test cases with memory and execution timeout
-							constraints.
+					<!-- Card 5 -->
+					<div class="pillar-card">
+						<PixelSprite name="thunder" :size="28" />
+						<h3 class="pillar-title">Automated Sandbox</h3>
+						<p class="pillar-text">
+							Multi-language code execution in a secure Judge0 sandbox with custom edge test cases.
 						</p>
 					</div>
 
-					<div class="feature-item">
-						<div class="feature-head">
-							<PixelSprite name="gem_emerald" :scale="1.2" />
-							<h4 class="feature-title">Customizable Badges & Milestones</h4>
-						</div>
-						<p class="feature-desc">
-							Admins configure custom XP milestones, streak thresholds, and problem
-							count rewards with retro gem badges to match the semester's learning
-							outcomes.
+					<!-- Card 6 -->
+					<div class="pillar-card">
+						<PixelSprite name="trophy" :size="28" />
+						<h3 class="pillar-title">Gamified Streaks</h3>
+						<p class="pillar-text">
+							Motivate daily consistency with XP rewards, streak multipliers, and custom milestone badges.
 						</p>
 					</div>
 				</div>
@@ -179,31 +137,30 @@ function goToGithub(): void {
 		<!-- SIMPLE 3-STEP FLOW -->
 		<section class="flow-section">
 			<div class="section-container">
+				<h2 class="section-heading">How It Works</h2>
+				<p class="section-subheading">Simple setup for faculty, seamless daily practice for students.</p>
 				<div class="flow-grid">
 					<div class="flow-step">
 						<div class="step-number">1</div>
-						<h4 class="step-title">Deploy & Import Roster</h4>
+						<h4 class="step-title">Deploy & Import</h4>
 						<p class="step-desc">
-							Deploy with Docker or local server and import student rosters by batch
-							year and section in seconds.
+							Run via Docker and upload your department student roster.
 						</p>
 					</div>
 
 					<div class="flow-step">
 						<div class="step-number">2</div>
-						<h4 class="step-title">Schedule Faculty Rotations</h4>
+						<h4 class="step-title">Rotate Mentors</h4>
 						<p class="step-desc">
-							Mentors curate daily aptitude MCQs and coding challenges with automated
-							test-case generators.
+							Faculty curate weekly problem sets aligned with coursework.
 						</p>
 					</div>
 
 					<div class="flow-step">
 						<div class="step-number">3</div>
-						<h4 class="step-title">Students Code Every Day</h4>
+						<h4 class="step-title">Daily Practice</h4>
 						<p class="step-desc">
-							Students solve quests, preserve streaks, unlock custom gem badges, and
-							climb the cohort Hall of Fame.
+							Students solve quests daily, maintain streaks, and level up.
 						</p>
 					</div>
 				</div>
@@ -215,13 +172,12 @@ function goToGithub(): void {
 			<div class="section-container">
 				<div class="cta-box">
 					<PixelSprite name="flame" :scale="2" class="cta-icon" />
-					<h2 class="cta-title">Ready to Level Up Your Class?</h2>
+					<h2 class="cta-title">Ready to Start Today's Quest?</h2>
 					<p class="cta-desc">
-						Build discipline, consistency, and campus-wide coding culture. Sign in with
-						your department credentials to start today's quest.
+						Sign in with your campus account and start coding.
 					</p>
 					<PixelButton variant="primary" size="large" @click="handleAction">
-						{{ authStore.isAuthenticated ? 'Resume Daily Quests' : 'Sign In' }}
+						{{ authStore.isAuthenticated ? 'Enter Arena' : 'Sign In' }}
 					</PixelButton>
 				</div>
 			</div>
@@ -232,7 +188,7 @@ function goToGithub(): void {
 			<div class="footer-container">
 				<div class="footer-brand">
 					<PixelSprite name="sword" :size="18" />
-					<span>ZERO1 • SELF-HOSTED CAMPUS CODING GUILD</span>
+					<span>ZERO1 • SELF-HOSTED CODING PRACTICE</span>
 				</div>
 			</div>
 		</footer>
@@ -432,48 +388,6 @@ function goToGithub(): void {
 	margin: 0;
 }
 
-/* CAMPUS FEATURES SECTION */
-.features-section {
-	padding: 4rem 1.5rem;
-	border-bottom: 2px solid var(--pixel-border);
-	background-color: var(--pixel-surface);
-}
-
-.features-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 1.5rem;
-}
-
-.feature-item {
-	background: var(--pixel-surface-alt);
-	border: 2px solid var(--pixel-border);
-	padding: 1.5rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-}
-
-.feature-head {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-.feature-title {
-	font-family: var(--pixel-font, monospace);
-	font-size: 1.05rem;
-	margin: 0;
-	color: var(--pixel-text);
-}
-
-.feature-desc {
-	font-size: 0.88rem;
-	line-height: 1.5;
-	color: var(--pixel-text-muted);
-	margin: 0;
-}
-
 /* FLOW SECTION */
 .flow-section {
 	padding: 3.5rem 1.5rem;
@@ -597,7 +511,6 @@ function goToGithub(): void {
 	}
 
 	.pillars-grid,
-	.features-grid,
 	.flow-grid {
 		grid-template-columns: 1fr;
 		gap: 1.25rem;

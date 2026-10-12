@@ -620,8 +620,8 @@ onBeforeUnmount(() => {
 }
 
 .calendar-day-btn.is-today {
-	border: 1px dashed var(--gold-glow);
-	color: var(--gold-glow);
+	border: 1px dashed var(--pixel-primary);
+	color: var(--pixel-primary);
 }
 
 .calendar-day-btn.is-selected {

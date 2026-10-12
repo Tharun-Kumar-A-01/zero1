@@ -6,6 +6,7 @@ import PixelTab from '@/components/pixel/PixelTab.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 
 import api from '@/services/api'
+import { formatISODate } from '@/utils/date'
 import type { UserItem, RotationItem, CustomLeaveItem, ImportJobResponse } from '@/types'
 import AdminHubBanner from '@/components/admin/AdminHubBanner.vue'
 import MentorScheduleSection from '@/components/admin/MentorScheduleSection.vue'
@@ -46,7 +47,15 @@ const importSummary = ref<{
 const mentorUsers = computed<UserItem[]>(() => users.value)
 
 const activeRotation = computed<RotationItem | null>(() => {
-	return rotations.value.find((r) => r.status === 'active') || null
+	const todayStr = formatISODate(new Date())
+	return (
+		rotations.value.find((r) => {
+			return (
+				r.status === 'active' ||
+				(r.week_start_date <= todayStr && todayStr <= r.week_end_date)
+			)
+		}) || null
+	)
 })
 
 async function fetchUsers(): Promise<void> {
@@ -339,21 +348,21 @@ onMounted(async (): Promise<void> => {
 
 		<!-- Section Tabs -->
 		<PixelTabs v-model="activeTab" class="admin-tabs">
-			<PixelTab name="users">
-				<PixelIcon name="user" :size="14" class="tab-icon" />
-				User Directory ({{ users.length }})
+			<PixelTab name="users" title="User Directory">
+				<PixelIcon name="user" :size="16" class="tab-icon" />
+				<span class="tab-label">User Directory ({{ users.length }})</span>
 			</PixelTab>
-			<PixelTab name="rotations">
-				<PixelIcon name="calendar" :size="14" class="tab-icon" />
-				Mentor Schedule ({{ rotations.length }})
+			<PixelTab name="rotations" title="Mentor Schedule">
+				<PixelIcon name="calendar" :size="16" class="tab-icon" />
+				<span class="tab-label">Mentor Schedule ({{ rotations.length }})</span>
 			</PixelTab>
-			<PixelTab name="problems">
-				<PixelIcon name="code" :size="14" class="tab-icon" />
-				Problem Pool
+			<PixelTab name="problems" title="Problem Pool">
+				<PixelIcon name="code" :size="16" class="tab-icon" />
+				<span class="tab-label">Problem Pool</span>
 			</PixelTab>
-			<PixelTab name="achievements">
-				<PixelIcon name="trophy" :size="14" class="tab-icon" />
-				Achievements & Badges
+			<PixelTab name="achievements" title="Achievements & Badges">
+				<PixelIcon name="trophy" :size="16" class="tab-icon" />
+				<span class="tab-label">Achievements & Badges</span>
 			</PixelTab>
 		</PixelTabs>
 
@@ -414,5 +423,25 @@ onMounted(async (): Promise<void> => {
 .tab-icon {
 	margin-right: 0.5rem;
 	vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+	.admin-page {
+		padding: 1rem 0.75rem;
+	}
+
+	.tab-label {
+		display: none;
+	}
+
+	.tab-icon {
+		margin-right: 0;
+	}
+
+	:deep(.pixel-tab) {
+		padding: 8px 12px;
+		justify-content: center;
+		flex: 1;
+	}
 }
 </style>

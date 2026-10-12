@@ -688,8 +688,8 @@ onUnmounted(() => {
 
 .mobile-tab-btn.active {
 	background: var(--pixel-surface);
-	color: var(--pixel-warning);
-	border-bottom-color: var(--pixel-warning);
+	color: var(--pixel-primary);
+	border-bottom-color: var(--pixel-primary);
 }
 
 .mobile-status-dot {
