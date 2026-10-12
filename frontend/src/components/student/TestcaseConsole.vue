@@ -444,7 +444,7 @@ defineExpose({
 }
 
 .tab-btn.active {
-	color: #ffffff;
+	color: var(--pixel-text);
 	background: var(--pixel-bg);
 	border-color: var(--pixel-border);
 	border-top: 2px solid var(--pixel-btn-primary-bg);
@@ -460,13 +460,13 @@ defineExpose({
 }
 
 .dot-success {
-	background: #10b981;
-	box-shadow: 0 0 0 1px #064e3b;
+	background: var(--pixel-success-border);
+	box-shadow: 0 0 0 1px var(--pixel-success-shade);
 }
 
 .dot-danger {
-	background: #ef4444;
-	box-shadow: 0 0 0 1px #7f1d1d;
+	background: var(--pixel-danger-border);
+	box-shadow: 0 0 0 1px var(--pixel-danger-shade);
 }
 
 .console-content {
@@ -522,51 +522,51 @@ defineExpose({
 	box-shadow: 0 1px 0 0 var(--pixel-border-dark);
 	background-color: var(--pixel-btn-primary-bg);
 	border-color: var(--pixel-btn-primary-border);
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .result-pill-btn.pill-passed {
-	border-color: #10b981;
-	box-shadow: 0 3px 0 0 #064e3b;
-	color: #6ee7b7;
+	border-color: var(--pixel-success-border);
+	box-shadow: 0 3px 0 0 var(--pixel-success-shade);
+	color: var(--pixel-success-text);
 }
 
 .result-pill-btn.pill-passed .pill-status-icon {
-	color: #34d399;
+	color: var(--pixel-success);
 }
 
 .result-pill-btn.pill-failed {
-	border-color: #ef4444;
-	box-shadow: 0 3px 0 0 #7f1d1d;
-	color: #fca5a5;
+	border-color: var(--pixel-danger-border);
+	box-shadow: 0 3px 0 0 var(--pixel-danger-shade);
+	color: var(--pixel-danger-text);
 }
 
 .result-pill-btn.pill-failed .pill-status-icon {
-	color: #f87171;
+	color: var(--pixel-danger);
 }
 
 .result-pill-btn.active.pill-passed {
-	background-color: #064e3b;
-	border-color: #10b981;
-	box-shadow: 0 1px 0 0 #064e3b;
-	color: #ffffff;
+	background-color: var(--pixel-success-shade);
+	border-color: var(--pixel-success-border);
+	box-shadow: 0 1px 0 0 var(--pixel-success-shade);
+	color: var(--pixel-btn-primary-text);
 	transform: translateY(2px);
 }
 
 .result-pill-btn.active.pill-passed .pill-status-icon {
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .result-pill-btn.active.pill-failed {
-	background-color: #7f1d1d;
-	border-color: #ef4444;
-	box-shadow: 0 1px 0 0 #7f1d1d;
-	color: #ffffff;
+	background-color: var(--pixel-danger-shade);
+	border-color: var(--pixel-danger-border);
+	box-shadow: 0 1px 0 0 var(--pixel-danger-shade);
+	color: var(--pixel-btn-primary-text);
 	transform: translateY(2px);
 }
 
 .result-pill-btn.active.pill-failed .pill-status-icon {
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .case-details {
@@ -602,17 +602,17 @@ defineExpose({
 }
 
 .tag-passed {
-	background-color: #12281e;
-	color: #6ee7b7;
-	border-color: #10b981;
-	box-shadow: 0 2px 0 0 #064e3b;
+	background-color: var(--pixel-success-surface);
+	color: var(--pixel-success-text);
+	border-color: var(--pixel-success-border);
+	box-shadow: 0 2px 0 0 var(--pixel-success-shade);
 }
 
 .tag-failed {
-	background-color: #2a1518;
-	color: #fca5a5;
-	border-color: #ef4444;
-	box-shadow: 0 2px 0 0 #7f1d1d;
+	background-color: var(--pixel-danger-surface);
+	color: var(--pixel-danger-text);
+	border-color: var(--pixel-danger-border);
+	box-shadow: 0 2px 0 0 var(--pixel-danger-shade);
 }
 
 .case-meta-tag {
@@ -637,7 +637,7 @@ defineExpose({
 }
 
 .io-label.error-label {
-	color: #f87171;
+	color: var(--pixel-danger);
 }
 
 .io-pre {
@@ -662,26 +662,26 @@ defineExpose({
 }
 
 .expected-pre {
-	border-left: 4px solid #38bdf8;
+	border-left: 4px solid var(--pixel-info);
 }
 
 .match-pre {
-	border-left: 4px solid #10b981;
+	border-left: 4px solid var(--pixel-success-border);
 	background: rgba(16, 185, 129, 0.06);
 }
 
 .mismatch-pre {
-	border: 2px solid #ef4444;
-	border-left: 4px solid #ef4444;
-	background: #241417;
-	color: #fca5a5;
+	border: 2px solid var(--pixel-danger-border);
+	border-left: 4px solid var(--pixel-danger-border);
+	background: var(--pixel-danger-surface);
+	color: var(--pixel-danger-text);
 }
 
 .error-pre {
-	color: #fca5a5;
-	border: 2px solid #ef4444;
-	border-left: 4px solid #ef4444;
-	background: #241417;
+	color: var(--pixel-danger-text);
+	border: 2px solid var(--pixel-danger-border);
+	border-left: 4px solid var(--pixel-danger-border);
+	background: var(--pixel-danger-surface);
 }
 
 .error-alert {
@@ -721,17 +721,17 @@ defineExpose({
 }
 
 .verdict-pass {
-	background-color: #12281e;
-	border-color: #10b981;
-	box-shadow: 0 4px 0 0 #064e3b;
-	color: #6ee7b7;
+	background-color: var(--pixel-success-surface);
+	border-color: var(--pixel-success-border);
+	box-shadow: 0 4px 0 0 var(--pixel-success-shade);
+	color: var(--pixel-success-text);
 }
 
 .verdict-fail {
-	background-color: #2a1518;
-	border-color: #ef4444;
-	box-shadow: 0 4px 0 0 #7f1d1d;
-	color: #fca5a5;
+	background-color: var(--pixel-danger-surface);
+	border-color: var(--pixel-danger-border);
+	box-shadow: 0 4px 0 0 var(--pixel-danger-shade);
+	color: var(--pixel-danger-text);
 }
 
 .verdict-title-row {
@@ -770,7 +770,7 @@ defineExpose({
 
 .stat-badge strong {
 	font-weight: normal;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .empty-cases,

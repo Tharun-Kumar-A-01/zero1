@@ -585,8 +585,8 @@ onMounted(async () => {
 }
 
 .header-card {
-	background: var(--pixel-surface, #1e1e24);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface);
+	border: 2px solid var(--pixel-border);
 }
 
 .header-content {
@@ -614,10 +614,10 @@ onMounted(async () => {
 }
 
 .header-title {
-	font-family: var(--pixel-font, 'Courier New', monospace);
+	font-family: var(--pixel-font, monospace);
 	font-size: 1.35rem;
 	font-weight: 700;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 	margin: 0;
 	letter-spacing: 0.5px;
 }
@@ -625,7 +625,7 @@ onMounted(async () => {
 .header-desc {
 	font-size: 0.85rem;
 	line-height: 1.45;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 }
 
@@ -657,7 +657,7 @@ onMounted(async () => {
 .empty-card {
 	text-align: center;
 	padding: 3rem 1.5rem;
-	background: var(--pixel-surface, #1e1e24);
+	background: var(--pixel-surface);
 }
 
 .empty-content {
@@ -670,13 +670,13 @@ onMounted(async () => {
 .empty-title {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.2rem;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 	margin: 0;
 }
 
 .empty-desc {
 	font-size: 0.85rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	max-width: 460px;
 	margin: 0;
 }
@@ -689,15 +689,15 @@ onMounted(async () => {
 }
 
 .milestone-card {
-	background: var(--pixel-surface, #1e1e24);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface);
+	border: 2px solid var(--pixel-border);
 	transition:
 		transform 0.15s ease,
 		border-color 0.15s ease;
 }
 
 .milestone-card:hover {
-	border-color: var(--pixel-primary, #6366f1);
+	border-color: var(--pixel-primary);
 	transform: translateY(-2px);
 }
 
@@ -722,13 +722,13 @@ onMounted(async () => {
 .badge-icon-box {
 	width: 52px;
 	height: 52px;
-	background: rgba(0, 0, 0, 0.4);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface-raised);
+	border: 2px solid var(--pixel-border);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+	box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .card-headings {
@@ -748,7 +748,7 @@ onMounted(async () => {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.05rem;
 	font-weight: 700;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 	margin: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -758,7 +758,7 @@ onMounted(async () => {
 .card-desc {
 	font-size: 0.8rem;
 	line-height: 1.35;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
@@ -770,8 +770,8 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	background: rgba(0, 0, 0, 0.25);
-	border: 1px solid var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface-alt);
+	border: 1px solid var(--pixel-border);
 	padding: 0.75rem;
 	font-size: 0.82rem;
 }
@@ -784,7 +784,7 @@ onMounted(async () => {
 }
 
 .detail-label {
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	font-weight: 500;
 }
 
@@ -793,25 +793,25 @@ onMounted(async () => {
 	align-items: center;
 	gap: 0.35rem;
 	font-weight: 600;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .requirement-value {
-	color: #38bdf8;
+	color: var(--pixel-info);
 }
 
 .reward-value {
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .badge-tag {
 	font-size: 0.72rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin-left: 0.25rem;
 }
 
 .earned-value {
-	color: #a78bfa;
+	color: var(--pixel-primary);
 }
 
 .metric-icon {
@@ -858,7 +858,7 @@ onMounted(async () => {
 .form-label {
 	font-family: var(--pixel-font, monospace);
 	font-size: 0.8rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 }
@@ -870,8 +870,8 @@ onMounted(async () => {
 	gap: 0.5rem;
 	max-height: 180px;
 	overflow-y: auto;
-	background: rgba(0, 0, 0, 0.35);
-	border: 1px solid var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface-alt);
+	border: 1px solid var(--pixel-border);
 	padding: 0.5rem;
 }
 
@@ -886,19 +886,19 @@ onMounted(async () => {
 	border: 1px solid transparent;
 	cursor: pointer;
 	border-radius: 2px;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	transition: all 0.1s ease;
 }
 
 .icon-palette-btn:hover {
-	background: rgba(255, 255, 255, 0.05);
-	border-color: var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface-raised);
+	border-color: var(--pixel-border);
 }
 
 .icon-palette-btn--active {
-	background: rgba(99, 102, 241, 0.2);
-	border-color: var(--pixel-primary, #6366f1);
-	color: var(--pixel-text, #ffffff);
+	background: var(--pixel-selection-bg);
+	border-color: var(--pixel-primary);
+	color: var(--pixel-text);
 }
 
 .icon-palette-label {
@@ -926,13 +926,13 @@ onMounted(async () => {
 
 .delete-warning {
 	font-size: 0.95rem;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 	margin: 0;
 }
 
 .delete-subtext {
 	font-size: 0.8rem;
-	color: var(--pixel-danger, #ef4444);
+	color: var(--pixel-danger);
 	margin: 0;
 	max-width: 400px;
 }

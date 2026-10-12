@@ -80,7 +80,7 @@ const bgColor = computed(() => {
 	justify-content: center;
 	font-family: var(--font-pixel);
 	font-weight: bold;
-	color: #fff;
+	color: var(--pixel-btn-primary-text);
 	border: 2px solid var(--pixel-border);
 	box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.4);
 	border-radius: 4px;

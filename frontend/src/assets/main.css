@@ -62,12 +62,170 @@
 	--gold-glow: #f59e0b;
 	--silver-glow: #94a3b8;
 	--bronze-glow: #b45309;
+	--gold-surface: #2a2016;
+	--gold-border: #f59e0b;
+	--gold-shade: #b45309;
+	--gold-text: #fef08a;
+	--silver-surface: #1e222d;
+	--silver-border: #94a3b8;
+	--silver-shade: #475569;
+	--silver-text: #e2e8f0;
+	--bronze-surface: #281a14;
+	--bronze-border: #b45309;
+	--bronze-shade: #78350f;
+	--bronze-text: #fed7aa;
+
+	/* Accents & Statuses */
+	--pixel-primary: #818cf8;
+	--pixel-success: #34d399;
+	--pixel-warning: #fbbf24;
+	--pixel-danger: #f87171;
+	--pixel-info: #38bdf8;
+	--pixel-caret: #fbbf24;
+	--pixel-selection-bg: rgba(90, 50, 163, 0.45);
+	--pixel-selection-text: #ffffff;
+
+	/* Status Surfaces */
+	--pixel-success-surface: #12281e;
+	--pixel-success-border: #10b981;
+	--pixel-success-shade: #064e3b;
+	--pixel-success-text: #6ee7b7;
+
+	--pixel-danger-surface: #2a1518;
+	--pixel-danger-border: #ef4444;
+	--pixel-danger-shade: #7f1d1d;
+	--pixel-danger-text: #fca5a5;
+
+	/* Toasts */
+	--pixel-toast-success-bg: #172b1d;
+	--pixel-toast-success-text: #a7f3d0;
+	--pixel-toast-danger-bg: #311515;
+	--pixel-toast-danger-text: #fecaca;
+	--pixel-toast-warning-bg: #2e1d0f;
+	--pixel-toast-warning-text: #fed7aa;
+	--pixel-toast-info-bg: #112638;
+	--pixel-toast-info-text: #bae6fd;
+	--pixel-toast-primary-bg: #241638;
+	--pixel-toast-primary-text: #e9d5ff;
 
 	/* Fonts */
 	--font-pixel: 'Departure Mono', monospace;
 	--font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	--font-mono: 'Terminus', 'Departure Mono', 'JetBrains Mono', monospace;
 	--pixel-font: var(--font-pixel);
+}
+
+html.light {
+	/* Habitica Official Arcade RPG Light Palette */
+	/* Core Surfaces: Habitica $gray-600 (#edecee), $gray-500 (#e1e0e3), $white (#ffffff), $gray-700 (#f9f9f9) */
+	--pixel-bg: #edecee;
+	--pixel-bg-alt: #e1e0e3;
+	--pixel-surface: #ffffff;
+	--pixel-surface-alt: #f9f9f9;
+	--pixel-surface-raised: #e1e0e3;
+
+	/* Pixel 3D Bevel Borders: Habitica $gray-400/#b2aebd border, $gray-100/#686274 3D shade, $purple-600/#d5c8ff highlight */
+	--pixel-border: #b2aebd;
+	--pixel-border-dark: #686274;
+	--pixel-border-bright: #d5c8ff;
+
+	/* Habitica Typography: $gray-10 (#34313a), $gray-100 (#686274), $gray-200 (#878190) */
+	--pixel-text: #34313a;
+	--pixel-text-muted: #686274;
+	--pixel-text-dim: #878190;
+
+	/* Button Color Palettes - Habitica Class & Action Colors */
+	/* Primary (Habitica Rogue / Royal Purple $purple-200: #4f2a93, $purple-50: #36205d, $purple-300: #6133b4) */
+	--pixel-btn-primary-bg: #4f2a93;
+	--pixel-btn-primary-border: #36205d;
+	--pixel-btn-primary-shade: #271b3d;
+	--pixel-btn-primary-hover: #6133b4;
+	--pixel-btn-primary-text: #ffffff;
+
+	/* Success (Habitica Gems & Habit Positive $green-10: #1ca372, $green-1: #005737, $green-50: #20b780) */
+	--pixel-btn-success-bg: #1ca372;
+	--pixel-btn-success-border: #005737;
+	--pixel-btn-success-shade: #003a25;
+	--pixel-btn-success-hover: #20b780;
+	--pixel-btn-success-text: #ffffff;
+
+	/* Danger (Habitica Warrior / Health Loss $maroon-50: #c92b2b, $maroon-10: #b01515, $red-1: #6c0406) */
+	--pixel-btn-danger-bg: #c92b2b;
+	--pixel-btn-danger-border: #b01515;
+	--pixel-btn-danger-shade: #6c0406;
+	--pixel-btn-danger-hover: #de3f3f;
+	--pixel-btn-danger-text: #ffffff;
+
+	/* Warning (Habitica Gold / Healer $yellow-5: #ee9109, $yellow-1: #794b00, $yellow-10: #ffa624) */
+	--pixel-btn-warning-bg: #ee9109;
+	--pixel-btn-warning-border: #794b00;
+	--pixel-btn-warning-shade: #523300;
+	--pixel-btn-warning-hover: #ffa624;
+	--pixel-btn-warning-text: #ffffff;
+
+	/* Info (Habitica Wizard / Mana Blue $blue-10: #2995cd, $blue-1: #033f5e, $blue-50: #46a7d9) */
+	--pixel-btn-info-bg: #2995cd;
+	--pixel-btn-info-border: #033f5e;
+	--pixel-btn-info-shade: #02293e;
+	--pixel-btn-info-hover: #46a7d9;
+	--pixel-btn-info-text: #ffffff;
+
+	/* Secondary (Habitica Gray Stone $gray-500: #e1e0e3, $gray-300: #a5a1ac, $gray-200: #878190) */
+	--pixel-btn-secondary-bg: #e1e0e3;
+	--pixel-btn-secondary-border: #b2aebd;
+	--pixel-btn-secondary-shade: #878190;
+	--pixel-btn-secondary-hover: #edecee;
+	--pixel-btn-secondary-text: #34313a;
+
+	/* Accents & Statuses */
+	--pixel-primary: #6133b4;
+	--pixel-success: #1ca372;
+	--pixel-warning: #ee9109;
+	--pixel-danger: #c92b2b;
+	--pixel-info: #2995cd;
+	--pixel-caret: #6133b4;
+	--pixel-selection-bg: rgba(97, 51, 180, 0.2);
+	--pixel-selection-text: #34313a;
+
+	/* Ranks / Medals (Habitica Gold, Silver, Bronze) */
+	--gold-glow: #ffa624;
+	--silver-glow: #878190;
+	--bronze-glow: #f47825;
+	--gold-surface: #fedead;
+	--gold-border: #ffa624;
+	--gold-shade: #ee9109;
+	--gold-text: #794b00;
+	--silver-surface: #edecee;
+	--silver-border: #b2aebd;
+	--silver-shade: #878190;
+	--silver-text: #34313a;
+	--bronze-surface: #ffc8a7;
+	--bronze-border: #fa8537;
+	--bronze-shade: #f47825;
+	--bronze-text: #7f3300;
+
+	/* Status Surfaces */
+	--pixel-success-surface: #e8faf3;
+	--pixel-success-border: #1ca372;
+	--pixel-success-shade: #005737;
+	--pixel-success-text: #005737;
+
+	--pixel-danger-surface: #fdeded;
+	--pixel-danger-border: #c92b2b;
+	--pixel-danger-shade: #6c0406;
+	--pixel-danger-text: #6c0406;
+
+	/* Toasts */
+	--pixel-toast-success-bg: #e8faf3;
+	--pixel-toast-success-text: #005737;
+	--pixel-toast-danger-bg: #fdeded;
+	--pixel-toast-danger-text: #6c0406;
+	--pixel-toast-warning-bg: #fef8ee;
+	--pixel-toast-warning-text: #794b00;
+	--pixel-toast-info-bg: #edf7fc;
+	--pixel-toast-info-text: #033f5e;
+	--pixel-toast-primary-bg: #f4f0fd;
+	--pixel-toast-primary-text: #432874;
 }
 
 *,

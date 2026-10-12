@@ -1195,7 +1195,7 @@ function handleCommitImport(): void {
 	font-family: var(--font-pixel);
 	font-size: 13px;
 	font-weight: 700;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 	letter-spacing: 0.04em;
 }
 

@@ -156,7 +156,7 @@ const getFileName = () => {
 .file-name {
 	font-family: var(--font-mono);
 	font-size: 13px;
-	color: #34d399;
+	color: var(--pixel-success);
 	font-weight: 600;
 }
 

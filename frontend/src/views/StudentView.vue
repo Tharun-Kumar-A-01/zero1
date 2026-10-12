@@ -166,7 +166,7 @@ onMounted(async (): Promise<void> => {
 										v-if="challenge.coding_status === 'solved'"
 										class="solved-tag"
 									>
-										<PixelIcon name="check" :size="14" color="#34d399" />
+										<PixelIcon name="check" :size="14" color="var(--pixel-success)" />
 										Problem Solved (+30 XP)
 									</span>
 									<span v-else class="pending-tag">
@@ -284,7 +284,7 @@ onMounted(async (): Promise<void> => {
 	display: flex;
 	align-items: center;
 	gap: 0.4rem;
-	color: #34d399;
+	color: var(--pixel-success);
 }
 
 .pending-tag {

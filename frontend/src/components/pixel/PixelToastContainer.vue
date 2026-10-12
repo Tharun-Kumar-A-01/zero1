@@ -95,32 +95,32 @@ const { toasts, close } = usePixelToast()
 
 .pixel-toast--success {
 	border-color: var(--pixel-btn-success-bg);
-	background-color: #172b1d;
-	color: #a7f3d0;
+	background-color: var(--pixel-toast-success-bg);
+	color: var(--pixel-toast-success-text);
 }
 
 .pixel-toast--danger {
 	border-color: var(--pixel-btn-danger-bg);
-	background-color: #311515;
-	color: #fecaca;
+	background-color: var(--pixel-toast-danger-bg);
+	color: var(--pixel-toast-danger-text);
 }
 
 .pixel-toast--warning {
 	border-color: var(--pixel-btn-warning-bg);
-	background-color: #2e1d0f;
-	color: #fed7aa;
+	background-color: var(--pixel-toast-warning-bg);
+	color: var(--pixel-toast-warning-text);
 }
 
 .pixel-toast--info {
 	border-color: var(--pixel-btn-info-bg);
-	background-color: #112638;
-	color: #bae6fd;
+	background-color: var(--pixel-toast-info-bg);
+	color: var(--pixel-toast-info-text);
 }
 
 .pixel-toast--primary {
 	border-color: var(--pixel-btn-primary-bg);
-	background-color: #241638;
-	color: #e9d5ff;
+	background-color: var(--pixel-toast-primary-bg);
+	color: var(--pixel-toast-primary-text);
 }
 
 /* Animations */

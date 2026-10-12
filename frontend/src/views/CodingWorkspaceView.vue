@@ -13,6 +13,7 @@ import PixelButton from '@/components/pixel/PixelButton.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
 import PixelSplit from '@/components/pixel/PixelSplit.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -339,6 +340,7 @@ onUnmounted(() => {
 			</div>
 
 			<div class="topbar-right">
+				<ThemeToggle size="small" />
 				<PixelButton
 					color="secondary"
 					size="small"
@@ -643,7 +645,7 @@ onUnmounted(() => {
 
 .timer-digits {
 	font-family: var(--font-mono) !important;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .topbar-right {
@@ -686,8 +688,8 @@ onUnmounted(() => {
 
 .mobile-tab-btn.active {
 	background: var(--pixel-surface);
-	color: #fbbf24;
-	border-bottom-color: #fbbf24;
+	color: var(--pixel-warning);
+	border-bottom-color: var(--pixel-warning);
 }
 
 .mobile-status-dot {
@@ -697,11 +699,11 @@ onUnmounted(() => {
 }
 
 .dot-pass {
-	background-color: #10b981;
+	background-color: var(--pixel-success);
 }
 
 .dot-fail {
-	background-color: #ef4444;
+	background-color: var(--pixel-danger);
 }
 
 .workspace-viewport {

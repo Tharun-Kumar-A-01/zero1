@@ -147,7 +147,7 @@ const weekDays = computed(() => {
 									v-if="day.isSolved"
 									name="check"
 									:size="12"
-									color="#fff"
+									color="var(--pixel-btn-primary-text, #ffffff)"
 								/>
 							</div>
 							<span class="day-name" :class="{ highlight: day.isCurrentDay }">
@@ -213,7 +213,7 @@ const weekDays = computed(() => {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #fff;
+	color: var(--pixel-btn-primary-text, #ffffff);
 	opacity: 0;
 	transition: opacity 0.15s ease;
 	border-radius: 4px;
@@ -265,7 +265,7 @@ const weekDays = computed(() => {
 	font-family: var(--font-pixel);
 	font-size: 2.75rem;
 	font-weight: normal;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 	line-height: 1;
 }
 
@@ -335,7 +335,7 @@ const weekDays = computed(() => {
 }
 
 .day-name.highlight {
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .profile-actions {

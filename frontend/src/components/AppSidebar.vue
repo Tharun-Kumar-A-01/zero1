@@ -8,6 +8,7 @@ import PixelSprite from '@/components/pixel/PixelSprite.vue'
 import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelButton from '@/components/pixel/PixelButton.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -36,10 +37,6 @@ function toggleCollapse(): void {
 }
 
 onMounted(() => {
-	if (typeof document !== 'undefined') {
-		document.documentElement.classList.add('dark')
-	}
-
 	const savedCollapsed = localStorage.getItem('sidebar_collapsed')
 	if (savedCollapsed === 'true') {
 		isDesktopCollapsed.value = true
@@ -280,8 +277,13 @@ function navigateTo(path: string): void {
 				<PixelBadge :text="`${authStore.user.total_points ?? 0} XP`" color="primary" />
 			</div>
 
-			<!-- Controls: Logout -->
+			<!-- Controls: Theme Toggle & Logout -->
 			<div class="sidebar-actions">
+				<ThemeToggle
+					size="small"
+					:show-label="!isDesktopCollapsed"
+					class="sidebar-theme-toggle"
+				/>
 				<PixelButton
 					color="danger"
 					size="small"
@@ -451,7 +453,7 @@ function navigateTo(path: string): void {
 	background-color: var(--pixel-btn-primary-bg);
 	border-color: var(--pixel-btn-primary-border);
 	box-shadow: 0 3px 0 0 var(--pixel-btn-primary-shade);
-	color: #fff;
+	color: var(--pixel-btn-primary-text);
 	transform: translateY(-1px);
 }
 
@@ -537,8 +539,8 @@ function navigateTo(path: string): void {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background-color: #2b1704;
-	border: 1px solid #7e4507;
+	background-color: var(--pixel-surface-raised);
+	border: 1px solid var(--pixel-border);
 	padding: 2px 6px;
 	border-radius: 3px;
 }
@@ -546,7 +548,7 @@ function navigateTo(path: string): void {
 .streak-text {
 	font-family: var(--font-pixel);
 	font-size: 11px;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .sidebar-actions {
@@ -554,6 +556,15 @@ function navigateTo(path: string): void {
 	flex-direction: column;
 	gap: 0.5rem;
 	margin-top: 0.25rem;
+}
+
+.sidebar-theme-toggle {
+	width: 100%;
+	height: 32px;
+}
+
+.app-sidebar.is-collapsed .sidebar-theme-toggle {
+	width: 32px;
 }
 
 .app-sidebar.is-collapsed .sidebar-actions {
@@ -627,9 +638,9 @@ function navigateTo(path: string): void {
 	.nav-item--active {
 		background: transparent;
 		box-shadow: none;
-		color: #fbbf24;
+		color: var(--pixel-warning);
 		border: none;
-		border-top: 2px solid #fbbf24;
+		border-top: 2px solid var(--pixel-warning);
 	}
 
 	.nav-label {

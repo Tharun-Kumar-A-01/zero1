@@ -106,30 +106,30 @@ const handleClose = () => {
 .pixel-alert--danger {
 	background-color: rgba(184, 51, 51, 0.15);
 	border-color: var(--pixel-btn-danger-bg);
-	color: #ff9e9e;
+	color: var(--pixel-danger);
 }
 
 .pixel-alert--warning {
 	background-color: rgba(201, 119, 22, 0.15);
 	border-color: var(--pixel-btn-warning-bg);
-	color: #ffd08a;
+	color: var(--pixel-warning);
 }
 
 .pixel-alert--success {
 	background-color: rgba(40, 135, 70, 0.15);
 	border-color: var(--pixel-btn-success-bg);
-	color: #8be4a7;
+	color: var(--pixel-success);
 }
 
 .pixel-alert--info {
 	background-color: rgba(29, 123, 175, 0.15);
 	border-color: var(--pixel-btn-info-bg);
-	color: #92d4f8;
+	color: var(--pixel-info);
 }
 
 .pixel-alert--primary {
 	background-color: rgba(90, 50, 163, 0.15);
 	border-color: var(--pixel-btn-primary-bg);
-	color: #d1b8ff;
+	color: var(--pixel-primary);
 }
 </style>

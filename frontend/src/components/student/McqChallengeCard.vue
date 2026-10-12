@@ -113,13 +113,13 @@ function handleSubmit(): void {
 							v-else-if="correctOptionIndex === idx"
 							class="result-indicator correct-icon"
 						>
-							<PixelIcon name="check" :size="14" color="#10b981" />
+							<PixelIcon name="check" :size="14" color="var(--pixel-success)" />
 						</div>
 						<div
 							v-else-if="markedOptionIndex === idx"
 							class="result-indicator wrong-icon"
 						>
-							<PixelIcon name="cross" :size="14" color="#ef4444" />
+							<PixelIcon name="cross" :size="14" color="var(--pixel-danger)" />
 						</div>
 						<div v-else class="result-indicator neutral-dot">
 							<span class="neutral-dash">—</span>
@@ -168,11 +168,11 @@ function handleSubmit(): void {
 						v-else-if="challenge?.mcq_status === 'correct'"
 						class="completed-msg success-msg"
 					>
-						<PixelIcon name="check" :size="16" color="#34d399" />
+						<PixelIcon name="check" :size="16" color="var(--pixel-success)" />
 						<span>Aptitude challenge verified (+20 XP).</span>
 					</div>
 					<div v-else class="completed-msg incorrect-msg">
-						<PixelIcon name="cross" :size="16" color="#ef4444" />
+						<PixelIcon name="cross" :size="16" color="var(--pixel-danger)" />
 						<span
 							>Aptitude challenge completed. Marked and correct options are shown
 							above.</span
@@ -263,15 +263,15 @@ function handleSubmit(): void {
 }
 
 .option-tile.is-correct-option {
-	border-color: #10b981 !important;
-	background-color: rgba(16, 185, 129, 0.15) !important;
-	box-shadow: 0 3px 0 0 #065f46 !important;
+	border-color: var(--pixel-btn-success-bg) !important;
+	background-color: rgba(40, 135, 70, 0.15) !important;
+	box-shadow: 0 3px 0 0 var(--pixel-btn-success-shade) !important;
 }
 
 .option-tile.is-wrong-marked {
-	border-color: #ef4444 !important;
-	background-color: rgba(239, 68, 68, 0.15) !important;
-	box-shadow: 0 3px 0 0 #7f1d1d !important;
+	border-color: var(--pixel-btn-danger-bg) !important;
+	background-color: rgba(184, 51, 51, 0.15) !important;
+	box-shadow: 0 3px 0 0 var(--pixel-btn-danger-shade) !important;
 }
 
 .result-indicator {
@@ -326,7 +326,7 @@ function handleSubmit(): void {
 .radio-dot {
 	width: 6px;
 	height: 6px;
-	background-color: #fff;
+	background-color: var(--pixel-btn-primary-text, #ffffff);
 	border-radius: 1px;
 }
 
@@ -353,11 +353,11 @@ function handleSubmit(): void {
 	gap: 0.5rem;
 	font-family: var(--font-pixel);
 	font-size: 12px;
-	color: #34d399;
+	color: var(--pixel-success);
 }
 
 .incorrect-msg {
-	color: #f87171 !important;
+	color: var(--pixel-danger) !important;
 }
 
 .empty-state {

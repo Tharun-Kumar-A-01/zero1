@@ -148,19 +148,19 @@ const columns = [
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background-color: #2b1704;
-	border: 1px solid #7e4507;
+	background-color: var(--pixel-surface-raised);
+	border: 1px solid var(--pixel-border);
 	padding: 2px 6px;
 	border-radius: 3px;
 	font-family: var(--font-pixel);
 	font-size: 11px;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .points-val {
 	font-family: var(--font-pixel);
 	font-size: 12px;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .empty-state {

@@ -5,6 +5,7 @@ import PixelButton from '@/components/pixel/PixelButton.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -35,6 +36,7 @@ function goToGithub(): void {
 				</div>
 
 				<div class="nav-actions">
+					<ThemeToggle size="small" />
 					<PixelButton variant="primary" class="nav-btn" @click="handleAction">
 						<PixelIcon name="login" :size="12" class="btn-icon" />
 						{{ authStore.isAuthenticated ? 'Dashboard' : 'Sign In' }}
@@ -240,8 +242,8 @@ function goToGithub(): void {
 <style scoped>
 .landing-page {
 	min-height: 100vh;
-	background-color: var(--pixel-bg, #121218);
-	color: var(--pixel-text, #f0f0f5);
+	background-color: var(--pixel-bg);
+	color: var(--pixel-text);
 	font-family: var(--font-body, system-ui, sans-serif);
 	display: flex;
 	flex-direction: column;
@@ -252,8 +254,8 @@ function goToGithub(): void {
 	position: sticky;
 	top: 0;
 	z-index: 100;
-	background-color: var(--pixel-surface, #1e1e24);
-	border-bottom: 2px solid var(--pixel-border, #3a3a4c);
+	background-color: var(--pixel-surface);
+	border-bottom: 2px solid var(--pixel-border);
 }
 
 .nav-container {
@@ -277,16 +279,16 @@ function goToGithub(): void {
 	font-size: 1.4rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .brand-tag {
 	font-family: var(--pixel-font, monospace);
 	font-size: 0.7rem;
 	padding: 2px 6px;
-	background: rgba(99, 102, 241, 0.2);
-	border: 1px solid var(--pixel-primary, #6366f1);
-	color: var(--pixel-primary, #6366f1);
+	background: var(--pixel-selection-bg);
+	border: 1px solid var(--pixel-primary);
+	color: var(--pixel-primary);
 	letter-spacing: 0.05em;
 }
 
@@ -316,10 +318,10 @@ function goToGithub(): void {
 	padding: 5rem 1.5rem 4.5rem;
 	background: linear-gradient(
 		180deg,
-		var(--pixel-surface, #1e1e24) 0%,
-		var(--pixel-bg, #121218) 100%
+		var(--pixel-surface) 0%,
+		var(--pixel-bg) 100%
 	);
-	border-bottom: 2px solid var(--pixel-border, #3a3a4c);
+	border-bottom: 2px solid var(--pixel-border);
 	text-align: center;
 }
 
@@ -341,7 +343,7 @@ function goToGithub(): void {
 	font-family: var(--pixel-font, monospace);
 	font-size: 2.35rem;
 	line-height: 1.25;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 	margin: 0;
 	letter-spacing: 0.5px;
 }
@@ -349,7 +351,7 @@ function goToGithub(): void {
 .hero-desc {
 	font-size: 1.1rem;
 	line-height: 1.6;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 	max-width: 680px;
 }
@@ -365,7 +367,7 @@ function goToGithub(): void {
 /* 3 CORE PILLARS */
 .pillars-section {
 	padding: 4.5rem 1.5rem;
-	border-bottom: 2px solid var(--pixel-border, #3a3a4c);
+	border-bottom: 2px solid var(--pixel-border);
 }
 
 .section-container {
@@ -378,13 +380,13 @@ function goToGithub(): void {
 	font-size: 1.75rem;
 	text-align: center;
 	margin: 0 0 0.5rem;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .section-subheading {
 	text-align: center;
 	font-size: 0.95rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0 0 3rem;
 }
 
@@ -395,21 +397,21 @@ function goToGithub(): void {
 }
 
 .pillar-card {
-	background-color: var(--pixel-surface, #1e1e24);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background-color: var(--pixel-surface);
+	border: 2px solid var(--pixel-border);
 	padding: 2rem 1.5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 0.85rem;
 	align-items: flex-start;
-	box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+	box-shadow: 0 4px 0 var(--pixel-border-dark);
 }
 
 .pillar-icon {
 	width: 50px;
 	height: 50px;
-	background-color: rgba(0, 0, 0, 0.3);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background-color: var(--pixel-surface-raised);
+	border: 2px solid var(--pixel-border);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -420,21 +422,21 @@ function goToGithub(): void {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.15rem;
 	margin: 0;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .pillar-text {
 	font-size: 0.9rem;
 	line-height: 1.55;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 }
 
 /* CAMPUS FEATURES SECTION */
 .features-section {
 	padding: 4rem 1.5rem;
-	border-bottom: 2px solid var(--pixel-border, #3a3a4c);
-	background-color: var(--pixel-surface, #1e1e24);
+	border-bottom: 2px solid var(--pixel-border);
+	background-color: var(--pixel-surface);
 }
 
 .features-grid {
@@ -444,8 +446,8 @@ function goToGithub(): void {
 }
 
 .feature-item {
-	background: var(--pixel-bg, #121218);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background: var(--pixel-surface-alt);
+	border: 2px solid var(--pixel-border);
 	padding: 1.5rem;
 	display: flex;
 	flex-direction: column;
@@ -462,21 +464,21 @@ function goToGithub(): void {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.05rem;
 	margin: 0;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .feature-desc {
 	font-size: 0.88rem;
 	line-height: 1.5;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 }
 
 /* FLOW SECTION */
 .flow-section {
 	padding: 3.5rem 1.5rem;
-	background-color: var(--pixel-bg, #121218);
-	border-bottom: 2px solid var(--pixel-border, #3a3a4c);
+	background-color: var(--pixel-bg);
+	border-bottom: 2px solid var(--pixel-border);
 }
 
 .flow-grid {
@@ -494,26 +496,26 @@ function goToGithub(): void {
 .step-number {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.25rem;
-	color: var(--pixel-primary, #6366f1);
+	color: var(--pixel-primary);
 	width: 36px;
 	height: 36px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: var(--pixel-surface, #1e1e24);
-	border: 2px solid var(--pixel-border, #3a3a4c);
+	background-color: var(--pixel-surface);
+	border: 2px solid var(--pixel-border);
 }
 
 .step-title {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.05rem;
 	margin: 0;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .step-desc {
 	font-size: 0.88rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 	line-height: 1.45;
 }
@@ -524,9 +526,9 @@ function goToGithub(): void {
 }
 
 .cta-box {
-	background-color: var(--pixel-surface, #1e1e24);
-	border: 2px solid var(--pixel-border, #3a3a4c);
-	box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
+	background-color: var(--pixel-surface);
+	border: 2px solid var(--pixel-border);
+	box-shadow: 0 6px 0 var(--pixel-border-dark);
 	padding: 3rem 2rem;
 	text-align: center;
 	display: flex;
@@ -545,12 +547,12 @@ function goToGithub(): void {
 	font-family: var(--pixel-font, monospace);
 	font-size: 1.65rem;
 	margin: 0;
-	color: var(--pixel-text, #f0f0f5);
+	color: var(--pixel-text);
 }
 
 .cta-desc {
 	font-size: 0.95rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 	max-width: 500px;
 }
@@ -558,8 +560,8 @@ function goToGithub(): void {
 /* FOOTER */
 .landing-footer {
 	margin-top: auto;
-	border-top: 2px solid var(--pixel-border, #3a3a4c);
-	background-color: var(--pixel-surface, #1e1e24);
+	border-top: 2px solid var(--pixel-border);
+	background-color: var(--pixel-surface);
 	padding: 1.75rem 1.5rem;
 }
 
@@ -579,12 +581,12 @@ function goToGithub(): void {
 	gap: 8px;
 	font-family: var(--pixel-font, monospace);
 	font-size: 0.85rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 }
 
 .footer-copy {
 	font-size: 0.8rem;
-	color: var(--pixel-text-muted, #9ca3af);
+	color: var(--pixel-text-muted);
 	margin: 0;
 }
 

@@ -2,19 +2,19 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { initTheme } from '@/composables/useTheme'
 import PixelButton from '@/components/pixel/PixelButton.vue'
 import PixelAvatar from '@/components/pixel/PixelAvatar.vue'
 import PixelBadge from '@/components/pixel/PixelBadge.vue'
 import PixelSprite from '@/components/pixel/PixelSprite.vue'
 import PixelIcon from '@/components/pixel/PixelIcon.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 onMounted(() => {
-	if (typeof document !== 'undefined') {
-		document.documentElement.classList.add('dark')
-	}
+	initTheme()
 })
 
 function handleLogout(): void {
@@ -86,6 +86,7 @@ function handleLogout(): void {
 		</div>
 
 		<div class="navbar-right">
+			<ThemeToggle size="small" />
 			<div v-if="authStore.isAuthenticated && authStore.user" class="user-profile-menu">
 				<PixelAvatar size="small" color="primary" :avatar="authStore.user.avatar">
 					{{ authStore.user.name.charAt(0).toUpperCase() }}

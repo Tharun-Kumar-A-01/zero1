@@ -75,7 +75,7 @@ const customStyle = computed(() => {
 	padding: 3px 6px;
 	border-radius: 2px;
 	border: 1px solid var(--pixel-border-dark);
-	color: #fff;
+	color: var(--pixel-btn-primary-text);
 	letter-spacing: 0.02em;
 	user-select: none;
 	white-space: nowrap;

@@ -316,7 +316,7 @@ async function handleSave(): Promise<void> {
 	width: 14px;
 	height: 14px;
 	background-color: var(--pixel-btn-success-bg);
-	color: #fff;
+	color: var(--pixel-btn-primary-text);
 	display: flex;
 	align-items: center;
 	justify-content: center;

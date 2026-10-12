@@ -361,12 +361,12 @@ const errorMessage = computed(() => {
 
 .pixel-select-item:hover {
 	background: var(--pixel-surface-raised);
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .pixel-select-item.active {
 	background: var(--pixel-btn-primary-bg);
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .option-name {
@@ -378,7 +378,7 @@ const errorMessage = computed(() => {
 .check-icon {
 	width: 14px;
 	height: 14px;
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 	flex-shrink: 0;
 	margin-left: 8px;
 }
@@ -399,7 +399,7 @@ const errorMessage = computed(() => {
 .pixel-select-error-msg {
 	font-family: var(--font-pixel);
 	font-size: 10px;
-	color: #ff6b6b;
+	color: var(--pixel-danger);
 	margin-top: 2px;
 	text-transform: uppercase;
 }

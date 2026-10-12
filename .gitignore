@@ -20,3 +20,8 @@ dist/
 .vite/
 *.local
 
+# Logs
+*.log
+logs/
+backend/logs/
+

@@ -257,7 +257,7 @@ function handleCommitImport(): void {
 								</div>
 
 								<div v-if="oIdx === mcq.correct_option_index" class="option-check">
-									<PixelIcon name="check" :size="14" color="#34d399" />
+									<PixelIcon name="check" :size="14" color="var(--pixel-success)" />
 								</div>
 							</div>
 						</div>
@@ -507,7 +507,7 @@ function handleCommitImport(): void {
 	font-family: var(--font-pixel);
 	font-size: 13px;
 	font-weight: 700;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 	letter-spacing: 0.04em;
 }
 
@@ -559,7 +559,7 @@ function handleCommitImport(): void {
 }
 
 .option-item.correct .option-prefix {
-	color: #34d399;
+	color: var(--pixel-success);
 }
 
 .option-content {

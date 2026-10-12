@@ -192,7 +192,7 @@ const daysOfWeek = computed<
 .streak-count {
 	font-family: var(--font-pixel);
 	font-size: 2.75rem;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 	line-height: 1;
 }
 

@@ -69,7 +69,7 @@ const handleClick = () => {
 
 .pixel-tab--active {
 	background-color: var(--pixel-tab-active-bg, var(--pixel-bg));
-	color: #ffffff;
+	color: var(--pixel-text);
 	border-color: var(--pixel-border);
 	border-top: 2px solid var(--pixel-btn-primary-bg);
 	border-bottom: 2px solid var(--pixel-tab-active-bg, var(--pixel-bg));

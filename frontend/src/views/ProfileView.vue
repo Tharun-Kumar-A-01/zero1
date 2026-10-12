@@ -328,7 +328,7 @@ onMounted(() => {
 										v-if="day.isSolved"
 										name="check"
 										:size="14"
-										color="#fff"
+										color="var(--pixel-btn-primary-text, #ffffff)"
 									/>
 								</div>
 								<span class="day-name" :class="{ highlight: day.isCurrentDay }">
@@ -468,7 +468,7 @@ onMounted(() => {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #fff;
+	color: var(--pixel-btn-primary-text, #ffffff);
 	opacity: 0;
 	transition: opacity 0.15s ease;
 	border-radius: 4px;
@@ -539,7 +539,7 @@ onMounted(() => {
 	font-family: var(--font-pixel);
 	font-size: 3.2rem;
 	font-weight: normal;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 	line-height: 1;
 	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
@@ -622,7 +622,7 @@ onMounted(() => {
 }
 
 .day-name.highlight {
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .tier-labels {

@@ -141,7 +141,7 @@ const errorMessage = computed(() => {
 .pixel-textarea-error-msg {
 	font-family: var(--font-body);
 	font-size: 11px;
-	color: #ff6b6b;
+	color: var(--pixel-danger);
 	margin-top: 2px;
 }
 

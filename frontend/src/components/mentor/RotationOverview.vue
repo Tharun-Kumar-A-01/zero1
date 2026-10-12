@@ -134,7 +134,7 @@ const readinessPercentage = computed<number>(() => {
 }
 
 .unassigned-draft-label {
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .readiness-strip {
@@ -165,7 +165,7 @@ const readinessPercentage = computed<number>(() => {
 .readiness-percent {
 	font-family: var(--font-pixel);
 	font-size: 13px;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 
 .readiness-bar {

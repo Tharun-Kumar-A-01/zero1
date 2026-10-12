@@ -274,7 +274,7 @@ function insertLinePrefix(prefix: string): void {
 .toolbar-btn:hover {
 	background-color: var(--pixel-surface-raised);
 	border-color: var(--pixel-border-bright);
-	color: #ffffff;
+	color: var(--pixel-text);
 }
 
 .toolbar-btn:active {
@@ -328,14 +328,14 @@ function insertLinePrefix(prefix: string): void {
 	font-size: 13px;
 	line-height: 1.6;
 	color: var(--pixel-text);
-	caret-color: #fbbf24;
+	caret-color: var(--pixel-caret);
 	background-color: var(--pixel-bg-alt);
 	resize: vertical;
 	box-sizing: border-box;
 }
 
 .editor-textarea:focus {
-	background-color: #110e19;
+	background-color: var(--pixel-bg);
 }
 
 .editor-textarea::placeholder {

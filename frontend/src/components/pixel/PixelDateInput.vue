@@ -628,7 +628,7 @@ onBeforeUnmount(() => {
 	background: var(--pixel-btn-primary-bg) !important;
 	border: 1px solid var(--pixel-btn-primary-border) !important;
 	box-shadow: inset 0 -2px 0 0 var(--pixel-btn-primary-shade);
-	color: #ffffff !important;
+	color: var(--pixel-btn-primary-text) !important;
 	font-weight: 700;
 }
 

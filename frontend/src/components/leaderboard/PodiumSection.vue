@@ -134,9 +134,9 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 
 .gold-card {
 	min-height: 280px;
-	border-color: #f59e0b;
-	box-shadow: 0 6px 0 0 #b45309;
-	background-color: #2a2016;
+	border-color: var(--gold-border);
+	box-shadow: 0 6px 0 0 var(--gold-shade);
+	background-color: var(--gold-surface);
 }
 
 .gold-card .podium-content {
@@ -145,9 +145,9 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 
 .silver-card {
 	min-height: 240px;
-	border-color: #94a3b8;
-	box-shadow: 0 5px 0 0 #475569;
-	background-color: #1e222d;
+	border-color: var(--silver-border);
+	box-shadow: 0 5px 0 0 var(--silver-shade);
+	background-color: var(--silver-surface);
 }
 
 .silver-card .podium-content {
@@ -156,9 +156,9 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 
 .bronze-card {
 	min-height: 205px;
-	border-color: #b45309;
-	box-shadow: 0 5px 0 0 #78350f;
-	background-color: #281a14;
+	border-color: var(--bronze-border);
+	box-shadow: 0 5px 0 0 var(--bronze-shade);
+	background-color: var(--bronze-surface);
 }
 
 .bronze-card .podium-content {
@@ -174,7 +174,7 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 }
 
 .gold-rank {
-	color: #fbbf24;
+	color: var(--gold-glow);
 }
 
 .podium-name {
@@ -187,8 +187,8 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 
 .gold-name {
 	font-size: 1.4rem;
-	color: #fef08a;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+	color: var(--gold-text);
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .podium-roll {
@@ -207,12 +207,12 @@ const thirdPlace = computed<LeaderboardEntry | null>(() => props.entries[2] || n
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background-color: #2b1704;
-	border: 1px solid #7e4507;
+	background-color: var(--pixel-surface-raised);
+	border: 1px solid var(--pixel-border);
 	padding: 2px 6px;
 	border-radius: 3px;
 	font-family: var(--font-pixel);
 	font-size: 11px;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 </style>

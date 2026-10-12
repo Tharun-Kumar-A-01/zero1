@@ -790,7 +790,7 @@ onMounted(async () => {
 .type-tab-btn.active {
 	background: var(--pixel-btn-primary-bg);
 	border-color: var(--pixel-btn-primary-border);
-	color: #fff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .modal-form {

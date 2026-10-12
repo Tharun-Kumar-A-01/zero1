@@ -753,7 +753,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	font-family: var(--font-pixel);
 	font-size: 1.15rem;
 	font-weight: 700;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 	text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
@@ -802,7 +802,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .calendar-header-cell:first-child {
-	color: #ef4444;
+	color: var(--pixel-danger);
 }
 
 .calendar-month-body {
@@ -871,10 +871,10 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .today-badge {
-	background-color: #fbbf24;
-	color: #161220 !important;
+	background-color: var(--pixel-warning);
+	color: var(--pixel-border-dark) !important;
 	font-weight: 800;
-	box-shadow: 0 1px 0 0 #b45309;
+	box-shadow: 0 1px 0 0 var(--pixel-btn-warning-border);
 }
 
 /* EVENT BARS (SPANNING GOOGLE CALENDAR STYLE) */
@@ -896,7 +896,7 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 	font-family: var(--font-pixel);
 	font-size: 10px;
 	font-weight: 700;
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text, #ffffff);
 	cursor: pointer;
 	white-space: nowrap;
 	overflow: hidden;
@@ -934,8 +934,8 @@ function isRotationEnd(rot: RotationItem, day: CalendarDay): boolean {
 }
 
 .leave-bar {
-	background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
-	border-color: #7f1d1d;
+	background: linear-gradient(180deg, var(--pixel-btn-danger-hover) 0%, var(--pixel-btn-danger-bg) 100%);
+	border-color: var(--pixel-btn-danger-border);
 }
 
 .rotation-bar {

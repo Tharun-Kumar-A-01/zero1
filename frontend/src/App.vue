@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
 import PixelToastContainer from '@/components/pixel/PixelToastContainer.vue'
 import { useAuthStore } from '@/stores/auth'
+import { initTheme } from '@/composables/useTheme'
 
 const authStore = useAuthStore()
 const route = useRoute()
@@ -11,6 +12,7 @@ const route = useRoute()
 const isWorkspaceRoute = computed<boolean>(() => route.path.startsWith('/workspace'))
 
 onMounted(async (): Promise<void> => {
+	initTheme()
 	if (authStore.isAuthenticated && !authStore.user) {
 		await authStore.fetchProfile()
 	}

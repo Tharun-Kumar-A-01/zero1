@@ -1,4 +1,4 @@
-/* Base16 Default Dark for PrismJS - Adjusted for Habitica theme */
+/* Base16 Syntax Theme for PrismJS - Retro RPG Gamified Theme */
 :root {
 	--base00: #1e192b; /* Habitica pixel-bg */
 	--base01: #262235; /* Habitica pixel-surface */
@@ -18,16 +18,35 @@
 	--base0F: #e879f9; /* Brown/Pink */
 }
 
+html.light {
+	--base00: #f9f9f9; /* Habitica $gray-700 / Editor Canvas */
+	--base01: #ffffff; /* Habitica $white / Card surface */
+	--base02: #edecee; /* Habitica $gray-600 / Gutter & active lines */
+	--base03: #878190; /* Habitica $gray-200 / Comments */
+	--base04: #686274; /* Habitica $gray-100 / Line numbers & subtle */
+	--base05: #34313a; /* Habitica $gray-10 / Main code text & punctuation */
+	--base06: #1a181d; /* Habitica $black */
+	--base07: #1a181d;
+	--base08: #c92b2b; /* Habitica $maroon-50 / Red / Regex */
+	--base09: #f47825; /* Habitica $orange-10 / Constants, numbers */
+	--base0A: #ee9109; /* Habitica $yellow-5 / Classes, types */
+	--base0B: #1ca372; /* Habitica $green-10 / Strings */
+	--base0C: #26a0ab; /* Habitica $teal-10 / Operators, CSS */
+	--base0D: #2995cd; /* Habitica $blue-10 / Functions, methods */
+	--base0E: #6133b4; /* Habitica $purple-300 / Keywords */
+	--base0F: #b01515; /* Habitica $maroon-10 / Special symbols */
+}
+
 .token.comment,
 .token.prolog,
 .token.doctype,
 .token.cdata {
-	color: #747369; /* base03 */
+	color: var(--base03, #8a81aa);
 	font-style: italic;
 }
 
 .token.punctuation {
-	color: #d8d8d8; /* base05 */
+	color: var(--base05, #f3effa);
 }
 
 .token.namespace {
@@ -41,7 +60,7 @@
 .token.constant,
 .token.symbol,
 .token.deleted {
-	color: #dc9656; /* base09 */
+	color: var(--base09, #fb923c);
 }
 
 .token.selector,
@@ -51,7 +70,7 @@
 .token.builtin,
 .token.inserted,
 .token.triple-quoted-string {
-	color: #a1b56c; /* base0B */
+	color: var(--base0B, #4ade80);
 }
 
 .token.operator,
@@ -63,28 +82,28 @@
 .token.annotation,
 .language-css .token.string,
 .style .token.string {
-	color: #86c1b9; /* base0C */
+	color: var(--base0C, #38bdf8);
 }
 
 .token.atrule,
 .token.attr-value,
 .token.keyword,
 .token.directive.keyword {
-	color: #ba8baf; /* base0E */
+	color: var(--base0E, #c084fc);
 }
 
 .token.function {
-	color: #7cafc2; /* base0D */
+	color: var(--base0D, #818cf8);
 }
 
 .token.class-name {
-	color: #f7ca88; /* base0A */
+	color: var(--base0A, #fbbf24);
 }
 
 .token.regex,
 .token.important,
 .token.variable {
-	color: #ab4642; /* base08 */
+	color: var(--base08, #f87171);
 }
 
 .token.important,

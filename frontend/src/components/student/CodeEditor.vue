@@ -418,18 +418,18 @@ watch(
 
 .lang-dropdown-item:hover {
 	background: var(--pixel-surface-raised);
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .lang-dropdown-item.active {
 	background: var(--pixel-btn-primary-bg);
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 }
 
 .check-icon {
 	width: 14px;
 	height: 14px;
-	color: #ffffff;
+	color: var(--pixel-btn-primary-text);
 	flex-shrink: 0;
 }
 
@@ -533,7 +533,7 @@ watch(
 	z-index: 2;
 	background: transparent;
 	color: transparent;
-	caret-color: #fbbf24;
+	caret-color: var(--pixel-caret);
 	border: none;
 	outline: none;
 	resize: none;
@@ -541,8 +541,8 @@ watch(
 }
 
 .code-input::selection {
-	background: rgba(90, 50, 163, 0.45) !important;
-	color: #ffffff !important;
+	background: var(--pixel-selection-bg) !important;
+	color: var(--pixel-selection-text) !important;
 }
 
 @media (max-width: 640px) {

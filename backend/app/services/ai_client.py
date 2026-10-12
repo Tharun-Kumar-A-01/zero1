@@ -201,21 +201,56 @@ class AIClientService:
 		Invokes LLM (remote first, local Ollama fallback), parses and validates
 		the output against the specified Pydantic schema class.
 		"""
+		from app.services.logger_service import log_ai_prompt, log_ai_response
+
 		# Sanitize input prompts
 		safe_system_prompt: str = sanitize_text(system_prompt, max_length=8192)
 		safe_user_prompt: str = sanitize_text(user_prompt, max_length=16384)
+
+		start_time = time.perf_counter()
+		model_used = self.remote_model if self.remote_api_key else self.ollama_model
+		provider_used = "remote" if self.remote_api_key else "ollama"
+
+		log_ai_prompt(
+			task_name=schema_class.__name__,
+			system_prompt=safe_system_prompt,
+			user_prompt=safe_user_prompt,
+			model=model_used,
+			provider=provider_used,
+		)
 
 		# 1. Try remote LLM
 		raw_json: str | None = self._call_remote(safe_system_prompt, safe_user_prompt)
 
 		# 2. Fall back to local Ollama if remote didn't succeed
 		if not raw_json:
+			provider_used = "ollama"
+			model_used = self.ollama_model
 			raw_json = self._call_ollama(safe_system_prompt, safe_user_prompt)
 
+		duration_ms = (time.perf_counter() - start_time) * 1000
+
 		if not raw_json:
+			log_ai_response(
+				task_name=schema_class.__name__,
+				response_content=None,
+				duration_ms=duration_ms,
+				success=False,
+				model=model_used,
+				provider=provider_used,
+			)
 			raise RuntimeError(
 				"Failed to obtain response from both remote LLM and local Ollama fallback."
 			)
+
+		log_ai_response(
+			task_name=schema_class.__name__,
+			response_content=raw_json,
+			duration_ms=duration_ms,
+			success=True,
+			model=model_used,
+			provider=provider_used,
+		)
 
 		# Parse and validate JSON
 		try:

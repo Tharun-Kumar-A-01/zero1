@@ -50,6 +50,12 @@ def create_app() -> Flask:
 	app: Flask = Flask(__name__)
 	app.config.from_object(Config)
 
+	# Initialize structured single-line request and database write logging
+	from app.services.logger_service import init_db_logging, init_request_logging
+
+	init_request_logging(app)
+	init_db_logging()
+
 	# Initialize JWT
 	jwt: JWTManager = JWTManager(app)
 

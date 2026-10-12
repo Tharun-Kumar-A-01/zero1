@@ -720,7 +720,7 @@ function handleConfirmDeleteUser(): void {
 }
 
 .delete-warning-text {
-	color: #ef4444;
+	color: var(--pixel-danger);
 	font-size: 0.85rem;
 	font-weight: 600;
 	line-height: 1.4;

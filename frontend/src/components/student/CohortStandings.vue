@@ -149,6 +149,6 @@ const sortedLeaderboard = computed<LeaderboardEntry[]>(() =>
 	gap: 4px;
 	font-family: var(--font-pixel);
 	font-size: 11px;
-	color: #fbbf24;
+	color: var(--pixel-warning);
 }
 </style>

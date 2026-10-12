@@ -125,6 +125,10 @@ const ALIAS_MAP: Record<string, string> = {
 	format_list_numbered: 'LayoutList',
 	list: 'LayoutList',
 	auto_awesome: 'LightningBolt',
+	sun: 'Sun',
+	light: 'Sun',
+	moon: 'Moon',
+	dark: 'Moon',
 }
 
 const charmMap = charm as unknown as Record<string, { paths: string }>
